@@ -1,0 +1,63 @@
+Script: Parser Test Script
+Author: Daniel McKnight
+Description:
+    Just an example description to go with
+    an example script. This will go in meta
+
+# Timeout goto line 18
+Timeout: 10, 18
+# Timeout exit
+Timeout: 20
+
+Synonym: "Test Script"
+    "Tester Script"
+    "Another Synonym"
+Claps: 2 Two clap action
+    3 3 clap action
+Language: en-us, male
+
+Variable: no_val
+Variable: with_val = "Test Value"
+
+# This is a comment line separating header from execution (kinda)
+Neon speak: inlined speak
+Neon speak:
+    Block speech start
+    ...
+    Block speech end
+@pre-exec
+Execute: hello world
+voice_input(no_val)
+IF no_val == with_val:
+    Goto: pre-exec
+ELSE:
+    Reconvey: pre-exec
+
+If "word" IN "this phrase word is in":
+    Neon speak: "phrase"
+
+Reconvey: pre-exec, file_param
+Name Reconvey: "Someone", "some text", "/path/to/file"
+
+Case {with_val}:
+    "Some value"
+        Neon speak: first
+    "some other value"
+        Neon speak:
+            second
+
+Case(no_val):
+    "no_val_1":
+        Execute: what time is it
+
+Python: 1*2  # TODO: syntax check
+
+LOOP check START
+Set: new_val = no_val
+# TODO: The following should warn/error
+dne = "test"
+voice_input(new_val)
+LOOP check END
+Email: "Mail Title", "email body goes here. could be a variable name in most cases"
+Run: script_name_here
+Exit
