@@ -17,15 +17,18 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.6
+      - name: Install dependencies
+        run: |
+          sudo apt install docker-compose
       - name: Start Docker MQ service
         run: |
-          docker-compose up neon_rabbitmq
+          docker-compose up -d neon_rabbitmq
       - name: Configure Neon Diana Server
         run: |
           python setup_default_server.py
       - name: Start Docker Diana Services
         run: |
-          docker-compose up
+          docker-compose up -d
       - name: Test with pytest
         run: |
           pip install pytest pytest-timeout pytest-cov
