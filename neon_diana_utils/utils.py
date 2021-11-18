@@ -30,7 +30,7 @@ from os import getenv
 from os.path import join, dirname, expanduser, basename, exists
 from typing import Optional
 
-from rabbitmq_api import RabbitMQAPI
+from .rabbitmq_api import RabbitMQAPI
 
 
 DEFAULT_USERS = ["neon_api", "neon_coupons", "neon_email", "neon_metrics", "neon_script_parser"]

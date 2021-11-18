@@ -11,10 +11,23 @@ docker. Details of what should be present in `NEON_CONFIG_PATH` can be found in 
 section below.
 
 ```shell
-export NEON_CONFIG_PATH="/home/${USER}/docker_config/"
-export NEON_METRIC_PATH="/home/${USER}/docker_metrics/"
+export NEON_CONFIG_PATH="/home/${USER}/diana_config/"
+export NEON_METRIC_PATH="/home/${USER}/diana_metrics/"
 docker login ghcr.io
 docker-compose up
+```
+
+## Initial Configuration
+`neon_diana_utils` contains convenience utilities, including for automated initial configuration of RabbitMQ. If you 
+have a clean RabbitMQ container, you can use `create_default_mq_server` to configure an admin account and all parameters
+required for running Neon Diana. Make sure the `neon_rabbitmq` container is running before running this utility. After 
+RabbitMQ Configuration is complete, you can start the remaining containers 
+
+ex:
+```shell
+export NEON_CONFIG_PATH="/home/${USER}/diana_config/"
+# Modify neon-diana-backend/setup_default_server.py with desired username and password
+python neon-diana-backend/setup_default_server.py
 ```
 
 ## Configuration

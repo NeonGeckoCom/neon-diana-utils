@@ -25,4 +25,5 @@
 
 from neon_diana_utils.utils import create_default_mq_server
 
-create_default_mq_server("http://0.0.0.0:15672", "test_admin", "test_passwd")
+create_default_mq_server("http://0.0.0.0:15672", "admin", "admin")
+# TODO: Move neon_diana_utils to standalone package with CLI entrypoint DM
