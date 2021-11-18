@@ -21,7 +21,8 @@ jobs:
         run: |
           docker-compose up neon_rabbitmq
       - name: Configure Neon Diana Server
-        - python setup_default_server.py
+        run: |
+          python setup_default_server.py
       - name: Start Docker Diana Services
         run: |
           docker-compose up
