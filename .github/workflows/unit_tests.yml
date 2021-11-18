@@ -19,7 +19,8 @@ jobs:
           python-version: 3.6
       - name: Install dependencies
         run: |
-          sudo apt install docker-compose
+          sudo apt update
+          sudo apt install docker.io docker-compose
       - name: Start Docker MQ service
         run: |
           docker-compose up -d neon_rabbitmq
