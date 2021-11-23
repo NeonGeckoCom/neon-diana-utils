@@ -14,7 +14,12 @@ section below.
 export NEON_CONFIG_PATH="/home/${USER}/diana_config/"
 export NEON_METRIC_PATH="/home/${USER}/diana_metrics/"
 docker login ghcr.io
-docker-compose up
+docker-compose up -d
+```
+
+If you prefer not to run all services, you may specify which services to run with `docker-compose up`.
+```shell
+docker-compose up -d neon_rabbitmq neon_api_proxy neon_metrics_service
 ```
 
 ## Initial Configuration
