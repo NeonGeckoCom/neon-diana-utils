@@ -26,6 +26,7 @@
 
 import json
 import os
+import sys
 import unittest
 import docker
 import docker.models.containers
@@ -34,6 +35,7 @@ from docker.errors import APIError
 from mock import Mock
 from ruamel.yaml import YAML
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from neon_diana_utils.utils import _run_clean_rabbit_mq, cleanup_docker_container, create_diana_configurations, \
     write_neon_mq_config, write_rabbit_config, write_docker_compose
 
