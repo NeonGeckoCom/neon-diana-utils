@@ -33,7 +33,14 @@ from neon_utils.mq_utils import send_mq_request
 class TestNeonServices(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        cls.cached_config_path = os.environ.get("NEON_CONFIG_PATH")
         os.environ["NEON_CONFIG_PATH"] = os.path.join(os.path.dirname(__file__), "config")
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.environ.pop("NEON_CONFIG_PATH")
+        if cls.cached_config_path:
+            os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
 
     def test_api_proxy(self):
         resp = send_mq_request("/neon_api", {"test": True,

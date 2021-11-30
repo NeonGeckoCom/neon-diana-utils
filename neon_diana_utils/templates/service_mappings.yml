@@ -11,7 +11,9 @@ neon_rabbitmq:
       - ${NEON_CONFIG_PATH}/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ${NEON_CONFIG_PATH}:/config
 neon_api_proxy:
-  mq_users:
+  mq_service_name: neon_api_connector
+  mq_username: neon_api
+  mq_user_permissions:
     neon_api:
       /neon_api:
         read: .*
@@ -33,8 +35,10 @@ neon_api_proxy:
       - neon_rabbitmq
     volumes:
       - ${NEON_CONFIG_PATH}:/config
-neon_coupon_connector:
-  mq_users:
+neon_brands_service:
+  mq_service_name: neon_coupon_connector
+  mq_username: neon_coupons
+  mq_user_permissions:
     neon_coupons:
       /neon_coupons:
         read: .*
@@ -57,7 +61,8 @@ neon_coupon_connector:
     volumes:
       - ${NEON_CONFIG_PATH}:/config
 neon_email_proxy:
-  mq_users:
+  mq_username: neon_email
+  mq_user_permissions:
     neon_email:
       /neon_emails:
         read: .*
@@ -80,7 +85,9 @@ neon_email_proxy:
     volumes:
       - ${NEON_CONFIG_PATH}:/config
 neon_script_parser:
-  mq_users:
+  mq_service_name: neon_script_parser_service
+  mq_username: neon_script_parser
+  mq_user_permissions:
     neon_script_parser:
       /neon_script_parser:
         read: .*
@@ -104,7 +111,9 @@ neon_script_parser:
     volumes:
       - ${NEON_CONFIG_PATH}:/config
 neon_metrics_service:
-  mq_users:
+  mq_service_name: neon_metrics_connector
+  mq_username: neon_metrics
+  mq_user_permissions:
     neon_metrics:
       /neon_metrics:
         read: .*
