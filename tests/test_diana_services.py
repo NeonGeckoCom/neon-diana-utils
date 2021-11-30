@@ -25,23 +25,31 @@
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import subprocess
 import unittest
+import pytest
 from time import time
 from neon_utils.mq_utils import send_mq_request
+from neon_mq_connector.utils import wait_for_mq_startup
 
 
-class TestNeonServices(unittest.TestCase):
+class TestDianaServices(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.cached_config_path = os.environ.get("NEON_CONFIG_PATH")
         os.environ["NEON_CONFIG_PATH"] = os.path.join(os.path.dirname(__file__), "config")
+        cls.docker_compose_path = os.path.join(os.path.dirname(__file__), "test_diana_services_config")
+        subprocess.Popen(["/bin/bash", "-c", f"cd {cls.docker_compose_path} && docker-compose up"])
+        wait_for_mq_startup("0.0.0.0", 5672)
 
     @classmethod
     def tearDownClass(cls) -> None:
         os.environ.pop("NEON_CONFIG_PATH")
         if cls.cached_config_path:
             os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
+        subprocess.Popen(["/bin/bash", "-c", f"cd {cls.docker_compose_path} && docker-compose down"])
 
+    @pytest.mark.skip
     def test_api_proxy(self):
         resp = send_mq_request("/neon_api", {"test": True,
                                              "service": "api_test_endpoint"}, "neon_api_input", "neon_api_output")
@@ -53,11 +61,13 @@ class TestNeonServices(unittest.TestCase):
         self.assertIsInstance(resp, dict)
         self.assertEqual(resp['status_code'], 401)
 
+    @pytest.mark.skip
     def test_brands_service(self):
         brand_coupon_data = send_mq_request("/neon_coupons", {"brands": True,
                                                               "coupons": True}, "neon_coupons_input")
         self.assertTrue(brand_coupon_data["success"])
 
+    @pytest.mark.skip
     def test_email_proxy(self):
         request_data = {"recipient": "test@neongecko.com",
                         "subject": "Test Message",
@@ -72,6 +82,7 @@ class TestNeonServices(unittest.TestCase):
                                           "time": t}, "neon_metrics_input", expect_response=False)
         # TODO: Check metrics dir for this entry
 
+    @pytest.mark.skip
     def test_script_parser(self):
         with open(os.path.join(os.path.dirname(__file__), "ccl", "test.nct")) as f:
             text = f.read()

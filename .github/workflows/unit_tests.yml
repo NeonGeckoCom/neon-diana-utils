@@ -8,8 +8,7 @@ jobs:
     strategy:
       matrix:
         python-version: [ 3.6, 3.7, 3.8, 3.9 ]
-      max-parallel: 1
-    timeout-minutes: 30
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,3 +29,11 @@ jobs:
         with:
           name: utils-test-results
           path: tests/utils-test-results.xml
+      - name: Run Service Tests
+        run: |
+          pytest tests/test_diana_services.py --doctest-modules --junitxml=tests/services-test-results.xml
+      - name: Upload Services test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: services-test-results
+          path: tests/services-test-results.xml
