@@ -24,24 +24,82 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import itertools
 import json
 import os
 
 from os import getenv
 from os.path import join, dirname, expanduser, basename, exists
 from typing import Optional
+from ruamel.yaml import YAML
+from neon_utils import LOG
 
-from .rabbitmq_api import RabbitMQAPI
+from neon_diana_utils.rabbitmq_api import RabbitMQAPI
 
 
-DEFAULT_USERS = ["neon_api", "neon_coupons", "neon_email", "neon_metrics", "neon_script_parser"]
-DEFAULT_VHOSTS = ["/neon_api", "/neon_coupons", "/neon_emails", "/neon_metrics", "/neon_script_parser", "/neon_testing"]
+def configure_diana_backend(url: str, admin_user: str, admin_pass: str, services: list):
+    """
+    Configure a new Diana backend
+    :param url: URL of admin portal (i.e. http://0.0.0.0:15672)
+    :param admin_user: username to configure for RabbitMQ configuration
+    :param admin_pass: password associated with admin_user
+    :param services: list of services to configure on this backend
+    """
+    api = RabbitMQAPI(url)
+
+    # Configure Administrator
+    api.login("guest", "guest")
+    api.configure_admin_account(admin_user, admin_pass)
+
+    # Read configuration from templates
+    template_file = join(dirname(__file__), "templates",
+                         "service_mappings.yml")
+    with open(template_file) as f:
+        template_data = YAML().load(f)
+    services_to_configure = {name: dict(template_data[name])
+                             for name in services if name in template_data}
+
+    # Warn for unknown requested services
+    if set(services_to_configure.keys()) != set(services):
+        LOG.warning(f"Configured services do not match requested services: "
+                    f"{services_to_configure.keys()}")
+
+    # Parse Configured Service Mapping
+    vhosts_to_configure = set(itertools.chain.from_iterable([service.get("mq_vhosts", [])
+                                                             for service in services_to_configure.values()]))
+    users_to_configure = dict()
+    docker_compose_configuration = dict()
+    for name, service in services_to_configure.items():
+        users_to_configure.update(service.get("mq_users", dict()))
+        docker_compose_configuration[name] = service["docker_compose"]
+
+    print(vhosts_to_configure)
+    print(users_to_configure)
+
+    for vhost in vhosts_to_configure:
+        api.add_vhost(vhost)
+
+    api.add_user("neon_api_utils", "Klatchat2021")
+    credentials = api.create_default_users(users_to_configure.keys())
+    for user, vhost_config in users_to_configure.values():
+        for vhost, permissions in vhost_config.items():
+            api.configure_vhost_user_permissions(vhost, user, **permissions)
+
+    # Write out MQ config file
+    write_mq_config(credentials)
+
+    # Export and save rabbitMQ Config
+    write_rabbit_config(api)
 
 
 def create_default_mq_server(url: str, admin_user: str, admin_pass: str):
     """
     Configures the specified MQ server with defaults to support a Neon Diana system.
     """
+    DEFAULT_USERS = ["neon_api", "neon_coupons", "neon_email", "neon_metrics", "neon_script_parser"]
+    DEFAULT_VHOSTS = ["/neon_api", "/neon_coupons", "/neon_emails", "/neon_metrics", "/neon_script_parser",
+                      "/neon_testing"]
+
     api = RabbitMQAPI(url)
 
     # Configure Administrator
@@ -85,7 +143,7 @@ def write_mq_config(credentials: dict, config_file: Optional[str] = None):
     if not exists(dirname(config_file)):
         os.makedirs(dirname(config_file))
 
-    default_config = join(dirname(__file__), "clean_mq_config.json")
+    default_config = join(dirname(__file__), "templates" "clean_mq_config.json")
     with open(default_config, 'r') as default_conf:
         configuration = json.load(default_conf)
     for service in configuration["users"]:
