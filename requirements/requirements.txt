@@ -2,3 +2,5 @@ requests~=2.26
 ruamel.yaml~=0.16
 neon_utils~=0.12
 docker~=5.0
+click~=8.0
+click-default-group~=1.2

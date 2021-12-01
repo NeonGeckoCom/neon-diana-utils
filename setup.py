@@ -51,7 +51,7 @@ def get_requirements(requirements_filename: str):
 with open("README.md", "r") as f:
     long_description = f.read()
 
-with open("./version.py", "r", encoding="utf-8") as v:
+with open("./neon_diana_utils/version.py", "r", encoding="utf-8") as v:
     for line in v.readlines():
         if line.startswith("__version__"):
             if '"' in line:
@@ -78,5 +78,8 @@ setup(
     classifiers=[
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3.6',
-    ]
+    ],
+    entry_points={
+        "console_scripts": ['diana=neon_diana_utils.cli:neon_diana_cli']
+    }
 )

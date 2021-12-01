@@ -29,7 +29,7 @@
 import fileinput
 from os.path import join, dirname
 
-with open(join(dirname(__file__), "version.py"), "r", encoding="utf-8") as v:
+with open(join(dirname(__file__), "neon_diana_utils", "version.py"), "r", encoding="utf-8") as v:
     for line in v.readlines():
         if line.startswith("__version__"):
             if '"' in line:
@@ -47,7 +47,7 @@ else:
     new_post = int(post) + 1
     version = version.replace(f"a{post}", f"a{new_post}")
 
-for line in fileinput.input(join(dirname(__file__), "version.py"), inplace=True):
+for line in fileinput.input(join(dirname(__file__), "neon_diana_utils", "version.py"), inplace=True):
     if line.startswith("__version__"):
         print(f"__version__ = \"{version}\"")
     else:
