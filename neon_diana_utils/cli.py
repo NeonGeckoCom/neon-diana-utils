@@ -47,15 +47,17 @@ DEFAULT_SERVICES = ("neon_rabbitmq",
 
 
 @click.group("diana", cls=DefaultGroup,
-             no_args_is_help=True, invoke_without_command=True)
+             no_args_is_help=True, invoke_without_command=True,
+             help="Diana: Device Independent API for Neon Applications.\n\n"
+                  "See also: diana COMMAND --help")
 @click.option("--version", "-v", is_flag=True, required=False,
               help='Print the current version')
 def neon_diana_cli(version: bool = False):
     if version:
-        click.echo(f"Neon Diana version {__version__}")
+        click.echo(f"Diana version {__version__}")
 
 
-@neon_diana_cli.command(help="Configure a Neon Diana Backend")
+@neon_diana_cli.command(help="Configure a Diana Backend")
 @click.option('--service', '-s', multiple=True,
               help="Optional service to configure")
 @click.option('--default', '-d', is_flag=True, default=False,
@@ -119,7 +121,7 @@ def configure_backend(config_path, service, default, complete, user, password):
     click.echo(f"Remember to place `ngi_auth_vars.yml` in {config_path}")
 
 
-@neon_diana_cli.command(help="Start a Neon Diana Backend")
+@neon_diana_cli.command(help="Start a Diana Backend")
 @click.option('--service', '-s', multiple=True,
               help="Optional service to start")
 @click.option('--attach', '-a', is_flag=True, default=False,
@@ -146,7 +148,7 @@ def start_backend(config_path, service, attach):
         subprocess.Popen(["/bin/bash", "-c", f"cd {config_path} && {docker_compose_command}"]).communicate()
 
 
-@neon_diana_cli.command(help="Stop a Neon Diana Backend")
+@neon_diana_cli.command(help="Stop a Diana Backend")
 @click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
 def stop_backend(config_path):
     # Validate path to docker-compose.yml
