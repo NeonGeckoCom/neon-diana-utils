@@ -227,14 +227,3 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
     with open(join(neon_config_path, ".env"), "w+") as env:
         env.write(f"NEON_CONFIG_PATH={neon_config_path}\n"
                   f"NEON_METRIC_PATH={neon_config_path}/metrics")
-
-
-if __name__ == "__main__":
-    os.environ["NEON_CONFIG_PATH"] = "/home/d_mcknight/Desktop/testing"
-    create_diana_configurations("admin", "admin", {"neon_rabbitmq",
-                                                   "neon_api_proxy",
-                                                   "neon_brands_service",
-                                                   "neon_email_proxy",
-                                                   "neon_script_parser",
-                                                   "neon_metrics_service",
-                                                   "neon_unknown"})

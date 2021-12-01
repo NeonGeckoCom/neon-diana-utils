@@ -33,6 +33,7 @@ from click_default_group import DefaultGroup
 
 from .version import __version__
 
+# TODO: Valid services can be read from service_mappings.yml directly
 VALID_SERVICES = ("neon_rabbitmq",
                   "neon_api_proxy",
                   "neon_brands_service",
@@ -40,6 +41,7 @@ VALID_SERVICES = ("neon_rabbitmq",
                   "neon_script_parser",
                   "neon_metrics_service")
 
+# TODO: Consider tagging these in service_mappings.yml or some other method for easier extensibility DM
 DEFAULT_SERVICES = ("neon_rabbitmq",
                     "neon_api_proxy",
                     "neon_email_proxy",
