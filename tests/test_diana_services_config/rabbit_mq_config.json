@@ -1,0 +1,105 @@
+{
+  "rabbit_version": "3.9.9",
+  "rabbitmq_version": "3.9.9",
+  "product_name": "RabbitMQ",
+  "product_version": "3.9.9",
+  "users": [
+    {
+      "name": "admin",
+      "password_hash": "zTCCKdLkkImVHINvBxosIMB7zgo+Ohvlfaoqz7iMQK7afX2o",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [
+        "administrator"
+      ],
+      "limits": {}
+    },
+    {
+      "name": "neon_api_utils",
+      "password_hash": "au3vx9SxJqT01D+kczKOCgWsotSLcPCZxFOipTgFGaapsFso",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [],
+      "limits": {}
+    },
+    {
+      "name": "neon_metrics",
+      "password_hash": "6H2oEqaqeThINnGtRrruAqh69iih48iCnKTPe58sLl6hW7tZ",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [],
+      "limits": {}
+    },
+    {
+      "name": "neon_api",
+      "password_hash": "t15jXuyThl06tgnO1zp9n+id5rCITh2xXoikmj6nJHYlGdwL",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [],
+      "limits": {}
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    },
+    {
+      "name": "/neon_metrics"
+    },
+    {
+      "name": "/neon_api"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "admin",
+      "vhost": "/neon_metrics",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "admin",
+      "vhost": "/neon_api",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "neon_api_utils",
+      "vhost": "/neon_metrics",
+      "configure": ".*",
+      "write": ".*",
+      "read": ""
+    },
+    {
+      "user": "neon_metrics",
+      "vhost": "/neon_metrics",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "neon_api_utils",
+      "vhost": "/neon_api",
+      "configure": "./*",
+      "write": "./*",
+      "read": "./*"
+    },
+    {
+      "user": "neon_api",
+      "vhost": "/neon_api",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "topic_permissions": [],
+  "parameters": [],
+  "global_parameters": [
+    {
+      "name": "internal_cluster_id",
+      "value": "rabbitmq-cluster-id-CTk1SeHQ9dgq7XGJpl-YLg"
+    }
+  ],
+  "policies": [],
+  "queues": [],
+  "exchanges": [],
+  "bindings": []
+}

@@ -1,0 +1,138 @@
+neon_rabbitmq:
+  docker_compose:
+    container_name: neon_rabbitmq
+    hostname: neon_rabbitmq
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    ports:
+      - 15672:15672
+      - 5672:5672
+    volumes:
+      - ${NEON_CONFIG_PATH}/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ${NEON_CONFIG_PATH}:/config
+neon_api_proxy:
+  mq_service_name: neon_api_connector
+  mq_username: neon_api
+  mq_user_permissions:
+    neon_api:
+      /neon_api:
+        read: .*
+        write: .*
+        configure: .*
+    neon_api_utils:
+      /neon_api:
+        read: ./*
+        write: ./*
+        configure: ./*
+  mq_vhosts:
+    - /neon_api
+  docker_compose:
+    container_name: neon_api_proxy
+    hostname: neon_api_proxy
+    image: ghcr.io/neongeckocom/neon_api_proxy:dev
+    restart: unless-stopped
+    links:
+      - neon_rabbitmq
+    volumes:
+      - ${NEON_CONFIG_PATH}:/config
+neon_brands_service:
+  mq_service_name: neon_coupon_connector
+  mq_username: neon_coupons
+  mq_user_permissions:
+    neon_coupons:
+      /neon_coupons:
+        read: .*
+        write: .*
+        configure: .*
+    neon_api_utils:
+      /neon_coupons:
+        read: .*
+        write: .*
+        configure: .*
+  mq_vhosts:
+    - /neon_coupons
+  docker_compose:
+    container_name: neon_brands_service
+    hostname: neon_brands_service
+    image: ghcr.io/neongeckocom/neon_brands_service:dev
+    restart: unless-stopped
+    links:
+      - neon_rabbitmq
+    volumes:
+      - ${NEON_CONFIG_PATH}:/config
+neon_email_proxy:
+  mq_username: neon_email
+  mq_user_permissions:
+    neon_email:
+      /neon_emails:
+        read: .*
+        write: .*
+        configure: .*
+    neon_api_utils:
+      /neon_emails:
+        read: "^(?!neon_emails_input).*"
+        write: .*
+        configure: .*
+  mq_vhosts:
+    - /neon_emails
+  docker_compose:
+    container_name: neon_email_proxy
+    hostname: neon_email_proxy
+    image: ghcr.io/neongeckocom/neon_email_proxy:dev
+    restart: unless-stopped
+    links:
+      - neon_rabbitmq
+    volumes:
+      - ${NEON_CONFIG_PATH}:/config
+neon_script_parser:
+  mq_service_name: neon_script_parser_service
+  mq_username: neon_script_parser
+  mq_user_permissions:
+    neon_script_parser:
+      /neon_script_parser:
+        read: .*
+        write: .*
+        configure: .*
+    neon_api_utils:
+      /neon_script_parser:
+        read: .*
+        write: .*
+        configure: .*
+  mq_vhosts:
+    - /neon_script_parser
+
+  docker_compose:
+    container_name: neon_script_parser
+    hostname: neon_script_parser
+    image: ghcr.io/neongeckocom/neon-script-parser:dev
+    restart: unless-stopped
+    links:
+      - neon_rabbitmq
+    volumes:
+      - ${NEON_CONFIG_PATH}:/config
+neon_metrics_service:
+  mq_service_name: neon_metrics_connector
+  mq_username: neon_metrics
+  mq_user_permissions:
+    neon_metrics:
+      /neon_metrics:
+        read: .*
+        write: .*
+        configure: .*
+    neon_api_utils:
+      /neon_metrics:
+        read: ""
+        write: .*
+        configure: .*
+  mq_vhosts:
+    - /neon_metrics
+  docker_compose:
+    container_name: neon_metrics_service
+    hostname: neon_metrics_service
+    image: ghcr.io/neongeckocom/neon_metrics_service:dev
+    restart: unless-stopped
+    links:
+      - neon_rabbitmq
+    volumes:
+      - ${NEON_CONFIG_PATH}:/config
+      - ${NEON_METRIC_PATH}:/metrics
