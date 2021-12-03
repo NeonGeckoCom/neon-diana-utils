@@ -25,7 +25,7 @@ diana configure-backend -d -u administrator -p password ~/neon_diana
 Many backend services rely on configured credentials for authentication. Before running a configured backend, `ngi_auth_vars.yml`
 must be defined with the appropriate credentials. A more complete example can be seen in the [Configuration section](#configuration).
 
-####~/neon_diana/ngi_auth_vars.yml
+#### ~/neon_diana/ngi_auth_vars.yml
 ```yaml
 emails:
   mail: neon@neon.ai

@@ -1,11 +1,10 @@
 neon_rabbitmq:
   docker_compose:
-    container_name: neon_rabbitmq
-    hostname: neon_rabbitmq
+    container_name: neon-rabbitmq
     image: rabbitmq:3-management
-    deploy:
-      restart_policy:
-        condition: on-failure
+    restart: unless-stopped
+    networks:
+      - mq_backend
     ports:
       - 15672:15672
       - 5672:5672
@@ -29,14 +28,11 @@ neon_api_proxy:
   mq_vhosts:
     - /neon_api
   docker_compose:
-    container_name: neon_api_proxy
-    hostname: neon_api_proxy
+    container_name: neon-api-proxy
     image: ghcr.io/neongeckocom/neon_api_proxy:dev
-    deploy:
-      restart_policy:
-        condition: on-failure
-    links:
-      - neon_rabbitmq
+    restart: unless-stopped
+    networks:
+      - mq_backend
     volumes:
       - ${NEON_CONFIG_PATH}:/config
 neon_brands_service:
@@ -56,14 +52,11 @@ neon_brands_service:
   mq_vhosts:
     - /neon_coupons
   docker_compose:
-    container_name: neon_brands_service
-    hostname: neon_brands_service
+    container_name: neon-brands-service
     image: ghcr.io/neongeckocom/neon_brands_service:dev
-    deploy:
-      restart_policy:
-        condition: on-failure
-    links:
-      - neon_rabbitmq
+    restart: unless-stopped
+    networks:
+      - mq_backend
     volumes:
       - ${NEON_CONFIG_PATH}:/config
 neon_email_proxy:
@@ -82,14 +75,11 @@ neon_email_proxy:
   mq_vhosts:
     - /neon_emails
   docker_compose:
-    container_name: neon_email_proxy
-    hostname: neon_email_proxy
+    container_name: neon-email-proxy
     image: ghcr.io/neongeckocom/neon_email_proxy:dev
-    deploy:
-      restart_policy:
-        condition: on-failure
-    links:
-      - neon_rabbitmq
+    restart: unless-stopped
+    networks:
+      - mq_backend
     volumes:
       - ${NEON_CONFIG_PATH}:/config
 neon_script_parser:
@@ -110,14 +100,11 @@ neon_script_parser:
     - /neon_script_parser
 
   docker_compose:
-    container_name: neon_script_parser
-    hostname: neon_script_parser
+    container_name: neon-script-parser
     image: ghcr.io/neongeckocom/neon-script-parser:dev
-    deploy:
-      restart_policy:
-        condition: on-failure
-    links:
-      - neon_rabbitmq
+    restart: unless-stopped
+    networks:
+      - mq_backend
     volumes:
       - ${NEON_CONFIG_PATH}:/config
 neon_metrics_service:
@@ -137,14 +124,11 @@ neon_metrics_service:
   mq_vhosts:
     - /neon_metrics
   docker_compose:
-    container_name: neon_metrics_service
-    hostname: neon_metrics_service
+    container_name: neon-metrics-service
     image: ghcr.io/neongeckocom/neon_metrics_service:dev
-    deploy:
-      restart_policy:
-        condition: on-failure
-    links:
-      - neon_rabbitmq
+    restart: unless-stopped
+    networks:
+      - mq_backend
     volumes:
       - ${NEON_CONFIG_PATH}:/config
       - ${NEON_METRIC_PATH}:/metrics
