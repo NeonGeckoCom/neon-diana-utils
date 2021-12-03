@@ -3,7 +3,9 @@ neon_rabbitmq:
     container_name: neon_rabbitmq
     hostname: neon_rabbitmq
     image: rabbitmq:3-management
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
     ports:
       - 15672:15672
       - 5672:5672
@@ -30,7 +32,9 @@ neon_api_proxy:
     container_name: neon_api_proxy
     hostname: neon_api_proxy
     image: ghcr.io/neongeckocom/neon_api_proxy:dev
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
     links:
       - neon_rabbitmq
     volumes:
@@ -55,7 +59,9 @@ neon_brands_service:
     container_name: neon_brands_service
     hostname: neon_brands_service
     image: ghcr.io/neongeckocom/neon_brands_service:dev
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
     links:
       - neon_rabbitmq
     volumes:
@@ -79,7 +85,9 @@ neon_email_proxy:
     container_name: neon_email_proxy
     hostname: neon_email_proxy
     image: ghcr.io/neongeckocom/neon_email_proxy:dev
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
     links:
       - neon_rabbitmq
     volumes:
@@ -105,7 +113,9 @@ neon_script_parser:
     container_name: neon_script_parser
     hostname: neon_script_parser
     image: ghcr.io/neongeckocom/neon-script-parser:dev
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
     links:
       - neon_rabbitmq
     volumes:
@@ -130,7 +140,9 @@ neon_metrics_service:
     container_name: neon_metrics_service
     hostname: neon_metrics_service
     image: ghcr.io/neongeckocom/neon_metrics_service:dev
-    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
     links:
       - neon_rabbitmq
     volumes:
