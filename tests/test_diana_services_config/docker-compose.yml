@@ -1,32 +1,47 @@
-version: 0.0.1
+version: '3.1'
+networks:
+  mq_backend:
 services:
-  neon_metrics_service:
-    container_name: neon_metrics_service
-    hostname: neon_metrics_service
-    image: ghcr.io/neongeckocom/neon_metrics_service:dev
-    restart: unless-stopped
-    links:
-    - neon_rabbitmq
-    volumes:
-    - ${NEON_CONFIG_PATH}:/config
-    - ${NEON_METRIC_PATH}:/metrics
   neon_rabbitmq:
-    container_name: neon_rabbitmq
-    hostname: neon_rabbitmq
+    container_name: neon-rabbitmq
     image: rabbitmq:3-management
-    restart: unless-stopped
+    restart: always
+    networks:
+    - mq_backend
     ports:
     - 15672:15672
     - 5672:5672
     volumes:
-    - ${NEON_CONFIG_PATH}/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-    - ${NEON_CONFIG_PATH}:/config
-  neon_api_proxy:
-    container_name: neon_api_proxy
-    hostname: neon_api_proxy
-    image: ghcr.io/neongeckocom/neon_api_proxy:dev
-    restart: unless-stopped
-    links:
-    - neon_rabbitmq
+      - ${NEON_CONFIG_PATH}/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ${NEON_CONFIG_PATH}:/config
+  neon_email_proxy:
+    container_name: neon-email-proxy
+    image: ghcr.io/neongeckocom/neon_email_proxy:dev
+    restart: on-failure
+    networks:
+    - mq_backend
     volumes:
     - ${NEON_CONFIG_PATH}:/config
+    labels:
+      kompose.service.type: headless
+  neon_metrics_service:
+    container_name: neon-metrics-service
+    image: ghcr.io/neongeckocom/neon_metrics_service:dev
+    restart: on-failure
+    networks:
+    - mq_backend
+    volumes:
+    - ${NEON_CONFIG_PATH}:/config
+    - ${NEON_CONFIG_PATH}/metrics:/metrics
+    labels:
+      kompose.service.type: headless
+  neon_api_proxy:
+    container_name: neon-api-proxy
+    image: ghcr.io/neongeckocom/neon_api_proxy:dev
+    restart: on-failure
+    networks:
+    - mq_backend
+    volumes:
+    - ${NEON_CONFIG_PATH}:/config
+    labels:
+      kompose.service.type: headless
