@@ -49,7 +49,7 @@ class TestDianaServices(unittest.TestCase):
             os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
         subprocess.Popen(["/bin/bash", "-c", f"cd {cls.docker_compose_path} && docker-compose down"])
 
-    @pytest.mark.skip
+    # @pytest.mark.skip
     def test_api_proxy(self):
         resp = send_mq_request("/neon_api", {"test": True,
                                              "service": "api_test_endpoint"}, "neon_api_input", "neon_api_output")
@@ -67,7 +67,7 @@ class TestDianaServices(unittest.TestCase):
                                                               "coupons": True}, "neon_coupons_input")
         self.assertTrue(brand_coupon_data["success"])
 
-    @pytest.mark.skip
+    # @pytest.mark.skip
     def test_email_proxy(self):
         request_data = {"recipient": "test@neongecko.com",
                         "subject": "Test Message",

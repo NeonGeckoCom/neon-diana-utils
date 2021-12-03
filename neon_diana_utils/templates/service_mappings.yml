@@ -1,7 +1,6 @@
 neon_rabbitmq:
   docker_compose:
     container_name: neon-rabbitmq
-    hostname: neon_rabbitmq
     image: rabbitmq:3-management
     restart: unless-stopped
     networks:
@@ -30,7 +29,6 @@ neon_api_proxy:
     - /neon_api
   docker_compose:
     container_name: neon-api-proxy
-    hostname: neon_api_proxy
     image: ghcr.io/neongeckocom/neon_api_proxy:dev
     restart: unless-stopped
     networks:
@@ -55,7 +53,6 @@ neon_brands_service:
     - /neon_coupons
   docker_compose:
     container_name: neon-brands-service
-    hostname: neon_brands_service
     image: ghcr.io/neongeckocom/neon_brands_service:dev
     restart: unless-stopped
     networks:
