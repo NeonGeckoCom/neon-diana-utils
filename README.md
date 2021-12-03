@@ -3,6 +3,8 @@ Device Independent API for Neon Applications (Diana) is a collection of microser
 to NeonAI systems. All services are implemented as standalone Docker containers that are connected to a RabbitMQ server.
 This repository contains the files required to launch a Neon API server.
 
+Install the Diana utilities Python package with: `pip install neon-diana-utils`
+
 ## Automated Configuration
 The `diana` entrypoint is available to handle automated setup and some common administration tasks. You can see get detailed
 help via `diana --help`. A standard configuration is described here:
