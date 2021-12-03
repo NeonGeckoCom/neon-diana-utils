@@ -6,7 +6,7 @@ on:
     branches:
       - dev
     paths-ignore:
-      - 'version.py'
+      - 'neon_diana_utils/version.py'
 
 jobs:
   build_and_publish:
