@@ -8,8 +8,8 @@
       "neon_rabbitmq"
     ],
     "volumes": [
-      "${NEON_CONFIG_PATH}:/config",
-      "${NEON_METRIC_PATH}:/metrics"
+      "host_path:/config",
+      "host_path_metrics:/metrics"
     ]
   },
   "neon_rabbitmq": {
@@ -22,8 +22,8 @@
       "5672:5672"
     ],
     "volumes": [
-      "${NEON_CONFIG_PATH}/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf",
-      "${NEON_CONFIG_PATH}:/config"
+      "host_path/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf",
+      "host_path:/config"
     ]
   },
   "neon_api_proxy": {
@@ -35,7 +35,7 @@
       "neon_rabbitmq"
     ],
     "volumes": [
-      "${NEON_CONFIG_PATH}:/config"
+      "host_path:/config"
     ]
   }
 }
