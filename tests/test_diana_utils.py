@@ -73,7 +73,7 @@ class TestDianaUtils(unittest.TestCase):
                                                        "neon_api_proxy",
                                                        "neon_metrics_service",
                                                        "neon_unknown"})
-        valid_files = {"docker-compose.yml", "mq_config.json", "rabbitmq.conf", "rabbit_mq_config.json", ".env"}
+        valid_files = {"docker-compose.yml", "mq_config.json", "rabbitmq.conf", "rabbit_mq_config.json"}
         for file in valid_files:
             file_path = os.path.join(os.environ["NEON_CONFIG_PATH"], file)
             self.assertTrue(os.path.isfile(file_path))
