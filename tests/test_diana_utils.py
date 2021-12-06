@@ -73,7 +73,7 @@ class TestDianaUtils(unittest.TestCase):
                                                        "neon_api_proxy",
                                                        "neon_metrics_service",
                                                        "neon_unknown"})
-        valid_files = {"docker-compose.yml", "mq_config.json", "rabbitmq.conf", "rabbit_mq_config.json", ".env"}
+        valid_files = {"docker-compose.yml", "mq_config.json", "rabbitmq.conf", "rabbit_mq_config.json"}
         for file in valid_files:
             file_path = os.path.join(os.environ["NEON_CONFIG_PATH"], file)
             self.assertTrue(os.path.isfile(file_path))
@@ -121,7 +121,7 @@ class TestDianaUtils(unittest.TestCase):
         os.remove(rabbitmq_conf)
 
     def test_write_docker_compose(self):
-        with open(os.path.join(os.path.dirname(__file__), "config", "valid_docker-compose.json")) as f:
+        with open(os.path.join(os.path.dirname(__file__), "config", "valid_docker-compose-services.json")) as f:
             sample_config = json.load(f)
         write_docker_compose(sample_config)
 
@@ -132,13 +132,6 @@ class TestDianaUtils(unittest.TestCase):
         self.assertIn("version", docker_compose)
         self.assertEqual(docker_compose["services"], sample_config)
         os.remove(docker_compose_file)
-
-        docker_env_file = os.path.join(os.environ["NEON_CONFIG_PATH"], ".env")
-        with open(docker_env_file) as f:
-            environ = f.read()
-        self.assertIn(f"NEON_CONFIG_PATH={os.environ['NEON_CONFIG_PATH']}", environ)
-        self.assertIn("NEON_METRIC_PATH=", environ)
-        os.remove(docker_env_file)
 
 
 if __name__ == '__main__':

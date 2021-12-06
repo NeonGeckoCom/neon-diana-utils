@@ -213,6 +213,11 @@ def write_rabbit_config(api: RabbitMQAPI, config_file: Optional[str] = None):
 
 
 def write_docker_compose(services_config: dict, compose_file: Optional[str] = None):
+    """
+    Generates and writes a docker-compose.yml according to the specified services
+    :param services_config: dict services, usually read from service_mappings.yml
+    :param compose_file: path of docker-compose.yml file to write
+    """
     compose_file = compose_file if compose_file else \
         join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), "docker-compose.yml")
     compose_file = expanduser(compose_file)
@@ -220,10 +225,16 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
     with open(join(dirname(__file__), "templates", "docker-compose.yml")) as f:
         compose_boilerplate = YAML().load(f)
     compose_contents = {**compose_boilerplate, **{"services": services_config}}
-    with open(compose_file, "w+") as f:
-        YAML().dump(compose_contents, f)
 
     neon_config_path = dirname(compose_file)
-    with open(join(neon_config_path, ".env"), "w+") as env:
-        env.write(f"NEON_CONFIG_PATH={neon_config_path}\n"
-                  f"NEON_METRIC_PATH={neon_config_path}/metrics")
+    neon_metric_path = expanduser(getenv("NEON_METRIC_PATH", f"{neon_config_path}/metrics"))
+    with open(compose_file, "w+") as f:
+        YAML().dump(compose_contents, f)
+        f.seek(0)
+        string_contents = f.read()
+        string_contents = string_contents.replace("${NEON_CONFIG_PATH}",
+                                                  neon_config_path)\
+            .replace("${NEON_METRIC_PATH}", neon_metric_path)
+        f.seek(0)
+        f.truncate(0)
+        f.write(string_contents)
