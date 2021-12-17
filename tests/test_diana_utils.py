@@ -36,8 +36,8 @@ from mock import Mock
 from ruamel.yaml import YAML
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from neon_diana_utils.utils import _run_clean_rabbit_mq, cleanup_docker_container, create_diana_configurations, \
-    write_neon_mq_config, write_rabbit_config, write_docker_compose
+from neon_diana_utils.utils import create_diana_configurations, write_neon_mq_config, write_rabbit_config
+from neon_diana_utils.utils.docker import _run_clean_rabbit_mq_docker, cleanup_docker_container, write_docker_compose
 
 
 class TestDianaUtils(unittest.TestCase):
@@ -51,22 +51,6 @@ class TestDianaUtils(unittest.TestCase):
         os.environ.pop("NEON_CONFIG_PATH")
         if cls.cached_config_path:
             os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
-
-    def test_run_clean_rmq_docker(self):
-        container = _run_clean_rabbit_mq()
-        self.assertIsInstance(container, docker.models.containers.Container)
-        self.assertIn(container, docker.from_env().containers.list())
-        cleanup_docker_container(container)
-        self.assertNotIn(container, docker.from_env().containers.list(all=True))
-
-        _run_clean_rabbit_mq()
-        with self.assertRaises(APIError):
-            _run_clean_rabbit_mq()
-        container = _run_clean_rabbit_mq(True)
-        self.assertIsInstance(container, docker.models.containers.Container)
-        self.assertIn(container, docker.from_env().containers.list())
-        cleanup_docker_container(container)
-        self.assertNotIn(container, docker.from_env().containers.list(all=True))
 
     def test_create_diana_configurations(self):
         create_diana_configurations("admin", "admin", {"neon_rabbitmq",
@@ -119,6 +103,35 @@ class TestDianaUtils(unittest.TestCase):
         with open(rabbitmq_conf) as f:
             self.assertIn("load_definitions = /config/rabbit_mq_config.json", f.read())
         os.remove(rabbitmq_conf)
+
+
+class TestDockerUtils(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.cached_config_path = os.environ.get("NEON_CONFIG_PATH")
+        os.environ["NEON_CONFIG_PATH"] = os.path.join(os.path.dirname(__file__), "config")
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.environ.pop("NEON_CONFIG_PATH")
+        if cls.cached_config_path:
+            os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
+
+    def test_run_clean_rmq_docker(self):
+        container = _run_clean_rabbit_mq_docker()
+        self.assertIsInstance(container, docker.models.containers.Container)
+        self.assertIn(container, docker.from_env().containers.list())
+        cleanup_docker_container(container)
+        self.assertNotIn(container, docker.from_env().containers.list(all=True))
+
+        _run_clean_rabbit_mq_docker()
+        with self.assertRaises(APIError):
+            _run_clean_rabbit_mq_docker()
+        container = _run_clean_rabbit_mq_docker(True)
+        self.assertIsInstance(container, docker.models.containers.Container)
+        self.assertIn(container, docker.from_env().containers.list())
+        cleanup_docker_container(container)
+        self.assertNotIn(container, docker.from_env().containers.list(all=True))
 
     def test_write_docker_compose(self):
         with open(os.path.join(os.path.dirname(__file__), "config", "valid_docker-compose-services.json")) as f:

@@ -24,62 +24,26 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import itertools
 import json
 import os
-import docker
+import itertools
 
 from os import getenv
-from os.path import join, dirname, expanduser, basename, exists
 from typing import Optional
-
-from docker.errors import APIError
-from docker.models.containers import Container
-from ruamel.yaml import YAML
+from os.path import join, dirname, expanduser, basename, exists
 from neon_utils import LOG
+from ruamel.yaml import YAML
 from neon_utils.configuration_utils import dict_merge
 
 from neon_diana_utils.rabbitmq_api import RabbitMQAPI
-
-
-def _run_clean_rabbit_mq(bind_existing: bool = False) -> Container:
-    """
-    Start a clean RabbitMQ Docker instance to generate configuration files
-    :param bind_existing: If true, allows for binding to a running container
-        WARNING: setting `bind_existing` can result in overwriting valid MQ configuration
-    """
-    docker_client = docker.from_env()
-    try:
-        container = docker_client.containers.run("rabbitmq:3-management",
-                                                 ports={"15672": "15672",
-                                                        "5672": "5672"},
-                                                 detach=True)
-    except APIError as e:
-        if e.status_code == 500:
-            LOG.warning("Is an instance of RabbitMQ already running?")
-            if bind_existing:
-                for c in docker_client.containers.list():
-                    if "rabbitmq:3-management" in c.image.tags:
-                        LOG.info(f"Found a running RabbitMQ instance to configure")
-                        return c
-        else:
-            LOG.error(e)
-        raise e
-    return container
-
-
-def cleanup_docker_container(container_to_remove: Container):
-    """
-    Stop and remove the specified Docker Container
-    :param container_to_remove: Docker.Container object to stop and remove
-    """
-    container_to_remove.stop()
-    container_to_remove.remove()
+from neon_diana_utils.orchestrators import Orchestrator
+from neon_diana_utils.utils.docker import create_diana_docker_configurations, write_docker_compose
 
 
 def create_diana_configurations(admin_user: str, admin_pass: str,
                                 services: set, config_path: str = None,
-                                allow_bind_existing: bool = False):
+                                allow_bind_existing: bool = False,
+                                orchestrator: Orchestrator = Orchestrator.DOCKER):
     """
     Create configuration files for Neon Diana.
     :param admin_user: username to configure for RabbitMQ configuration
@@ -87,21 +51,17 @@ def create_diana_configurations(admin_user: str, admin_pass: str,
     :param services: list of services to configure on this backend
     :param config_path: path to write configuration files (default=NEON_CONFIG_PATH)
     :param allow_bind_existing: bool to allow overwriting configuration for a running RabbitMQ instance
+    :param orchestrator: Container orchestrator to configure
     """
-    container = _run_clean_rabbit_mq(allow_bind_existing)
-    container_logs = container.logs(stream=True)
-    for log in container_logs:
-        if b"Server startup complete" in log:
-            break
-    configure_diana_backend("http://0.0.0.0:15672", admin_user, admin_pass, services, config_path)
-
-    cleanup_docker_container(container)
+    if orchestrator == Orchestrator.DOCKER:
+        create_diana_docker_configurations(admin_user, admin_pass, services,
+                                           config_path, allow_bind_existing)
 
 
 def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
                             services: set, config_path: str = None):
     """
-    Configure a new Diana backend
+    Configure a new Diana RabbitMQ backend
     :param url: URL of admin portal (i.e. http://0.0.0.0:15672)
     :param admin_user: username to configure for RabbitMQ configuration
     :param admin_pass: password associated with admin_user
@@ -210,31 +170,3 @@ def write_rabbit_config(api: RabbitMQAPI, config_file: Optional[str] = None):
     config_basename = basename(config_file)
     with open(join(config_path, "rabbitmq.conf"), 'w+') as rabbit:
         rabbit.write(f"load_definitions = /config/{config_basename}")
-
-
-def write_docker_compose(services_config: dict, compose_file: Optional[str] = None):
-    """
-    Generates and writes a docker-compose.yml according to the specified services
-    :param services_config: dict services, usually read from service_mappings.yml
-    :param compose_file: path of docker-compose.yml file to write
-    """
-    compose_file = compose_file if compose_file else \
-        join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), "docker-compose.yml")
-    compose_file = expanduser(compose_file)
-
-    with open(join(dirname(__file__), "templates", "docker-compose.yml")) as f:
-        compose_boilerplate = YAML().load(f)
-    compose_contents = {**compose_boilerplate, **{"services": services_config}}
-
-    neon_config_path = dirname(compose_file)
-    neon_metric_path = expanduser(getenv("NEON_METRIC_PATH", f"{neon_config_path}/metrics"))
-    with open(compose_file, "w+") as f:
-        YAML().dump(compose_contents, f)
-        f.seek(0)
-        string_contents = f.read()
-        string_contents = string_contents.replace("${NEON_CONFIG_PATH}",
-                                                  neon_config_path)\
-            .replace("${NEON_METRIC_PATH}", neon_metric_path)
-        f.seek(0)
-        f.truncate(0)
-        f.write(string_contents)
