@@ -37,13 +37,13 @@ from neon_utils.configuration_utils import dict_merge
 
 from neon_diana_utils.rabbitmq_api import RabbitMQAPI
 from neon_diana_utils.orchestrators import Orchestrator
-from neon_diana_utils.utils.docker import create_diana_docker_configurations, write_docker_compose
+from neon_diana_utils.utils.docker_utils import run_clean_rabbit_mq_docker, cleanup_docker_container, \
+    write_docker_compose
 
 
 def create_diana_configurations(admin_user: str, admin_pass: str,
                                 services: set, config_path: str = None,
-                                allow_bind_existing: bool = False,
-                                orchestrator: Orchestrator = Orchestrator.DOCKER):
+                                allow_bind_existing: bool = False):
     """
     Create configuration files for Neon Diana.
     :param admin_user: username to configure for RabbitMQ configuration
@@ -51,11 +51,14 @@ def create_diana_configurations(admin_user: str, admin_pass: str,
     :param services: list of services to configure on this backend
     :param config_path: path to write configuration files (default=NEON_CONFIG_PATH)
     :param allow_bind_existing: bool to allow overwriting configuration for a running RabbitMQ instance
-    :param orchestrator: Container orchestrator to configure
     """
-    if orchestrator == Orchestrator.DOCKER:
-        create_diana_docker_configurations(admin_user, admin_pass, services,
-                                           config_path, allow_bind_existing)
+    container = run_clean_rabbit_mq_docker(allow_bind_existing)
+    container_logs = container.logs(stream=True)
+    for log in container_logs:
+        if b"Server startup complete" in log:
+            break
+    configure_diana_backend("http://0.0.0.0:15672", admin_user, admin_pass, services, config_path)
+    cleanup_docker_container(container)
 
 
 def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
@@ -75,7 +78,7 @@ def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
     api.configure_admin_account(admin_user, admin_pass)
 
     # Read configuration from templates
-    template_file = join(dirname(__file__), "templates",
+    template_file = join(dirname(dirname(__file__)), "templates",
                          "service_mappings.yml")
     with open(template_file) as f:
         template_data = YAML().load(f)

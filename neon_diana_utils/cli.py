@@ -31,6 +31,8 @@ from os import makedirs, getenv
 from os.path import expanduser, isdir, isfile, join
 from click_default_group import DefaultGroup
 
+from .orchestrators import Orchestrator
+from .utils.kompose_utils import convert_docker_compose
 from .version import __version__
 
 # TODO: Valid services can be read from service_mappings.yml directly
@@ -121,6 +123,31 @@ def configure_backend(config_path, service, default, complete, user, password):
     sys.stdout = std_out
     click.echo(f"Configuration Complete")
     click.echo(f"Remember to place `ngi_auth_vars.yml` in {config_path}")
+
+
+@neon_diana_cli.command(help="Convert Diana resources for Container Orchestration")
+@click.option("--kubernetes", "-k", is_flag=True, default=False)
+@click.option("--openshift", "-o", is_flag=True, default=False)
+@click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def convert(kubernetes, openshift, config_path):
+    # Validate path to docker-compose.yml
+    config_path = expanduser(config_path)
+    if not config_path:
+        return ValueError("Null config_path")
+    compose_file = join(config_path, "docker-compose.yml")
+    if not isfile(compose_file):
+        click.echo(f"docker-compose.yml not found in {config_path}")
+        return ValueError(f"docker-compose.yml not found")
+
+    if not kubernetes or openshift:
+        kubernetes = True
+
+    if kubernetes:
+        click.echo(f"Converting {compose_file} to Kubernetes definition")
+        convert_docker_compose(compose_file, Orchestrator.KUBERNETES)
+    if openshift:
+        click.echo(f"Converting {compose_file} to OpenShift definition")
+        convert_docker_compose(compose_file, Orchestrator.OPENSHIFT)
 
 
 @neon_diana_cli.command(help="Start a Diana Backend")

@@ -35,10 +35,8 @@ from docker.models.containers import Container
 from ruamel.yaml import YAML
 from neon_utils import LOG
 
-from neon_diana_utils.utils import configure_diana_backend
 
-
-def _run_clean_rabbit_mq_docker(bind_existing: bool = False) -> Container:
+def run_clean_rabbit_mq_docker(bind_existing: bool = False) -> Container:
     """
     Start a clean RabbitMQ Docker instance to generate configuration files
     :param bind_existing: If true, allows for binding to a running container
@@ -73,27 +71,6 @@ def cleanup_docker_container(container_to_remove: Container):
     container_to_remove.remove()
 
 
-def create_diana_docker_configurations(admin_user: str, admin_pass: str,
-                                       services: set, config_path: str = None,
-                                       allow_bind_existing: bool = False):
-    """
-    Create configuration files for Neon Diana.
-    :param admin_user: username to configure for RabbitMQ configuration
-    :param admin_pass: password associated with admin_user
-    :param services: list of services to configure on this backend
-    :param config_path: path to write configuration files (default=NEON_CONFIG_PATH)
-    :param allow_bind_existing: bool to allow overwriting configuration for a running RabbitMQ instance
-    """
-    container = _run_clean_rabbit_mq_docker(allow_bind_existing)
-    container_logs = container.logs(stream=True)
-    for log in container_logs:
-        if b"Server startup complete" in log:
-            break
-    configure_diana_backend("http://0.0.0.0:15672", admin_user, admin_pass, services, config_path)
-
-    cleanup_docker_container(container)
-
-
 def write_docker_compose(services_config: dict, compose_file: Optional[str] = None):
     """
     Generates and writes a docker-compose.yml according to the specified services
@@ -104,7 +81,7 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
         join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), "docker-compose.yml")
     compose_file = expanduser(compose_file)
 
-    with open(join(dirname(__file__), "templates", "docker-compose.yml")) as f:
+    with open(join(dirname(dirname(__file__)), "templates", "docker-compose.yml")) as f:
         compose_boilerplate = YAML().load(f)
     compose_contents = {**compose_boilerplate, **{"services": services_config}}
 

@@ -37,7 +37,8 @@ from ruamel.yaml import YAML
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from neon_diana_utils.utils import create_diana_configurations, write_neon_mq_config, write_rabbit_config
-from neon_diana_utils.utils.docker import _run_clean_rabbit_mq_docker, cleanup_docker_container, write_docker_compose
+from neon_diana_utils.utils.docker_utils import run_clean_rabbit_mq_docker,\
+    cleanup_docker_container, write_docker_compose
 
 
 class TestDianaUtils(unittest.TestCase):
@@ -118,16 +119,16 @@ class TestDockerUtils(unittest.TestCase):
             os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
 
     def test_run_clean_rmq_docker(self):
-        container = _run_clean_rabbit_mq_docker()
+        container = run_clean_rabbit_mq_docker()
         self.assertIsInstance(container, docker.models.containers.Container)
         self.assertIn(container, docker.from_env().containers.list())
         cleanup_docker_container(container)
         self.assertNotIn(container, docker.from_env().containers.list(all=True))
 
-        _run_clean_rabbit_mq_docker()
+        run_clean_rabbit_mq_docker()
         with self.assertRaises(APIError):
-            _run_clean_rabbit_mq_docker()
-        container = _run_clean_rabbit_mq_docker(True)
+            run_clean_rabbit_mq_docker()
+        container = run_clean_rabbit_mq_docker(True)
         self.assertIsInstance(container, docker.models.containers.Container)
         self.assertIn(container, docker.from_env().containers.list())
         cleanup_docker_container(container)

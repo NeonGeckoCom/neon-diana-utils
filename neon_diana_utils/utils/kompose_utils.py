@@ -23,3 +23,30 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import subprocess
+
+from os.path import dirname, join
+from neon_utils.logger import LOG
+from neon_diana_utils.orchestrators import Orchestrator
+
+
+def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):
+    """
+    Convert the specified compose file into resources to deploy to Kubernetes.
+    :param compose_file: path to docker-compose.yml file to convert
+    :param orchestrator: orchestrator to generate resources for
+    """
+    docker_compose_dir = dirname(compose_file)
+    if orchestrator == Orchestrator.KUBERNETES:
+        provider = "kubernetes"
+    elif orchestrator == Orchestrator.OPENSHIFT:
+        provider = "openshift"
+    else:
+        LOG.error(f"Unhandled orchestrator: {orchestrator.name}. Fallback to Kubernetes")
+        provider = "kubernetes"
+    subprocess.Popen(["/bin/bash", "-c",
+                      f"kompose convert -f {compose_file} "
+                      f"-o {join(docker_compose_dir, provider)}.yml "
+                      f"--provider {provider} --volumes hostPath"]).communicate()
+

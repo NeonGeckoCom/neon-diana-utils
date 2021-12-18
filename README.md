@@ -169,3 +169,17 @@ api_services:
 ```
 load_definitions = /config/rabbit_mq_config.json
 ```
+
+
+## Container Orchestration
+The default behavior for Diana assumes docker-compose will be used to run applications.
+Resources for `Kubernetes` and `OpenShift` can be optionally generated for deploying 
+containers under those infrastructures.
+
+### Requirements
+Conversion of `docker-compose` files requires [Kompose](https://github.com/kubernetes/kompose).
+Detailed installation instructions can be found [here](https://github.com/kubernetes/kompose/blob/master/docs/installation.md)
+
+```shell
+diana convert --kubernetes ~/neon_diana
+```
