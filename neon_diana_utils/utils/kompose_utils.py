@@ -49,4 +49,3 @@ def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):
                       f"kompose convert -f {compose_file} "
                       f"-o {join(docker_compose_dir, provider)}.yml "
                       f"--provider {provider} --volumes hostPath"]).communicate()
-

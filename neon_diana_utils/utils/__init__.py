@@ -146,7 +146,7 @@ def write_neon_mq_config(credentials: dict, config_file: Optional[str] = None):
     if not exists(dirname(config_file)):
         os.makedirs(dirname(config_file))
 
-    configuration = {"server": "neon_rabbitmq",
+    configuration = {"server": "neon-rabbitmq",
                      "users": credentials}
     LOG.info(f"Writing Neon MQ configuration to {config_file}")
     with open(config_file, 'w+') as new_config:

@@ -40,8 +40,8 @@ api_services:
   open_weather_map:
     api_key: ""
 ```
-* The `emails` config should reference a smtp email account used in `neon_email_proxy`
-* The `api_services` config should reference services used in `neon_api_proxy`
+* The `emails` config should reference a smtp email account used in `neon-email-proxy`
+* The `api_services` config should reference services used in `neon-api-proxy`
 
 ### Running Configured Backend Services
 After a backend is configured, it can be started with `diana start-backend`. A standard example is included here, but 
@@ -77,13 +77,13 @@ docker-compose up -d
 
 If you prefer not to run all services, you may specify which services to run with `docker-compose up`.
 ```shell
-docker-compose up -d neon_rabbitmq neon_api_proxy neon_metrics_service
+docker-compose up -d neon-rabbitmq neon-api-proxy neon-metrics-service
 ```
 
 ### Initial Configuration
 `neon_diana_utils` contains convenience utilities, including for automated initial configuration of RabbitMQ. If you 
 have a clean RabbitMQ container, you can use `create_default_mq_server` to configure an admin account and all parameters
-required for running Neon Diana. Make sure the `neon_rabbitmq` container is running before running this utility. After 
+required for running Neon Diana. Make sure the `neon-rabbitmq` container is running before running this utility. After 
 RabbitMQ Configuration is complete, you can start the remaining containers 
 
 ex:
@@ -97,10 +97,10 @@ python neon-diana-backend/setup_default_server.py
 All containers containing an MQ module will expect `mq_config.json` to be mounted to `NEON_CONFIG_PATH` 
 (usually `/config` in the containers).
 
-- `neon_api_proxy`, `neon_brands_service`, and `neon_email_proxy` will expect `/config/ngi_auth_vars.yml` to specify any
+- `neon-api-proxy`, `neon-brands-service`, and `neon-email-proxy` will expect `/config/ngi_auth_vars.yml` to specify any
     account credentials
-- `neon_metrics_service` will output metrics files to `/metrics`.
-- `neon_rabbitmq` will expect `/config/rabbitmq.conf` to specify a path to the configuration `.json` file to load.
+- `neon-metrics-service` will output metrics files to `/metrics`.
+- `neon-rabbitmq` will expect `/config/rabbitmq.conf` to specify a path to the configuration `.json` file to load.
 
 Example configuration file structure:
 ```
@@ -114,7 +114,7 @@ $NEON_CONFIG_DIR
 `mq_config.json` (passwords redacted)
 ```json
 {
-  "server": "neon_rabbitmq",
+  "server": "neon-rabbitmq",
   "users": {
     "test": {
       "user": "test_user",

@@ -36,18 +36,18 @@ from .utils.kompose_utils import convert_docker_compose
 from .version import __version__
 
 # TODO: Valid services can be read from service_mappings.yml directly
-VALID_SERVICES = ("neon_rabbitmq",
-                  "neon_api_proxy",
-                  "neon_brands_service",
-                  "neon_email_proxy",
-                  "neon_script_parser",
-                  "neon_metrics_service")
+VALID_SERVICES = ("neon-rabbitmq",
+                  "neon-api-proxy",
+                  "neon-brands-service",
+                  "neon-email-proxy",
+                  "neon-script-parser",
+                  "neon-metrics-service")
 
 # TODO: Consider tagging these in service_mappings.yml or some other method for easier extensibility DM
-DEFAULT_SERVICES = ("neon_rabbitmq",
-                    "neon_api_proxy",
-                    "neon_email_proxy",
-                    "neon_metrics_service")
+DEFAULT_SERVICES = ("neon-rabbitmq",
+                    "neon-api-proxy",
+                    "neon-email-proxy",
+                    "neon-metrics-service")
 
 
 @click.group("diana", cls=DefaultGroup,

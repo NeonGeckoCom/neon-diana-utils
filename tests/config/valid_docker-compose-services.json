@@ -1,20 +1,20 @@
 {
-  "neon_metrics_service": {
-    "container_name": "neon_metrics_service",
-    "hostname": "neon_metrics_service",
-    "image": "ghcr.io/neongeckocom/neon_metrics_service:dev",
+  "neon-metrics-service": {
+    "container_name": "neon-metrics-service",
+    "hostname": "neon-metrics-service",
+    "image": "ghcr.io/neongeckocom/neon-metrics-service:dev",
     "restart": "unless-stopped",
     "links": [
-      "neon_rabbitmq"
+      "neon-rabbitmq"
     ],
     "volumes": [
       "host_path:/config",
       "host_path_metrics:/metrics"
     ]
   },
-  "neon_rabbitmq": {
-    "container_name": "neon_rabbitmq",
-    "hostname": "neon_rabbitmq",
+  "neon-rabbitmq": {
+    "container_name": "neon-rabbitmq",
+    "hostname": "neon-rabbitmq",
     "image": "rabbitmq:3-management",
     "restart": "unless-stopped",
     "ports": [
@@ -26,13 +26,13 @@
       "host_path:/config"
     ]
   },
-  "neon_api_proxy": {
-    "container_name": "neon_api_proxy",
-    "hostname": "neon_api_proxy",
-    "image": "ghcr.io/neongeckocom/neon_api_proxy:dev",
+  "neon-api-proxy": {
+    "container_name": "neon-api-proxy",
+    "hostname": "neon-api-proxy",
+    "image": "ghcr.io/neongeckocom/neon-api-proxy:dev",
     "restart": "unless-stopped",
     "links": [
-      "neon_rabbitmq"
+      "neon-rabbitmq"
     ],
     "volumes": [
       "host_path:/config"

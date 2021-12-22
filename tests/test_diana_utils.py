@@ -54,10 +54,10 @@ class TestDianaUtils(unittest.TestCase):
             os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
 
     def test_create_diana_configurations(self):
-        create_diana_configurations("admin", "admin", {"neon_rabbitmq",
-                                                       "neon_api_proxy",
-                                                       "neon_metrics_service",
-                                                       "neon_unknown"})
+        create_diana_configurations("admin", "admin", {"neon-rabbitmq",
+                                                       "neon-api-proxy",
+                                                       "neon-metrics-service",
+                                                       "neon-unknown"})
         valid_files = {"docker-compose.yml", "mq_config.json", "rabbitmq.conf", "rabbit_mq_config.json"}
         for file in valid_files:
             file_path = os.path.join(os.environ["NEON_CONFIG_PATH"], file)
