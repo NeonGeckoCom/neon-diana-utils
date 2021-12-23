@@ -8,9 +8,10 @@ neon-rabbitmq:
     ports:
       - 15672:15672
       - 5672:5672
+    environment:
+      - RABBITMQ_CONFIG_FILE=/config/rabbitmq.conf
     volumes:
-      - ${NEON_CONFIG_PATH}/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-      - ${NEON_CONFIG_PATH}:/config
+      - config:/config
 neon-api-proxy:
   mq_service_name: neon_api_connector
   mq_username: neon_api
@@ -36,7 +37,7 @@ neon-api-proxy:
     labels:
       kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
+      - config:/config
 neon-brands-service:
   mq_service_name: neon_coupon_connector
   mq_username: neon_coupons
@@ -62,7 +63,7 @@ neon-brands-service:
     labels:
       kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
+      - config:/config
 neon-email-proxy:
   mq_service_name: neon_email_proxy
   mq_username: neon_email
@@ -88,7 +89,7 @@ neon-email-proxy:
     labels:
       kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
+      - config:/config
 neon-script-parser:
   mq_service_name: neon_script_parser_service
   mq_username: neon_script_parser
@@ -115,7 +116,7 @@ neon-script-parser:
     labels:
       kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
+      - config:/config
 neon-metrics-service:
   mq_service_name: neon_metrics_connector
   mq_username: neon_metrics
@@ -141,5 +142,5 @@ neon-metrics-service:
     labels:
       kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
-      - ${NEON_METRIC_PATH}:/metrics
+      - config:/config
+      - metrics:/metrics

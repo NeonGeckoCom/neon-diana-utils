@@ -1,3 +1,22 @@
 version: "3.1"
+
 networks:
   mq-backend:
+
+volumes:
+  config:
+    driver_opts:
+      type: none
+      o: bind
+      device: ${NEON_CONFIG_PATH}
+  metrics:
+    driver_opts:
+      type: none
+      o: bind
+      device: ${NEON_METRIC_PATH}
+
+#  config:
+#    driver_opts:
+#      type: nfs
+#      o: addr=${SERVER_HOST},nolock,rw,soft,nfsvers=4
+#      device: ":${SERVER_PATH}"
