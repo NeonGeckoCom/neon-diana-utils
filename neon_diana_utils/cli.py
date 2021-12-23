@@ -72,8 +72,13 @@ def neon_diana_cli(version: bool = False):
               help="Username to configure for administration")
 @click.option('--password', '-p',
               help="Password associated with admin user to login to console")
+@click.option('--volume-driver', default='none',
+              help="Docker Volume Driver to use. 'none' and 'nfs' are currently supported")
+@click.option('--volume-path', default=None,
+              help="Optional fully-qualified path to config (i.e. /opt/diana, 192.168.1.10:/opt/diana")
 @click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def configure_backend(config_path, service, default, complete, user, password):
+def configure_backend(config_path, service, default, complete, user, password, volume_driver, volume_path):
+    # TODO: consider a util or flag to only do Docker Compose for existing config on NFS share DM
     # Determine Configuration Path
     config_path = expanduser(config_path)
     if not config_path:
@@ -114,15 +119,24 @@ def configure_backend(config_path, service, default, complete, user, password):
     click.echo(f"Configuring API Services: {services_to_configure}")
     click.echo(f"Configuration will be written to: {config_path}")
 
+    # Parse Configuration paths
+    if volume_path:
+        volumes = {"config": join(volume_path, "config"),
+                   "metrics": join(volume_path, "metrics")}
+        click.echo(f"Remote volumes specified, ensure NFS permissions are set.")
+    else:
+        volumes = None
+        click.echo(f"Remember to place `ngi_auth_vars.yml` in {config_path}")
+
     # Call setup
     import sys
     std_out = sys.stdout
     sys.stdout = open("/dev/null", 'a+')
     from .utils import create_diana_configurations
-    create_diana_configurations(user, password, services_to_configure, config_path)
+    create_diana_configurations(user, password, services_to_configure,
+                                config_path, volume_driver=volume_driver, volumes=volumes)
     sys.stdout = std_out
     click.echo(f"Configuration Complete")
-    click.echo(f"Remember to place `ngi_auth_vars.yml` in {config_path}")
 
 
 @neon_diana_cli.command(help="Convert Diana resources for Container Orchestration")

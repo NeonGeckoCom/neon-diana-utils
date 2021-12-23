@@ -43,7 +43,9 @@ from neon_diana_utils.utils.docker_utils import run_clean_rabbit_mq_docker, clea
 
 def create_diana_configurations(admin_user: str, admin_pass: str,
                                 services: set, config_path: str = None,
-                                allow_bind_existing: bool = False):
+                                allow_bind_existing: bool = False,
+                                volume_driver: str = "none",
+                                volumes: Optional[dict] = None):
     """
     Create configuration files for Neon Diana.
     :param admin_user: username to configure for RabbitMQ configuration
@@ -51,25 +53,32 @@ def create_diana_configurations(admin_user: str, admin_pass: str,
     :param services: list of services to configure on this backend
     :param config_path: path to write configuration files (default=NEON_CONFIG_PATH)
     :param allow_bind_existing: bool to allow overwriting configuration for a running RabbitMQ instance
+    :param volume_driver: Docker volume driver (https://docs.docker.com/storage/volumes/#use-a-volume-driver)
+    :param volumes: Optional dict of volume names to directories (including hostnames for nfs volumes)
     """
     container = run_clean_rabbit_mq_docker(allow_bind_existing)
     container_logs = container.logs(stream=True)
     for log in container_logs:
         if b"Server startup complete" in log:
             break
-    configure_diana_backend("http://0.0.0.0:15672", admin_user, admin_pass, services, config_path)
+    configure_diana_backend("http://0.0.0.0:15672", admin_user, admin_pass,
+                            services, config_path, volume_driver, volumes)
     cleanup_docker_container(container)
 
 
 def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
-                            services: set, config_path: str = None):
+                            services: set, config_path: str = None,
+                            volume_driver: str = "none",
+                            volumes: Optional[dict] = None):
     """
     Configure a new Diana RabbitMQ backend
     :param url: URL of admin portal (i.e. http://0.0.0.0:15672)
     :param admin_user: username to configure for RabbitMQ configuration
     :param admin_pass: password associated with admin_user
     :param services: list of services to configure on this backend
-    :param config_path: path to write configuration files (default=NEON_CONFIG_PATH)
+    :param config_path: local path to write configuration files (default=NEON_CONFIG_PATH)
+    :param volume_driver: Docker volume driver (https://docs.docker.com/storage/volumes/#use-a-volume-driver)
+    :param volumes: Optional dict of volume names to directories (including hostnames for nfs volumes)
     """
     api = RabbitMQAPI(url)
 
@@ -133,7 +142,8 @@ def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
 
     # Generate docker-compose file
     docker_compose_file = join(expanduser(config_path), "docker-compose.yml") if config_path else None
-    write_docker_compose(docker_compose_configuration, docker_compose_file)
+    write_docker_compose(docker_compose_configuration, docker_compose_file,
+                         volume_driver, volumes)
 
 
 def write_neon_mq_config(credentials: dict, config_file: Optional[str] = None):

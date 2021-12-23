@@ -71,11 +71,15 @@ def cleanup_docker_container(container_to_remove: Container):
     container_to_remove.remove()
 
 
-def write_docker_compose(services_config: dict, compose_file: Optional[str] = None):
+def write_docker_compose(services_config: dict, compose_file: Optional[str] = None,
+                         volume_type: str = "none",
+                         volumes: Optional[dict] = None):
     """
     Generates and writes a docker-compose.yml according to the specified services
     :param services_config: dict services, usually read from service_mappings.yml
     :param compose_file: path of docker-compose.yml file to write
+    :param volume_type: volume type to use for config (default "none" uses local fs)
+    :param volumes: Optional dict of volume names to directories (including hostnames for nfs volumes)
     """
     compose_file = compose_file if compose_file else \
         join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), "docker-compose.yml")
@@ -85,15 +89,34 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
         compose_boilerplate = YAML().load(f)
     compose_contents = {**compose_boilerplate, **{"services": services_config}}
 
-    neon_config_path = dirname(compose_file)
-    neon_metric_path = expanduser(getenv("NEON_METRIC_PATH", f"{neon_config_path}/metrics"))
+    neon_config_path = volumes.get("config") if volumes else \
+        None or dirname(compose_file)
+    neon_metric_path = volumes.get("metrics") if volumes else \
+        None or expanduser(getenv("NEON_METRIC_PATH", f"{neon_config_path}/metrics"))
+
+    if volume_type == "none":
+        config_opts = "bind"
+        metric_opts = "bind"
+    elif volume_type == "nfs":
+        config_host, config_path = neon_config_path.split(':')
+        neon_config_path = f"\":{config_path}\""
+        metric_host, metric_volume = neon_metric_path.split(':')
+        neon_metric_path = f"\":{metric_volume}\""
+        config_opts = f"addr={config_host},nolock,rw,soft,nfsvers=4"
+        metric_opts = f"addr={metric_host},nolock,rw,soft,nfsvers=4"
+    else:
+        raise ValueError(f"Unsupported volume_type requested: {volume_type}")
+
     with open(compose_file, "w+") as f:
         YAML().dump(compose_contents, f)
         f.seek(0)
         string_contents = f.read()
-        string_contents = string_contents.replace("${NEON_CONFIG_PATH}",
-                                                  neon_config_path)\
-            .replace("${NEON_METRIC_PATH}", neon_metric_path)
+        string_contents = string_contents\
+            .replace("${NEON_CONFIG_PATH}", neon_config_path)\
+            .replace("${NEON_METRIC_PATH}", neon_metric_path)\
+            .replace("${VOLUME_TYPE}", volume_type)\
+            .replace("${CONFIG_OPTS}", config_opts)\
+            .replace("${METRIC_OPTS}", metric_opts)
         f.seek(0)
         f.truncate(0)
         f.write(string_contents)

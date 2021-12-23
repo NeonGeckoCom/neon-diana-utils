@@ -6,17 +6,11 @@ networks:
 volumes:
   config:
     driver_opts:
-      type: none
-      o: bind
+      type: ${VOLUME_TYPE}
+      o: ${CONFIG_OPTS}
       device: ${NEON_CONFIG_PATH}
   metrics:
     driver_opts:
-      type: none
-      o: bind
+      type: ${VOLUME_TYPE}
+      o: ${METRIC_OPTS}
       device: ${NEON_METRIC_PATH}
-
-#  config:
-#    driver_opts:
-#      type: nfs
-#      o: addr=${SERVER_HOST},nolock,rw,soft,nfsvers=4
-#      device: ":${SERVER_PATH}"
