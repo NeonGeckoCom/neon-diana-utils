@@ -26,7 +26,7 @@
 
 import subprocess
 
-from os.path import dirname, join
+from os.path import dirname, join, isfile, isdir
 from neon_utils.logger import LOG
 from neon_diana_utils.orchestrators import Orchestrator
 
@@ -48,4 +48,32 @@ def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):
     subprocess.Popen(["/bin/bash", "-c",
                       f"kompose convert -f {compose_file} "
                       f"-o {join(docker_compose_dir, provider)}.yml "
-                      f"--provider {provider} --volumes hostPath"]).communicate()
+                      f"--provider {provider}"]).communicate()
+    # TODO: PVC RWO -> RWM DM
+
+
+def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, output_path: str):
+    """
+    Generate a Kubernetes configuration for NFS-based persistent volumes
+    :param host: NFS Server hostname
+    :param config_path: host path to config dir
+    :param metric_path: host path to metric dir
+    :param output_path: path to output file
+    """
+    if isfile(output_path):
+        raise FileExistsError(f"{output_path} already exists!")
+    if not isdir(dirname(output_path)):
+        raise ValueError(f"Output directory does not exist: {dirname(output_path)}")
+
+    nfs_volume_template = join(dirname(dirname(__file__)),
+                               "templates", "k8s_nfs_volume.yml")
+    with open(nfs_volume_template, 'r') as f:
+        nfs_config = f.read()
+    nfs_config.replace("${HOST}", host)\
+        .replace("${METRIC_PATH}", metric_path)\
+        .replace("${CONFIG_PATH}", config_path)
+
+    with open(output_path, 'w+') as f:
+        f.write(nfs_config)
+
+    # TODO: How to associate a specific PV with a PVC DM

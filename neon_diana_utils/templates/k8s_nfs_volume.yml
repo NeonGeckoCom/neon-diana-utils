@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: config
+    spec:
+      capacity:
+        storage: 1Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteMany
+      persistentVolumeReclaimPolicy: Retain
+      storageClassName: nfs
+      mountOptions:
+        - nolock
+        - rw
+        - soft
+        - "nfsvers=4"
+      nfs:
+        path: ${CONFIG_PATH}
+        server: ${HOST}
+  - apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: metrics
+    spec:
+      capacity:
+        storage: 10Gi
+      volumeMode: Filesystem
+      accessModes:
+        - ReadWriteMany
+      persistentVolumeReclaimPolicy: Retain
+      storageClassName: nfs
+      mountOptions:
+        - nolock
+        - rw
+        - soft
+        - "nfsvers=4"
+      nfs:
+        path: ${METRIC_PATH}
+        server: ${HOST}
