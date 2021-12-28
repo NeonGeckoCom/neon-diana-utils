@@ -25,7 +25,7 @@
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import subprocess
-
+import ruamel.yaml
 from os.path import dirname, join, isfile, isdir
 from neon_utils.logger import LOG
 from neon_diana_utils.orchestrators import Orchestrator
@@ -45,11 +45,25 @@ def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):
     else:
         LOG.error(f"Unhandled orchestrator: {orchestrator.name}. Fallback to Kubernetes")
         provider = "kubernetes"
+    output_file = f'{join(docker_compose_dir, provider)}.yml'
     subprocess.Popen(["/bin/bash", "-c",
                       f"kompose convert -f {compose_file} "
-                      f"-o {join(docker_compose_dir, provider)}.yml "
+                      f"-o {output_file} "
                       f"--provider {provider}"]).communicate()
-    # TODO: PVC RWO -> RWM DM
+
+    # Patch Volume Read/Write
+    with open(output_file, 'r') as f:
+        contents = f.read()
+    contents = contents.replace("ReadWriteOnce", "ReadWriteMany")
+
+    yaml = ruamel.yaml.safe_load(contents)
+    for item in yaml.get("items", list()):
+        # Remove NetworkPolicy that blocks outside connections and duplicated PVC
+        if item.get("kind") in ("NetworkPolicy", "PersistentVolumeClaim"):
+            yaml["items"].remove(item)
+
+    with open(output_file, 'w') as f:
+        ruamel.yaml.safe_dump(yaml, f)
 
 
 def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, output_path: str):
@@ -69,11 +83,9 @@ def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, ou
                                "templates", "k8s_nfs_volume.yml")
     with open(nfs_volume_template, 'r') as f:
         nfs_config = f.read()
-    nfs_config.replace("${HOST}", host)\
+    nfs_config = nfs_config.replace("${HOST}", host)\
         .replace("${METRIC_PATH}", metric_path)\
         .replace("${CONFIG_PATH}", config_path)
 
     with open(output_path, 'w+') as f:
         f.write(nfs_config)
-
-    # TODO: How to associate a specific PV with a PVC DM

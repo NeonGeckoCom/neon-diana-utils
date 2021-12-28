@@ -12,7 +12,7 @@ items:
       accessModes:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain
-      storageClassName: nfs
+      storageClassName: nfs-config
       mountOptions:
         - nolock
         - rw
@@ -32,7 +32,7 @@ items:
       accessModes:
         - ReadWriteMany
       persistentVolumeReclaimPolicy: Retain
-      storageClassName: nfs
+      storageClassName: nfs-metrics
       mountOptions:
         - nolock
         - rw
@@ -41,3 +41,33 @@ items:
       nfs:
         path: ${METRIC_PATH}
         server: ${HOST}
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: config
+      name: config
+    spec:
+      storageClassName: nfs-config
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 100Mi
+    status: {}
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: metrics
+      name: metrics
+    spec:
+      storageClassName: nfs-metrics
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 100Mi
+    status: {}

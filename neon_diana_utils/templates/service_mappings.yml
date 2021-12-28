@@ -5,6 +5,8 @@ neon-rabbitmq:
     restart: always
     networks:
       - mq-backend
+    labels:
+      kompose.service.type: LoadBalancer
     ports:
       - 15672:15672
       - 5672:5672

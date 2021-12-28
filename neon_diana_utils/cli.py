@@ -31,9 +31,9 @@ from os import makedirs, getenv
 from os.path import expanduser, isdir, isfile, join
 from click_default_group import DefaultGroup
 
-from .orchestrators import Orchestrator
-from .utils.kompose_utils import convert_docker_compose
-from .version import __version__
+from neon_diana_utils.orchestrators import Orchestrator
+from neon_diana_utils.utils.kompose_utils import convert_docker_compose, generate_nfs_volume_config
+from neon_diana_utils.version import __version__
 
 # TODO: Valid services can be read from service_mappings.yml directly
 VALID_SERVICES = ("neon-rabbitmq",
@@ -162,6 +162,29 @@ def convert(kubernetes, openshift, config_path):
     if openshift:
         click.echo(f"Converting {compose_file} to OpenShift definition")
         convert_docker_compose(compose_file, Orchestrator.OPENSHIFT)
+
+
+@neon_diana_cli.command(help="Generate a volume config for NFS-based shares")
+@click.option("--hostname",
+              help="Hostname or IP address of NFS Server")
+@click.option("--config_path", "-c",
+              help="Host path to configuration share")
+@click.option("--metric_path", "-m",
+              help="Host path to metrics share")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def make_nfs_config(hostname, config_path, metric_path, output_path):
+    try:
+        output_path = expanduser(output_path)
+        if isdir(output_path):
+            output_file = join(output_path, "k8s_nfs_volumes.yml")
+        elif isfile(output_path):
+            output_file = output_path
+        else:
+            raise ValueError(f"Invalid output_path: {output_path}")
+        generate_nfs_volume_config(hostname, config_path, metric_path, output_file)
+        click.echo()
+    except Exception as e:
+        click.echo(e)
 
 
 @neon_diana_cli.command(help="Start a Diana Backend")
