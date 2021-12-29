@@ -28,11 +28,11 @@ import subprocess
 import click
 
 from os import makedirs, getenv
-from os.path import expanduser, isdir, isfile, join
+from os.path import expanduser, isdir, isfile, join, basename
 from click_default_group import DefaultGroup
 
 from neon_diana_utils.orchestrators import Orchestrator
-from neon_diana_utils.utils.kompose_utils import convert_docker_compose, generate_nfs_volume_config
+from neon_diana_utils.utils.kompose_utils import convert_docker_compose, generate_nfs_volume_config, generate_config_map
 from neon_diana_utils.version import __version__
 
 # TODO: Valid services can be read from service_mappings.yml directly
@@ -182,7 +182,35 @@ def make_nfs_config(hostname, config_path, metric_path, output_path):
         else:
             raise ValueError(f"Invalid output_path: {output_path}")
         generate_nfs_volume_config(hostname, config_path, metric_path, output_file)
-        click.echo()
+        click.echo(f"Generated {output_file}")
+    except Exception as e:
+        click.echo(e)
+
+
+@neon_diana_cli.command(help="Generate a Kubernetes ConfigMap for RabbitMQ")
+@click.option("--path", "-p",
+              help="Path to config files to populate")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def make_config_map(path, output_path):
+    try:
+        file_path = expanduser(path)
+        if not isdir(file_path):
+            raise FileNotFoundError(f"Could not find requested directory: {path}")
+        output_path = expanduser(output_path)
+        if isdir(output_path):
+            output_file = join(output_path, f"k8s_config_rabbitmq.yml")
+        elif isfile(output_path):
+            output_file = output_path
+        else:
+            raise ValueError(f"Invalid output_path: {output_path}")
+
+        with open(join(file_path, "rabbitmq.conf"), 'r') as f:
+            rabbitmq_file_contents = f.read()
+        with open(join(file_path, "rabbit_mq_config.json")) as f:
+            rmq_config = f.read()
+        generate_config_map("rabbitmq", {"rabbitmq.conf": rabbitmq_file_contents,
+                                         "rabbit_mq_config.json": rmq_config}, output_file)
+        click.echo(f"Generated {output_file}")
     except Exception as e:
         click.echo(e)
 

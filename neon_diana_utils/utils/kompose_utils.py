@@ -25,8 +25,9 @@
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import subprocess
-import ruamel.yaml
-from os.path import dirname, join, isfile, isdir
+import ruamel.yaml as yaml
+from os.path import dirname, join, isfile, isdir, expanduser
+
 from neon_utils.logger import LOG
 from neon_diana_utils.orchestrators import Orchestrator
 
@@ -51,19 +52,20 @@ def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):
                       f"-o {output_file} "
                       f"--provider {provider}"]).communicate()
 
+    # TODO: Volume R/W only applies to nfs shares, not config/secrets
     # Patch Volume Read/Write
     with open(output_file, 'r') as f:
         contents = f.read()
     contents = contents.replace("ReadWriteOnce", "ReadWriteMany")
 
-    yaml = ruamel.yaml.safe_load(contents)
-    for item in yaml.get("items", list()):
+    k8s_config = yaml.safe_load(contents)
+    for item in k8s_config.get("items", list()):
         # Remove NetworkPolicy that blocks outside connections and duplicated PVC
         if item.get("kind") in ("NetworkPolicy", "PersistentVolumeClaim"):
-            yaml["items"].remove(item)
+            k8s_config["items"].remove(item)
 
     with open(output_file, 'w') as f:
-        ruamel.yaml.safe_dump(yaml, f)
+        yaml.safe_dump(k8s_config, f)
 
 
 def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, output_path: str):
@@ -74,6 +76,7 @@ def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, ou
     :param metric_path: host path to metric dir
     :param output_path: path to output file
     """
+    output_path = expanduser(output_path)
     if isfile(output_path):
         raise FileExistsError(f"{output_path} already exists!")
     if not isdir(dirname(output_path)):
@@ -89,3 +92,28 @@ def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, ou
 
     with open(output_path, 'w+') as f:
         f.write(nfs_config)
+
+
+def generate_config_map(name: str, config_data: dict, output_path: str):
+    """
+    Generate a Kubernetes ConfigMap yml definition
+    :param name: ConfigMap name
+    :param config_data: Dict data to store
+    :param output_path: output file to write
+    """
+    output_path = expanduser(output_path)
+    if isfile(output_path):
+        raise FileExistsError(f"{output_path} already exists!")
+    if not isdir(dirname(output_path)):
+        raise ValueError(f"Output directory does not exist: {dirname(output_path)}")
+
+    config_template = join(dirname(dirname(__file__)),
+                           "templates", "k8s_config_map.yml")
+    with open(config_template) as f:
+        config_map = yaml.safe_load(f)
+
+    config_map["metadata"]["name"] = name
+    config_map["data"] = config_data
+
+    with open(output_path, 'w+') as f:
+        yaml.dump(config_map, f)
