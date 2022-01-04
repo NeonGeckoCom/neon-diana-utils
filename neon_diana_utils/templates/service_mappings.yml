@@ -225,6 +225,8 @@ neon-brands-service:
                 volumeMounts:
                   - mountPath: /config
                     name: config
+            imagePullSecrets:
+              - name: github-auth
             restartPolicy: Always
             volumes:
               - name: config
@@ -235,8 +237,8 @@ neon-brands-service:
                     - secret:
                         name: mq-config
 neon-email-proxy:
-  container_image: &image_email_proxy neon-email-proxy
-  container_name: &name_email_proxy ghcr.io/neongeckocom/neon_email_proxy:dev
+  container_image: &image_email_proxy ghcr.io/neongeckocom/neon_email_proxy:dev
+  container_name: &name_email_proxy neon-email-proxy
   mq:
     mq_service_name: neon_email_proxy
     mq_username: neon_email
@@ -383,6 +385,8 @@ neon-script-parser:
                 volumeMounts:
                   - mountPath: /config
                     name: config
+            imagePullSecrets:
+              - name: github-auth
             restartPolicy: Always
             volumes:
               - name: config
@@ -471,3 +475,13 @@ neon-metrics-service:
               - name: metrics
                 persistentVolumeClaim:
                   claimName: metrics
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: metrics
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

@@ -82,7 +82,7 @@ def neon_diana_cli(version: bool = False):
               help="Skip backend configuration and just generate orchestrator definitions")
 @click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
 def configure_backend(config_path, service, default, complete, user, password, volume_driver, volume_path, skip_config):
-# Determine Configuration Path
+    # Determine Configuration Path
     config_path = expanduser(config_path)
     if not config_path:
         return ValueError("Null config_path")
@@ -124,12 +124,12 @@ def configure_backend(config_path, service, default, complete, user, password, v
     click.echo(f"Configuration will be written to: {config_path}")
 
     # Parse Configuration paths
+    volumes = None
     if volume_path:
         volumes = {"config": join(volume_path, "config"),
                    "metrics": join(volume_path, "metrics")}
         click.echo(f"Remote volumes specified, ensure NFS permissions are set.")
-    else:
-        volumes = None
+    elif not skip_config:
         click.echo(f"Remember to place `ngi_auth_vars.yml` in {config_path}")
 
     # Call setup
