@@ -28,11 +28,13 @@ import subprocess
 import click
 
 from os import makedirs, getenv
-from os.path import expanduser, isdir, isfile, join, basename
+from os.path import expanduser, isdir, isfile, join, basename, dirname
 from click_default_group import DefaultGroup
 
 from neon_diana_utils.orchestrators import Orchestrator
-from neon_diana_utils.utils.kompose_utils import convert_docker_compose, generate_nfs_volume_config, generate_config_map
+from neon_diana_utils.utils import generate_config
+from neon_diana_utils.utils.kompose_utils import convert_docker_compose, generate_nfs_volume_config, \
+    generate_config_map, generate_secret
 from neon_diana_utils.version import __version__
 
 # TODO: Valid services can be read from service_mappings.yml directly
@@ -76,10 +78,11 @@ def neon_diana_cli(version: bool = False):
               help="Docker Volume Driver to use. 'none' and 'nfs' are currently supported")
 @click.option('--volume-path', default=None,
               help="Optional fully-qualified path to config (i.e. /opt/diana, 192.168.1.10:/opt/diana")
+@click.option('--skip-config', is_flag=True, default=False,
+              help="Skip backend configuration and just generate orchestrator definitions")
 @click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def configure_backend(config_path, service, default, complete, user, password, volume_driver, volume_path):
-    # TODO: consider a util or flag to only do Docker Compose for existing config on NFS share DM
-    # Determine Configuration Path
+def configure_backend(config_path, service, default, complete, user, password, volume_driver, volume_path, skip_config):
+# Determine Configuration Path
     config_path = expanduser(config_path)
     if not config_path:
         return ValueError("Null config_path")
@@ -90,11 +93,12 @@ def configure_backend(config_path, service, default, complete, user, password, v
             return ValueError(f"Unable to create config directory: {config_path}")
 
     # Determine admin credentials
-    if not password:
+    if not skip_config and not password:
         click.echo(f"No password specified, please specify a password for RabbitMQ admin access")
         return ValueError("Null password")
 
-    click.echo(f"Configuring RabbitMQ Administrator: {user}")
+    if not skip_config:
+        click.echo(f"Configuring RabbitMQ Administrator: {user}")
 
     # Determine Services to Configure
     if complete:
@@ -108,11 +112,11 @@ def configure_backend(config_path, service, default, complete, user, password, v
             click.echo("Service set and individual services specified\n"
                        "Configuring specified services only.")
         services_to_configure = list(service)
-        for service in services_to_configure:
-            if service not in VALID_SERVICES:
-                click.echo(f"Invalid service requested will be ignored: {service}")
-                services_to_configure.remove(service)
-        services_to_configure = set(services_to_configure)
+        # for service in services_to_configure:
+        #     if service not in VALID_SERVICES:
+        #         click.echo(f"Invalid service requested will be ignored: {service}")
+        #         services_to_configure.remove(service)
+        # services_to_configure = set(services_to_configure)
     if not services_to_configure:
         click.echo("No services specified. Call `diana configure-backend --help` for more info")
         return ValueError("No services provided")
@@ -132,9 +136,13 @@ def configure_backend(config_path, service, default, complete, user, password, v
     import sys
     std_out = sys.stdout
     sys.stdout = open("/dev/null", 'a+')
-    from .utils import create_diana_configurations
-    create_diana_configurations(user, password, services_to_configure,
-                                config_path, volume_driver=volume_driver, volumes=volumes)
+
+    if not skip_config:
+        from .utils import create_diana_configurations
+        create_diana_configurations(user, password, services_to_configure,
+                                    config_path, volume_driver=volume_driver, volumes=volumes)
+    else:
+        generate_config(services_to_configure, config_path, volume_driver, volumes)
     sys.stdout = std_out
     click.echo(f"Configuration Complete")
 
@@ -211,6 +219,30 @@ def make_config_map(path, output_path):
         generate_config_map("rabbitmq", {"rabbitmq.conf": rabbitmq_file_contents,
                                          "rabbit_mq_config.json": rmq_config}, output_file)
         click.echo(f"Generated {output_file}")
+    except Exception as e:
+        click.echo(e)
+
+
+@neon_diana_cli.command(help="Generate Kubernetes Secrets for ngi_auth_vars.yml")
+@click.option("--path", "-p",
+              help="Path to config files to populate")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def make_api_secrets(path, output_path):
+    try:
+        file_path = expanduser(path)
+        if not isdir(file_path):
+            raise FileNotFoundError(f"Could not find requested directory: {path}")
+        output_path = expanduser(output_path)
+        if isfile(output_path):
+            output_path = dirname(output_path)
+
+        with open(join(file_path, "ngi_auth_vars.yml")) as f:
+            ngi_auth = f.read()
+        generate_secret("ngi-auth", {"ngi_auth_vars.yml": ngi_auth},
+                        join(output_path, "k8s_secret_ngi-auth.yml"))
+        # generate_secret("mq-auth", {"mq_config.json": mq_config_contents},
+        #                 join(output_path, "k8s_secret_mq_config.yml"))
+        click.echo(f"Generated outputs in {output_path}")
     except Exception as e:
         click.echo(e)
 

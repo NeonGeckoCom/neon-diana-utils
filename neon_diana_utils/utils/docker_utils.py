@@ -75,9 +75,9 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
                          volume_type: str = "none",
                          volumes: Optional[dict] = None):
     """
-    Generates and writes a docker-compose.yml according to the specified services
+    Generates and writes a docker-compose.yml file according to the specified services
     :param services_config: dict services, usually read from service_mappings.yml
-    :param compose_file: path of docker-compose.yml file to write
+    :param compose_file: path to docker-compose.yml file to write
     :param volume_type: volume type to use for config (default "none" uses local fs)
     :param volumes: Optional dict of volume names to directories (including hostnames for nfs volumes)
     """

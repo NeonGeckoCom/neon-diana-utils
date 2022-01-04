@@ -1,0 +1,430 @@
+{
+  "neon-script-parser": {
+    "container_image": "ghcr.io/neongeckocom/neon-script-parser:dev",
+    "container_name": "neon-script-parser",
+    "mq": {
+      "mq_service_name": "neon_script_parser_service",
+      "mq_username": "neon_script_parser",
+      "mq_user_permissions": {
+        "neon_script_parser": {
+          "/neon_script_parser": {
+            "read": ".*",
+            "write": ".*",
+            "configure": ".*"
+          }
+        },
+        "neon_api_utils": {
+          "/neon_script_parser": {
+            "read": ".*",
+            "write": ".*",
+            "configure": ".*"
+          }
+        }
+      },
+      "mq_vhosts": [
+        "/neon_script_parser"
+      ]
+    },
+    "docker_compose": {
+      "container_name": "neon-script-parser",
+      "image": "ghcr.io/neongeckocom/neon-script-parser:dev",
+      "restart": "always",
+      "networks": [
+        "mq-backend"
+      ],
+      "labels": {
+        "kompose.service.type": "headless"
+      },
+      "volumes": [
+        "config:/config"
+      ]
+    },
+    "kubernetes": null
+  },
+  "neon-api-proxy": {
+    "container_image": "ghcr.io/neongeckocom/neon_api_proxy:dev",
+    "container_name": "neon-api-proxy",
+    "mq": {
+      "mq_service_name": "neon_api_connector",
+      "mq_username": "neon_api",
+      "mq_user_permissions": {
+        "neon_api": {
+          "/neon_api": {
+            "read": ".*",
+            "write": ".*",
+            "configure": ".*"
+          }
+        },
+        "neon_api_utils": {
+          "/neon_api": {
+            "read": "./*",
+            "write": "./*",
+            "configure": "./*"
+          }
+        }
+      },
+      "mq_vhosts": [
+        "/neon_api"
+      ]
+    },
+    "docker_compose": {
+      "container_name": "neon-api-proxy",
+      "image": "ghcr.io/neongeckocom/neon_api_proxy:dev",
+      "restart": "always",
+      "networks": [
+        "mq-backend"
+      ],
+      "labels": {
+        "kompose.service.type": "headless"
+      },
+      "volumes": [
+        "config:/config"
+      ]
+    },
+    "kubernetes": [
+      {
+        "apiVersion": "v1",
+        "kind": "Service",
+        "metadata": {
+          "labels": {
+            "io.kompose.service": "neon-api-proxy"
+          },
+          "name": "neon-api-proxy"
+        },
+        "spec": {
+          "clusterIP": "None",
+          "ports": [
+            {
+              "name": "headless",
+              "port": 55555,
+              "targetPort": 0
+            }
+          ],
+          "selector": {
+            "io.kompose.service": "neon-api-proxy"
+          }
+        }
+      },
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "labels": {
+            "io.kompose.service": "neon-api-proxy"
+          },
+          "name": "neon-api-proxy"
+        },
+        "spec": {
+          "replicas": 1,
+          "selector": {
+            "matchLabels": {
+              "io.kompose.service": "neon-api-proxy"
+            }
+          },
+          "strategy": {
+            "type": "Recreate"
+          },
+          "template": {
+            "metadata": {
+              "labels": {
+                "io.kompose.network/mq-backend": "true",
+                "io.kompose.service": "neon-api-proxy"
+              }
+            },
+            "spec": {
+              "containers": [
+                {
+                  "image": "ghcr.io/neongeckocom/neon_api_proxy:dev",
+                  "name": "neon-api-proxy",
+                  "resources": {},
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/config/ngi_auth_vars.yml",
+                      "name": "ngi-auth"
+                    },
+                    {
+                      "mountPath": "/config/mq_config.json",
+                      "name": "mq-auth"
+                    }
+                  ]
+                }
+              ],
+              "restartPolicy": "Always",
+              "volumes": [
+                {
+                  "name": "ngi-auth",
+                  "secret": {
+                    "secretName": "api-keys"
+                  }
+                },
+                {
+                  "name": "mq-auth",
+                  "secret": {
+                    "secretName": "mq-auth"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "neon-rabbitmq": {
+    "container_image": "rabbitmq:3-management",
+    "container_name": "neon-rabbitmq",
+    "docker_compose": {
+      "container_name": "neon-rabbitmq",
+      "image": "rabbitmq:3-management",
+      "restart": "always",
+      "networks": [
+        "mq-backend"
+      ],
+      "labels": {
+        "kompose.service.type": "LoadBalancer"
+      },
+      "ports": [
+        "15672:15672",
+        "5672:5672"
+      ],
+      "environment": [
+        "RABBITMQ_CONFIG_FILE=/config/rabbitmq.conf"
+      ],
+      "volumes": [
+        "config:/config"
+      ]
+    },
+    "kubernetes": [
+      {
+        "apiVersion": "v1",
+        "kind": "Service",
+        "metadata": {
+          "labels": {
+            "io.kompose.service": "neon-rabbitmq"
+          },
+          "name": "neon-rabbitmq"
+        },
+        "spec": {
+          "type": "LoadBalancer",
+          "ports": [
+            {
+              "name": "mq-admin",
+              "port": 15672,
+              "targetPort": 15672,
+              "protocol": "TCP"
+            },
+            {
+              "name": "mq-traffic",
+              "port": 5672,
+              "targetPort": 5672,
+              "protocol": "TCP"
+            }
+          ],
+          "selector": {
+            "io.kompose.service": "neon-rabbitmq"
+          }
+        }
+      },
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "neon-rabbitmq"
+        },
+        "spec": {
+          "replicas": 1,
+          "selector": {
+            "matchLabels": {
+              "io.kompose.service": "neon-rabbitmq"
+            }
+          },
+          "strategy": {
+            "type": "Recreate"
+          },
+          "template": {
+            "metadata": {
+              "labels": {
+                "io.kompose.network/mq-backend": "true",
+                "io.kompose.service": "neon-rabbitmq"
+              }
+            },
+            "spec": {
+              "containers": [
+                {
+                  "env": [
+                    {
+                      "name": "RABBITMQ_CONFIG_FILE",
+                      "value": "/config/rabbitmq.conf"
+                    }
+                  ],
+                  "image": "rabbitmq:3-management",
+                  "name": "neon-rabbitmq",
+                  "ports": [
+                    {
+                      "containerPort": 15672
+                    },
+                    {
+                      "containerPort": 5672
+                    }
+                  ],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/config",
+                      "name": "config"
+                    }
+                  ]
+                }
+              ],
+              "restartPolicy": "Always",
+              "volumes": [
+                {
+                  "name": "config",
+                  "configMap": {
+                    "name": "rabbitmq",
+                    "items": [
+                      {
+                        "key": "rabbit_mq_config.json",
+                        "path": "rabbit_mq_config.json"
+                      },
+                      {
+                        "key": "rabbitmq.conf",
+                        "path": "rabbitmq.conf"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "neon-email-proxy": {
+    "container_image": "neon-email-proxy",
+    "container_name": "ghcr.io/neongeckocom/neon_email_proxy:dev",
+    "mq": {
+      "mq_service_name": "neon_email_proxy",
+      "mq_username": "neon_email",
+      "mq_user_permissions": {
+        "neon_email": {
+          "/neon_emails": {
+            "read": ".*",
+            "write": ".*",
+            "configure": ".*"
+          }
+        },
+        "neon_api_utils": {
+          "/neon_emails": {
+            "read": "^(?!neon_emails_input).*",
+            "write": ".*",
+            "configure": ".*"
+          }
+        }
+      },
+      "mq_vhosts": [
+        "/neon_emails"
+      ]
+    },
+    "docker_compose": {
+      "container_name": "ghcr.io/neongeckocom/neon_email_proxy:dev",
+      "image": "neon-email-proxy",
+      "restart": "always",
+      "networks": [
+        "mq-backend"
+      ],
+      "labels": {
+        "kompose.service.type": "headless"
+      },
+      "volumes": [
+        "config:/config"
+      ]
+    },
+    "kubernetes": null
+  },
+  "neon-brands-service": {
+    "container_image": "ghcr.io/neongeckocom/neon_brands_service:dev",
+    "container_name": "neon-brands-service",
+    "mq": {
+      "mq_service_name": "neon_coupon_connector",
+      "mq_username": "neon_coupons",
+      "mq_user_permissions": {
+        "neon_coupons": {
+          "/neon_coupons": {
+            "read": ".*",
+            "write": ".*",
+            "configure": ".*"
+          }
+        },
+        "neon_api_utils": {
+          "/neon_coupons": {
+            "read": ".*",
+            "write": ".*",
+            "configure": ".*"
+          }
+        }
+      },
+      "mq_vhosts": [
+        "/neon_coupons"
+      ]
+    },
+    "docker_compose": {
+      "container_name": "neon-brands-service",
+      "image": "ghcr.io/neongeckocom/neon_brands_service:dev",
+      "restart": "always",
+      "networks": [
+        "mq-backend"
+      ],
+      "labels": {
+        "kompose.service.type": "headless"
+      },
+      "volumes": [
+        "config:/config"
+      ]
+    },
+    "kubernetes": null
+  },
+  "neon-metrics-service": {
+    "container_image": "ghcr.io/neongeckocom/neon_metrics_service:dev",
+    "container_name": "neon-metrics-service",
+    "mq": {
+      "mq_service_name": "neon_metrics_connector",
+      "mq_username": "neon_metrics",
+      "mq_user_permissions": {
+        "neon_metrics": {
+          "/neon_metrics": {
+            "read": ".*",
+            "write": ".*",
+            "configure": ".*"
+          }
+        },
+        "neon_api_utils": {
+          "/neon_metrics": {
+            "read": "",
+            "write": ".*",
+            "configure": ".*"
+          }
+        }
+      },
+      "mq_vhosts": [
+        "/neon_metrics"
+      ]
+    },
+    "docker_compose": {
+      "container_name": "neon-metrics-service",
+      "image": "ghcr.io/neongeckocom/neon_metrics_service:dev",
+      "restart": "always",
+      "networks": [
+        "mq-backend"
+      ],
+      "labels": {
+        "kompose.service.type": "headless"
+      },
+      "volumes": [
+        "config:/config",
+        "metrics:/metrics"
+      ]
+    },
+    "kubernetes": null
+  }
+}

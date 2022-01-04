@@ -1,7 +1,9 @@
 neon-rabbitmq:
+  container_image: &image_rabbitmq rabbitmq:3-management
+  container_name: &name_rabbitmq neon-rabbitmq
   docker_compose:
-    container_name: neon-rabbitmq
-    image: rabbitmq:3-management
+    container_name: *name_rabbitmq
+    image: *image_rabbitmq
     restart: always
     networks:
       - mq-backend
@@ -14,25 +16,87 @@ neon-rabbitmq:
       - RABBITMQ_CONFIG_FILE=/config/rabbitmq.conf
     volumes:
       - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          io.kompose.service: *name_rabbitmq
+        name: *name_rabbitmq
+      spec:
+        type: LoadBalancer
+        ports:
+          - name: "mq-admin"
+            port: 15672
+            targetPort: 15672
+            protocol: TCP
+          - name: "mq-traffic"
+            port: 5672
+            targetPort: 5672
+            protocol: TCP
+        selector:
+          io.kompose.service: neon-rabbitmq
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_rabbitmq
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            io.kompose.service: *name_rabbitmq
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              io.kompose.network/mq-backend: "true"
+              io.kompose.service: *name_rabbitmq
+          spec:
+            containers:
+              - env:
+                  - name: RABBITMQ_CONFIG_FILE
+                    value: /config/rabbitmq.conf
+                image: *image_rabbitmq
+                name: *name_rabbitmq
+                ports:
+                  - containerPort: 15672
+                  - containerPort: 5672
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                configMap:
+                  name: rabbitmq
+                  items:
+                    - key: rabbit_mq_config.json
+                      path: rabbit_mq_config.json
+                    - key: rabbitmq.conf
+                      path: rabbitmq.conf
 neon-api-proxy:
-  mq_service_name: neon_api_connector
-  mq_username: neon_api
-  mq_user_permissions:
-    neon_api:
-      /neon_api:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_api:
-        read: ./*
-        write: ./*
-        configure: ./*
-  mq_vhosts:
+  container_image: &image_api_proxy ghcr.io/neongeckocom/neon_api_proxy:dev
+  container_name: &name_api_proxy neon-api-proxy
+  mq:
+    mq_service_name: neon_api_connector
+    mq_username: neon_api
+    mq_user_permissions:
+      neon_api:
+        /neon_api:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_api:
+          read: ./*
+          write: ./*
+          configure: ./*
+    mq_vhosts:
     - /neon_api
   docker_compose:
-    container_name: neon-api-proxy
-    image: ghcr.io/neongeckocom/neon_api_proxy:dev
+    container_name: *name_api_proxy
+    image: *image_api_proxy
     restart: always
     networks:
       - mq-backend
@@ -40,25 +104,79 @@ neon-api-proxy:
       kompose.service.type: headless
     volumes:
       - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          io.kompose.service: *name_api_proxy
+        name: *name_api_proxy
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          io.kompose.service: *name_api_proxy
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        labels:
+          io.kompose.service: *name_api_proxy
+        name: *name_api_proxy
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            io.kompose.service: *name_api_proxy
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              io.kompose.network/mq-backend: 'true'
+              io.kompose.service: *name_api_proxy
+          spec:
+            containers:
+              - image: *image_api_proxy
+                name: *name_api_proxy
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: ngi-auth
+                    - secret:
+                        name: mq-config
+
 neon-brands-service:
-  mq_service_name: neon_coupon_connector
-  mq_username: neon_coupons
-  mq_user_permissions:
-    neon_coupons:
-      /neon_coupons:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_coupons:
-        read: .*
-        write: .*
-        configure: .*
-  mq_vhosts:
+  container_image: &image_brands_service ghcr.io/neongeckocom/neon_brands_service:dev
+  container_name: &name_brands_service neon-brands-service
+  mq:
+    mq_service_name: neon_coupon_connector
+    mq_username: neon_coupons
+    mq_user_permissions:
+      neon_coupons:
+        /neon_coupons:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_coupons:
+          read: .*
+          write: .*
+          configure: .*
+    mq_vhosts:
     - /neon_coupons
   docker_compose:
-    container_name: neon-brands-service
-    image: ghcr.io/neongeckocom/neon_brands_service:dev
+    container_name: *name_brands_service
+    image: *image_brands_service
     restart: always
     networks:
       - mq-backend
@@ -66,25 +184,78 @@ neon-brands-service:
       kompose.service.type: headless
     volumes:
       - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          io.kompose.service: *name_brands_service
+        name: *name_brands_service
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          io.kompose.service: *name_brands_service
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        labels:
+          io.kompose.service: *name_brands_service
+        name: *name_brands_service
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            io.kompose.service: *name_brands_service
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              io.kompose.network/mq-backend: 'true'
+              io.kompose.service: *name_brands_service
+          spec:
+            containers:
+              - image: *image_brands_service
+                name: *name_brands_service
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: ngi-auth
+                    - secret:
+                        name: mq-config
 neon-email-proxy:
-  mq_service_name: neon_email_proxy
-  mq_username: neon_email
-  mq_user_permissions:
-    neon_email:
-      /neon_emails:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_emails:
-        read: "^(?!neon_emails_input).*"
-        write: .*
-        configure: .*
-  mq_vhosts:
+  container_image: &image_email_proxy neon-email-proxy
+  container_name: &name_email_proxy ghcr.io/neongeckocom/neon_email_proxy:dev
+  mq:
+    mq_service_name: neon_email_proxy
+    mq_username: neon_email
+    mq_user_permissions:
+      neon_email:
+        /neon_emails:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_emails:
+          read: "^(?!neon_emails_input).*"
+          write: .*
+          configure: .*
+    mq_vhosts:
     - /neon_emails
   docker_compose:
-    container_name: neon-email-proxy
-    image: ghcr.io/neongeckocom/neon_email_proxy:dev
+    container_name: *name_email_proxy
+    image: *image_email_proxy
     restart: always
     networks:
       - mq-backend
@@ -92,26 +263,78 @@ neon-email-proxy:
       kompose.service.type: headless
     volumes:
       - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          io.kompose.service: *name_email_proxy
+        name: *name_email_proxy
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          io.kompose.service: *name_email_proxy
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        labels:
+          io.kompose.service: *name_email_proxy
+        name: *name_email_proxy
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            io.kompose.service: *name_email_proxy
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              io.kompose.network/mq-backend: 'true'
+              io.kompose.service: *name_email_proxy
+          spec:
+            containers:
+              - image: *image_email_proxy
+                name: *name_email_proxy
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: ngi-auth
+                    - secret:
+                        name: mq-config
 neon-script-parser:
-  mq_service_name: neon_script_parser_service
-  mq_username: neon_script_parser
-  mq_user_permissions:
-    neon_script_parser:
-      /neon_script_parser:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_script_parser:
-        read: .*
-        write: .*
-        configure: .*
-  mq_vhosts:
+  container_image: &image_script_parser ghcr.io/neongeckocom/neon-script-parser:dev
+  container_name: &name_script_parser neon-script-parser
+  mq:
+    mq_service_name: neon_script_parser_service
+    mq_username: neon_script_parser
+    mq_user_permissions:
+      neon_script_parser:
+        /neon_script_parser:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_script_parser:
+          read: .*
+          write: .*
+          configure: .*
+    mq_vhosts:
     - /neon_script_parser
-
   docker_compose:
-    container_name: neon-script-parser
-    image: ghcr.io/neongeckocom/neon-script-parser:dev
+    container_name: *name_script_parser
+    image: *image_script_parser
     restart: always
     networks:
       - mq-backend
@@ -119,25 +342,76 @@ neon-script-parser:
       kompose.service.type: headless
     volumes:
       - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          io.kompose.service: *name_script_parser
+        name: *name_script_parser
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          io.kompose.service: *name_script_parser
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        labels:
+          io.kompose.service: *name_script_parser
+        name: *name_script_parser
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            io.kompose.service: *name_script_parser
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              io.kompose.network/mq-backend: 'true'
+              io.kompose.service: *name_script_parser
+          spec:
+            containers:
+              - image: *image_script_parser
+                name: *name_script_parser
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: mq-config
 neon-metrics-service:
-  mq_service_name: neon_metrics_connector
-  mq_username: neon_metrics
-  mq_user_permissions:
-    neon_metrics:
-      /neon_metrics:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_metrics:
-        read: ""
-        write: .*
-        configure: .*
-  mq_vhosts:
+  container_image: &image_metrics_service ghcr.io/neongeckocom/neon_metrics_service:dev
+  container_name: &name_metrics_service neon-metrics-service
+  mq:
+    mq_service_name: neon_metrics_connector
+    mq_username: neon_metrics
+    mq_user_permissions:
+      neon_metrics:
+        /neon_metrics:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_metrics:
+          read: ""
+          write: .*
+          configure: .*
+    mq_vhosts:
     - /neon_metrics
   docker_compose:
-    container_name: neon-metrics-service
-    image: ghcr.io/neongeckocom/neon_metrics_service:dev
+    container_name: *name_metrics_service
+    image: *image_metrics_service
     restart: always
     networks:
       - mq-backend
@@ -146,3 +420,54 @@ neon-metrics-service:
     volumes:
       - config:/config
       - metrics:/metrics
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          io.kompose.service: *name_metrics_service
+        name: *name_metrics_service
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          io.kompose.service: *name_metrics_service
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        labels:
+          io.kompose.service: *name_metrics_service
+        name: *name_metrics_service
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            io.kompose.service: *name_metrics_service
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              io.kompose.network/mq-backend: 'true'
+              io.kompose.service: *name_metrics_service
+          spec:
+            containers:
+              - image: *image_metrics_service
+                name: *name_metrics_service
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: mq-config
+              - name: metrics
+                persistentVolumeClaim:
+                  claimName: metrics

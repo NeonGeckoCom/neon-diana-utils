@@ -36,9 +36,9 @@ from ruamel.yaml import YAML
 from neon_utils.configuration_utils import dict_merge
 
 from neon_diana_utils.rabbitmq_api import RabbitMQAPI
-from neon_diana_utils.orchestrators import Orchestrator
 from neon_diana_utils.utils.docker_utils import run_clean_rabbit_mq_docker, cleanup_docker_container, \
     write_docker_compose
+from neon_diana_utils.utils.kompose_utils import write_kubernetes_spec, generate_secret, generate_config_map
 
 
 def create_diana_configurations(admin_user: str, admin_pass: str,
@@ -66,6 +66,58 @@ def create_diana_configurations(admin_user: str, admin_pass: str,
     cleanup_docker_container(container)
 
 
+def _parse_services(requested_services: set) -> dict:
+    """
+    Parse requested services and return a dict mapping of valid service names
+    to configurations read from service_mappings.yml
+    :param requested_services: set of service names requested to be configured
+    :returns: mapping of service name to parameters required to configure the service
+    """
+    # Read configuration from templates
+    template_file = join(dirname(dirname(__file__)), "templates",
+                         "service_mappings.yml")
+    with open(template_file) as f:
+        template_data = YAML().load(f)
+    services_to_configure = {name: dict(template_data[name])
+                             for name in requested_services if name in template_data}
+
+    # Warn for unknown requested services
+    if set(services_to_configure.keys()) != set(requested_services):
+        unhandled_services = [s for s in requested_services if s not in services_to_configure.keys()]
+        LOG.warning(f"Some requested services not handled: {unhandled_services}")
+    return services_to_configure
+
+
+def _parse_vhosts(services_to_configure: dict) -> set:
+    """
+    Parse MQ vhosts specified in the requested configuration
+    :param services_to_configure: service mapping parsed from service_mappings.yml
+    :returns: set of vhosts to be created
+    """
+    return set(itertools.chain.from_iterable([service.get("mq", service).get("mq_vhosts", [])
+                                              for service in services_to_configure.values()]))
+
+
+def _parse_configuration(services_to_configure: dict) -> tuple:
+    # Parse user and orchestrator configuration
+    user_permissions = dict()
+    neon_mq_auth = dict()
+    docker_compose_configuration = dict()
+    kubernetes_configuration = list()
+    for name, service in services_to_configure.items():
+        # Get service MQ Config
+        if service.get("mq"):
+            dict_merge(user_permissions, service.get("mq", service).get("mq_user_permissions", dict()))
+            if service["mq"].get("mq_username"):
+                # TODO: Update MQ services such that their service names match the container names DM
+                neon_mq_auth[service.get("mq",
+                                         service).get("mq_service_name", name)] = \
+                    {"user": service.get("mq", service)["mq_username"]}
+        docker_compose_configuration[name] = service["docker_compose"]
+        kubernetes_configuration.extend(service.get("kubernetes") or list())
+    return user_permissions, neon_mq_auth, docker_compose_configuration, kubernetes_configuration
+
+
 def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
                             services: set, config_path: str = None,
                             volume_driver: str = "none",
@@ -86,31 +138,16 @@ def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
     api.login("guest", "guest")
     api.configure_admin_account(admin_user, admin_pass)
 
-    # Read configuration from templates
-    template_file = join(dirname(dirname(__file__)), "templates",
-                         "service_mappings.yml")
-    with open(template_file) as f:
-        template_data = YAML().load(f)
-    services_to_configure = {name: dict(template_data[name])
-                             for name in services if name in template_data}
-
-    # Warn for unknown requested services
-    if set(services_to_configure.keys()) != set(services):
-        unhandled_services = [s for s in services if s not in services_to_configure.keys()]
-        LOG.warning(f"Some requested services not handled: {unhandled_services}")
+    # Parse requested services
+    services_to_configure = _parse_services(services)
 
     # Parse Configured Service Mapping
-    vhosts_to_configure = set(itertools.chain.from_iterable([service.get("mq_vhosts", [])
-                                                             for service in services_to_configure.values()]))
-    users_to_configure = dict()
-    neon_mq_user_auth = dict()
-    docker_compose_configuration = dict()
-    for name, service in services_to_configure.items():
-        dict_merge(users_to_configure, service.get("mq_user_permissions", dict()))
-        docker_compose_configuration[name] = service["docker_compose"]
-        if service.get("mq_username"):
-            # TODO: Update MQ services such that their service names match the docker container names DM
-            neon_mq_user_auth[service.get("mq_service_name", name)] = {"user": service["mq_username"]}
+    vhosts_to_configure = _parse_vhosts(services_to_configure)
+
+    # Parse user and orchestrator configuration
+    users_to_configure, neon_mq_user_auth,\
+        docker_compose_configuration, kubernetes_configuration = \
+        _parse_configuration(services_to_configure)
 
     LOG.debug(f"vhosts={vhosts_to_configure}")
     LOG.debug(f"users={users_to_configure}")
@@ -133,8 +170,9 @@ def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
     # Export and save rabbitMQ Config
     rabbit_mq_config_file = join(expanduser(config_path), "rabbit_mq_config.json") if config_path else None
     write_rabbit_config(api, rabbit_mq_config_file)
+    # TODO: Generate config map DM
 
-    # Write out MQ config file
+    # Write out MQ Connector config file
     for service in neon_mq_user_auth.values():
         service["password"] = credentials[service["user"]]
     neon_mq_config_file = join(expanduser(config_path), "mq_config.json") if config_path else None
@@ -145,6 +183,34 @@ def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
     write_docker_compose(docker_compose_configuration, docker_compose_file,
                          volume_driver, volumes)
 
+    # Generate Kubernetes spec file
+    kubernetes_spec_file = join(expanduser(config_path), "kubernetes.yml") if config_path else None
+    write_kubernetes_spec(kubernetes_configuration, kubernetes_spec_file, volume_driver)
+
+
+def generate_config(services: set, config_path: Optional[str] = None,
+                    volume_driver: str = "none",  volumes: Optional[dict] = None):
+    """
+    Generate orchestrator configuration for the specified services
+    :param services: list of services to configure on this backend
+    :param config_path: local path to write configuration files (default=NEON_CONFIG_PATH)
+    :param volume_driver: Docker volume driver (https://docs.docker.com/storage/volumes/#use-a-volume-driver)
+    :param volumes: Optional dict of volume names to directories (including hostnames for nfs volumes)
+    """
+    # Parse user and orchestrator configuration
+    users_to_configure, neon_mq_user_auth, \
+        docker_compose_configuration, kubernetes_configuration = \
+        _parse_configuration(_parse_services(services))
+
+    # Generate docker-compose file
+    docker_compose_file = join(expanduser(config_path), "docker-compose.yml") if config_path else None
+    write_docker_compose(docker_compose_configuration, docker_compose_file,
+                         volume_driver, volumes)
+
+    # Generate Kubernetes spec file
+    kubernetes_spec_file = join(expanduser(config_path), "kubernetes.yml") if config_path else None
+    write_kubernetes_spec(kubernetes_configuration, kubernetes_spec_file, volume_driver)
+
 
 def write_neon_mq_config(credentials: dict, config_file: Optional[str] = None):
     """
@@ -153,14 +219,19 @@ def write_neon_mq_config(credentials: dict, config_file: Optional[str] = None):
     config_file = config_file if config_file else \
         join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), "mq_config.json")
     config_file = expanduser(config_file)
-    if not exists(dirname(config_file)):
-        os.makedirs(dirname(config_file))
+    config_path = dirname(config_file)
+    if not exists(config_path):
+        os.makedirs(config_path)
 
     configuration = {"server": "neon-rabbitmq",
                      "users": credentials}
     LOG.info(f"Writing Neon MQ configuration to {config_file}")
     with open(config_file, 'w+') as new_config:
         json.dump(configuration, new_config, indent=2)
+
+    # Generate k8s secret
+    generate_secret("mq-config", {"mq_config.json": configuration},
+                    join(config_path, "k8s_secret_mq-config.yml"))
 
 
 def write_rabbit_config(api: RabbitMQAPI, config_file: Optional[str] = None):
@@ -183,3 +254,7 @@ def write_rabbit_config(api: RabbitMQAPI, config_file: Optional[str] = None):
     config_basename = basename(config_file)
     with open(join(config_path, "rabbitmq.conf"), 'w+') as rabbit:
         rabbit.write(f"load_definitions = /config/{config_basename}")
+
+    # Generate k8s config
+    generate_config_map("rabbitmq", {"rabbit_mq_config.json": config},
+                        join(config_path, "k8s_config_rabbitmq.yml"))

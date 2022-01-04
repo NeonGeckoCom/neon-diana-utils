@@ -1,0 +1,191 @@
+[
+  {
+    "apiVersion": "v1",
+    "kind": "Service",
+    "metadata": {
+      "labels": {
+        "io.kompose.service": "neon-api-proxy"
+      },
+      "name": "neon-api-proxy"
+    },
+    "spec": {
+      "clusterIP": "None",
+      "ports": [
+        {
+          "name": "headless",
+          "port": 55555,
+          "targetPort": 0
+        }
+      ],
+      "selector": {
+        "io.kompose.service": "neon-api-proxy"
+      }
+    }
+  },
+  {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+      "labels": {
+        "io.kompose.service": "neon-api-proxy"
+      },
+      "name": "neon-api-proxy"
+    },
+    "spec": {
+      "replicas": 1,
+      "selector": {
+        "matchLabels": {
+          "io.kompose.service": "neon-api-proxy"
+        }
+      },
+      "strategy": {
+        "type": "Recreate"
+      },
+      "template": {
+        "metadata": {
+          "labels": {
+            "io.kompose.network/mq-backend": "true",
+            "io.kompose.service": "neon-api-proxy"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "image": "ghcr.io/neongeckocom/neon_api_proxy:dev",
+              "name": "neon-api-proxy",
+              "resources": {},
+              "volumeMounts": [
+                {
+                  "mountPath": "/config/ngi_auth_vars.yml",
+                  "name": "ngi-auth"
+                },
+                {
+                  "mountPath": "/config/mq_config.json",
+                  "name": "mq-auth"
+                }
+              ]
+            }
+          ],
+          "restartPolicy": "Always",
+          "volumes": [
+            {
+              "name": "ngi-auth",
+              "secret": {
+                "secretName": "api-keys"
+              }
+            },
+            {
+              "name": "mq-auth",
+              "secret": {
+                "secretName": "mq-auth"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "apiVersion": "v1",
+    "kind": "Service",
+    "metadata": {
+      "labels": {
+        "io.kompose.service": "neon-rabbitmq"
+      },
+      "name": "neon-rabbitmq"
+    },
+    "spec": {
+      "type": "LoadBalancer",
+      "ports": [
+        {
+          "name": "mq-admin",
+          "port": 15672,
+          "targetPort": 15672,
+          "protocol": "TCP"
+        },
+        {
+          "name": "mq-traffic",
+          "port": 5672,
+          "targetPort": 5672,
+          "protocol": "TCP"
+        }
+      ],
+      "selector": {
+        "io.kompose.service": "neon-rabbitmq"
+      }
+    }
+  },
+  {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+      "name": "neon-rabbitmq"
+    },
+    "spec": {
+      "replicas": 1,
+      "selector": {
+        "matchLabels": {
+          "io.kompose.service": "neon-rabbitmq"
+        }
+      },
+      "strategy": {
+        "type": "Recreate"
+      },
+      "template": {
+        "metadata": {
+          "labels": {
+            "io.kompose.network/mq-backend": "true",
+            "io.kompose.service": "neon-rabbitmq"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "env": [
+                {
+                  "name": "RABBITMQ_CONFIG_FILE",
+                  "value": "/config/rabbitmq.conf"
+                }
+              ],
+              "image": "rabbitmq:3-management",
+              "name": "neon-rabbitmq",
+              "ports": [
+                {
+                  "containerPort": 15672
+                },
+                {
+                  "containerPort": 5672
+                }
+              ],
+              "volumeMounts": [
+                {
+                  "mountPath": "/config",
+                  "name": "config"
+                }
+              ]
+            }
+          ],
+          "restartPolicy": "Always",
+          "volumes": [
+            {
+              "name": "config",
+              "configMap": {
+                "name": "rabbitmq",
+                "items": [
+                  {
+                    "key": "rabbit_mq_config.json",
+                    "path": "rabbit_mq_config.json"
+                  },
+                  {
+                    "key": "rabbitmq.conf",
+                    "path": "rabbitmq.conf"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+]

@@ -26,10 +26,33 @@
 
 import subprocess
 import ruamel.yaml as yaml
-from os.path import dirname, join, isfile, isdir, expanduser
 
+from typing import Optional
+from os import getenv
+from os.path import dirname, join, isfile, isdir, expanduser
 from neon_utils.logger import LOG
+from ruamel.yaml import YAML
+
 from neon_diana_utils.orchestrators import Orchestrator
+
+
+def write_kubernetes_spec(k8s_config: list, spec_file: Optional[str] = None,
+                          volume_type: str = "nfs"):
+    """
+    Generates and writes a kubernetes.yml spec file according to the passed services
+    :param k8s_config: list of k8s objects specified, usually read from service_mappings.yml
+    :param spec_file: path to spec file to write
+    :param volume_type: volume type to use for config (TODO: Spec this)
+    """
+    spec_file = spec_file or join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), "kubernetes.yml")
+    spec_file = expanduser(spec_file)
+
+    with open(join(dirname(dirname(__file__)), "templates", "kubernetes.yml")) as f:
+        spec_contents = YAML().load(f)
+    spec_contents["items"] = k8s_config
+
+    with open(spec_file, "w+") as f:
+        YAML().dump(spec_contents, f)
 
 
 def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):
@@ -38,6 +61,7 @@ def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):
     :param compose_file: path to docker-compose.yml file to convert
     :param orchestrator: orchestrator to generate resources for
     """
+    LOG.warning("Kompose outputs are not validated and may require manual modifications")
     docker_compose_dir = dirname(compose_file)
     if orchestrator == Orchestrator.KUBERNETES:
         provider = "kubernetes"
@@ -77,11 +101,6 @@ def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, ou
     :param output_path: path to output file
     """
     output_path = expanduser(output_path)
-    if isfile(output_path):
-        raise FileExistsError(f"{output_path} already exists!")
-    if not isdir(dirname(output_path)):
-        raise ValueError(f"Output directory does not exist: {dirname(output_path)}")
-
     nfs_volume_template = join(dirname(dirname(__file__)),
                                "templates", "k8s_nfs_volume.yml")
     with open(nfs_volume_template, 'r') as f:
@@ -101,12 +120,8 @@ def generate_config_map(name: str, config_data: dict, output_path: str):
     :param config_data: Dict data to store
     :param output_path: output file to write
     """
+    output_path = output_path or join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), f"k8s_config_{name}.yml")
     output_path = expanduser(output_path)
-    if isfile(output_path):
-        raise FileExistsError(f"{output_path} already exists!")
-    if not isdir(dirname(output_path)):
-        raise ValueError(f"Output directory does not exist: {dirname(output_path)}")
-
     config_template = join(dirname(dirname(__file__)),
                            "templates", "k8s_config_map.yml")
     with open(config_template) as f:
@@ -114,6 +129,27 @@ def generate_config_map(name: str, config_data: dict, output_path: str):
 
     config_map["metadata"]["name"] = name
     config_map["data"] = config_data
+
+    with open(output_path, 'w+') as f:
+        yaml.dump(config_map, f)
+
+
+def generate_secret(name: str, secret_data: dict, output_path: Optional[str] = None):
+    """
+    Generate a Kubernetes Secret yml definition
+    :param name: ConfigMap name
+    :param secret_data: Dict data to store
+    :param output_path: output file to write
+    """
+    output_path = output_path or join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), f"k8s_secret_{name}.yml")
+    output_path = expanduser(output_path)
+    config_template = join(dirname(dirname(__file__)),
+                           "templates", "k8s_secret.yml")
+    with open(config_template) as f:
+        config_map = yaml.safe_load(f)
+
+    config_map["metadata"]["name"] = name
+    config_map["stringData"] = secret_data
 
     with open(output_path, 'w+') as f:
         yaml.dump(config_map, f)

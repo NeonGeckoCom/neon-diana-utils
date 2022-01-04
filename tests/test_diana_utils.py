@@ -39,6 +39,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from neon_diana_utils.utils import create_diana_configurations, write_neon_mq_config, write_rabbit_config
 from neon_diana_utils.utils.docker_utils import run_clean_rabbit_mq_docker,\
     cleanup_docker_container, write_docker_compose
+from neon_diana_utils.utils.kompose_utils import convert_docker_compose, generate_nfs_volume_config, \
+    generate_config_map, write_kubernetes_spec
 
 
 class TestDianaUtils(unittest.TestCase):
@@ -105,6 +107,72 @@ class TestDianaUtils(unittest.TestCase):
             self.assertIn("load_definitions = /config/rabbit_mq_config.json", f.read())
         os.remove(rabbitmq_conf)
 
+    def test_parse_services(self):
+        from neon_diana_utils.cli import VALID_SERVICES
+        from neon_diana_utils.utils import _parse_services
+        minimal_valid_services = {"neon-rabbitmq", "neon-api-proxy"}
+        all_valid_services = set(VALID_SERVICES)
+        invalid_services = {"neon-invalid", "neon_invalid"}
+
+        minimal = _parse_services(minimal_valid_services)
+        complete = _parse_services(all_valid_services)
+        invalid = _parse_services(invalid_services)
+
+        self.assertIsInstance(minimal, dict)
+        self.assertEqual(set(minimal.keys()), minimal_valid_services)
+        for _, val in minimal.items():
+            self.assertIsInstance(val, dict)
+
+        self.assertIsInstance(complete, dict)
+        self.assertEqual(set(complete.keys()), all_valid_services)
+        for _, val in complete.items():
+            self.assertIsInstance(val, dict)
+
+        self.assertIsInstance(invalid, dict)
+        self.assertEqual(set(invalid.keys()), set())
+
+    def test_parse_vhosts(self):
+        from neon_diana_utils.utils import _parse_vhosts
+        with open(os.path.join(os.path.dirname(__file__), "config", "valid_services_to_configure.json")) as f:
+            valid_services = json.load(f)
+        vhosts = _parse_vhosts(valid_services)
+        self.assertIsInstance(vhosts, set)
+        self.assertTrue(all(v.startswith('/') for v in vhosts))
+
+    def test_parse_configuration(self):
+        from neon_diana_utils.utils import _parse_configuration
+        with open(os.path.join(os.path.dirname(__file__), "config", "valid_services_to_configure.json")) as f:
+            valid_services = json.load(f)
+
+        mq_user_permissions, neon_mq_auth, docker_config, k8s_config = _parse_configuration(valid_services)
+
+        self.assertIsInstance(mq_user_permissions, dict)
+        for user, vhost_config in mq_user_permissions.items():
+            self.assertIsInstance(user, str)
+            self.assertIsInstance(vhost_config, dict)
+            for route, perms in vhost_config.items():
+                self.assertIsInstance(route, str)
+                self.assertTrue(route.startswith('/'))
+                self.assertEqual(set(perms.keys()), {"read", "write", "configure"})
+
+        self.assertIsInstance(neon_mq_auth, dict)
+        self.assertTrue(all([set(conf.keys()) == {"user"} for conf in neon_mq_auth.values()]))
+        self.assertTrue(all([conf['user'] in mq_user_permissions for conf in neon_mq_auth.values()]))
+
+        self.assertIsInstance(docker_config, dict)
+        self.assertTrue(all([isinstance(conf, dict) for conf in docker_config.values()]))
+
+        self.assertIsInstance(k8s_config, list)
+        for config in k8s_config:
+            self.assertIsInstance(config, dict)
+            self.assertIsInstance(config["apiVersion"], str)
+            self.assertIsInstance(config["kind"], str)
+            self.assertIsInstance(config.get("metadata", dict()), dict)
+            self.assertIsInstance(config["spec"], dict)
+
+    def test_generate_config(self):
+        pass
+
 
 class TestDockerUtils(unittest.TestCase):
     @classmethod
@@ -146,6 +214,32 @@ class TestDockerUtils(unittest.TestCase):
         self.assertIn("version", docker_compose)
         self.assertEqual(docker_compose["services"], sample_config)
         os.remove(docker_compose_file)
+
+
+class TestKubernetesUtils(unittest.TestCase):
+    def test_write_kubernetes_spec(self):
+        with open(os.path.join(os.path.dirname(__file__), "config", "valid_k8s_config.json")) as f:
+            k8s_config = json.load(f)
+        test_k8s_file = os.path.join(os.path.dirname(__file__), "config", "kubernetes.yml")
+        write_kubernetes_spec(k8s_config, test_k8s_file)
+        self.assertTrue(os.path.isfile(test_k8s_file))
+        with open(test_k8s_file) as f:
+            kubernetes_spec = YAML().load(f)
+        self.assertIn("apiVersion", kubernetes_spec)
+        self.assertEqual(kubernetes_spec["items"], k8s_config)
+        os.remove(test_k8s_file)
+
+    def test_convert_docker_compose(self):
+        pass
+
+    def test_generate_nfs_volume_config(self):
+        pass
+
+    def test_generate_config_map(self):
+        pass
+
+    def test_generate_secret(self):
+        pass
 
 
 if __name__ == '__main__':
