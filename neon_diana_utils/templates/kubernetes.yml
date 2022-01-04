@@ -1,4 +1,10 @@
 apiVersion: v1
 kind: List
 metadata: {}
-items: []
+#items:
+#  - kind: Namespace
+#    apiVersion: v1
+#    metadata:
+#      name: backend
+#      labels:
+#        name: backend

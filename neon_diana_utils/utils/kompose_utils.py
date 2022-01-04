@@ -49,7 +49,7 @@ def write_kubernetes_spec(k8s_config: list, spec_file: Optional[str] = None,
 
     with open(join(dirname(dirname(__file__)), "templates", "kubernetes.yml")) as f:
         spec_contents = YAML().load(f)
-    spec_contents["items"] = k8s_config
+    spec_contents["items"].extend(k8s_config)
 
     with open(spec_file, "w+") as f:
         YAML().dump(spec_contents, f)

@@ -21,7 +21,7 @@ neon-rabbitmq:
       kind: Service
       metadata:
         labels:
-          io.kompose.service: *name_rabbitmq
+          neon.diana.service: *name_rabbitmq
         name: *name_rabbitmq
       spec:
         type: LoadBalancer
@@ -35,23 +35,25 @@ neon-rabbitmq:
             targetPort: 5672
             protocol: TCP
         selector:
-          io.kompose.service: neon-rabbitmq
+          neon.diana.service: neon-rabbitmq
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: *name_rabbitmq
+#        namespace: backend
       spec:
         replicas: 1
         selector:
           matchLabels:
-            io.kompose.service: *name_rabbitmq
+            neon.diana.service: *name_rabbitmq
         strategy:
           type: Recreate
         template:
           metadata:
             labels:
-              io.kompose.network/mq-backend: "true"
-              io.kompose.service: *name_rabbitmq
+              docker.network: mq-backend
+              neon.diana.service: *name_rabbitmq
+              neon.project.name: diana
           spec:
             containers:
               - env:
@@ -109,7 +111,7 @@ neon-api-proxy:
       kind: Service
       metadata:
         labels:
-          io.kompose.service: *name_api_proxy
+          neon.diana.service: *name_api_proxy
         name: *name_api_proxy
       spec:
         clusterIP: None
@@ -118,25 +120,27 @@ neon-api-proxy:
             port: 55555
             targetPort: 0
         selector:
-          io.kompose.service: *name_api_proxy
+          neon.diana.service: *name_api_proxy
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
+#        namespace: backend
         labels:
-          io.kompose.service: *name_api_proxy
+          neon.diana.service: *name_api_proxy
         name: *name_api_proxy
       spec:
         replicas: 1
         selector:
           matchLabels:
-            io.kompose.service: *name_api_proxy
+            neon.diana.service: *name_api_proxy
         strategy:
           type: Recreate
         template:
           metadata:
             labels:
-              io.kompose.network/mq-backend: 'true'
-              io.kompose.service: *name_api_proxy
+              docker.network: mq-backend
+              neon.diana.service: *name_api_proxy
+              neon.project.name: diana
           spec:
             containers:
               - image: *image_api_proxy
@@ -154,7 +158,6 @@ neon-api-proxy:
                         name: ngi-auth
                     - secret:
                         name: mq-config
-
 neon-brands-service:
   container_image: &image_brands_service ghcr.io/neongeckocom/neon_brands_service:dev
   container_name: &name_brands_service neon-brands-service
@@ -189,7 +192,7 @@ neon-brands-service:
       kind: Service
       metadata:
         labels:
-          io.kompose.service: *name_brands_service
+          neon.diana.service: *name_brands_service
         name: *name_brands_service
       spec:
         clusterIP: None
@@ -198,25 +201,27 @@ neon-brands-service:
             port: 55555
             targetPort: 0
         selector:
-          io.kompose.service: *name_brands_service
+          neon.diana.service: *name_brands_service
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
+#        namespace: backend
         labels:
-          io.kompose.service: *name_brands_service
+          neon.diana.service: *name_brands_service
         name: *name_brands_service
       spec:
         replicas: 1
         selector:
           matchLabels:
-            io.kompose.service: *name_brands_service
+            neon.diana.service: *name_brands_service
         strategy:
           type: Recreate
         template:
           metadata:
             labels:
-              io.kompose.network/mq-backend: 'true'
-              io.kompose.service: *name_brands_service
+              docker.network: mq-backend
+              neon.diana.service: *name_brands_service
+              neon.project.name: diana
           spec:
             containers:
               - image: *image_brands_service
@@ -270,7 +275,7 @@ neon-email-proxy:
       kind: Service
       metadata:
         labels:
-          io.kompose.service: *name_email_proxy
+          neon.diana.service: *name_email_proxy
         name: *name_email_proxy
       spec:
         clusterIP: None
@@ -279,25 +284,27 @@ neon-email-proxy:
             port: 55555
             targetPort: 0
         selector:
-          io.kompose.service: *name_email_proxy
+          neon.diana.service: *name_email_proxy
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
+#        namespace: backend
         labels:
-          io.kompose.service: *name_email_proxy
+          neon.diana.service: *name_email_proxy
         name: *name_email_proxy
       spec:
         replicas: 1
         selector:
           matchLabels:
-            io.kompose.service: *name_email_proxy
+            neon.diana.service: *name_email_proxy
         strategy:
           type: Recreate
         template:
           metadata:
             labels:
-              io.kompose.network/mq-backend: 'true'
-              io.kompose.service: *name_email_proxy
+              docker.network: mq-backend
+              neon.diana.service: *name_email_proxy
+              neon.project.name: diana
           spec:
             containers:
               - image: *image_email_proxy
@@ -349,7 +356,7 @@ neon-script-parser:
       kind: Service
       metadata:
         labels:
-          io.kompose.service: *name_script_parser
+          neon.diana.service: *name_script_parser
         name: *name_script_parser
       spec:
         clusterIP: None
@@ -358,25 +365,27 @@ neon-script-parser:
             port: 55555
             targetPort: 0
         selector:
-          io.kompose.service: *name_script_parser
+          neon.diana.service: *name_script_parser
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
+#        namespace: backend
         labels:
-          io.kompose.service: *name_script_parser
+          neon.diana.service: *name_script_parser
         name: *name_script_parser
       spec:
         replicas: 1
         selector:
           matchLabels:
-            io.kompose.service: *name_script_parser
+            neon.diana.service: *name_script_parser
         strategy:
           type: Recreate
         template:
           metadata:
             labels:
-              io.kompose.network/mq-backend: 'true'
-              io.kompose.service: *name_script_parser
+              docker.network: mq-backend
+              neon.diana.service: *name_script_parser
+              neon.project.name: diana
           spec:
             containers:
               - image: *image_script_parser
@@ -429,7 +438,7 @@ neon-metrics-service:
       kind: Service
       metadata:
         labels:
-          io.kompose.service: *name_metrics_service
+          neon.diana.service: *name_metrics_service
         name: *name_metrics_service
       spec:
         clusterIP: None
@@ -438,25 +447,27 @@ neon-metrics-service:
             port: 55555
             targetPort: 0
         selector:
-          io.kompose.service: *name_metrics_service
+          neon.diana.service: *name_metrics_service
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
+#        namespace: backend
         labels:
-          io.kompose.service: *name_metrics_service
+          neon.diana.service: *name_metrics_service
         name: *name_metrics_service
       spec:
         replicas: 1
         selector:
           matchLabels:
-            io.kompose.service: *name_metrics_service
+            neon.diana.service: *name_metrics_service
         strategy:
           type: Recreate
         template:
           metadata:
             labels:
-              io.kompose.network/mq-backend: 'true'
-              io.kompose.service: *name_metrics_service
+              docker.network: mq-backend
+              neon.diana.service: *name_metrics_service
+              neon.project.name: diana
           spec:
             containers:
               - image: *image_metrics_service
