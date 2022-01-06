@@ -45,7 +45,8 @@ def create_diana_configurations(admin_user: str, admin_pass: str,
                                 services: set, config_path: str = None,
                                 allow_bind_existing: bool = False,
                                 volume_driver: str = "none",
-                                volumes: Optional[dict] = None):
+                                volumes: Optional[dict] = None,
+                                namespace: str = 'default'):
     """
     Create configuration files for Neon Diana.
     :param admin_user: username to configure for RabbitMQ configuration
@@ -55,6 +56,7 @@ def create_diana_configurations(admin_user: str, admin_pass: str,
     :param allow_bind_existing: bool to allow overwriting configuration for a running RabbitMQ instance
     :param volume_driver: Docker volume driver (https://docs.docker.com/storage/volumes/#use-a-volume-driver)
     :param volumes: Optional dict of volume names to directories (including hostnames for nfs volumes)
+    :param namespace: k8s namespace to configure services to run in
     """
     container = run_clean_rabbit_mq_docker(allow_bind_existing)
     container_logs = container.logs(stream=True)
@@ -62,7 +64,8 @@ def create_diana_configurations(admin_user: str, admin_pass: str,
         if b"Server startup complete" in log:
             break
     configure_diana_backend("http://0.0.0.0:15672", admin_user, admin_pass,
-                            services, config_path, volume_driver, volumes)
+                            services, config_path, volume_driver, volumes,
+                            namespace)
     cleanup_docker_container(container)
 
 
@@ -121,7 +124,8 @@ def _parse_configuration(services_to_configure: dict) -> tuple:
 def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
                             services: set, config_path: str = None,
                             volume_driver: str = "none",
-                            volumes: Optional[dict] = None):
+                            volumes: Optional[dict] = None,
+                            namespace: str = 'default'):
     """
     Configure a new Diana RabbitMQ backend
     :param url: URL of admin portal (i.e. http://0.0.0.0:15672)
@@ -131,6 +135,7 @@ def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
     :param config_path: local path to write configuration files (default=NEON_CONFIG_PATH)
     :param volume_driver: Docker volume driver (https://docs.docker.com/storage/volumes/#use-a-volume-driver)
     :param volumes: Optional dict of volume names to directories (including hostnames for nfs volumes)
+    :param namespace: k8s namespace to configure services to run in
     """
     api = RabbitMQAPI(url)
 
@@ -184,18 +189,20 @@ def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
                          volume_driver, volumes)
 
     # Generate Kubernetes spec file
-    kubernetes_spec_file = join(expanduser(config_path), "kubernetes.yml") if config_path else None
-    write_kubernetes_spec(kubernetes_configuration, kubernetes_spec_file, volume_driver)
+    kubernetes_spec_file = join(expanduser(config_path), "k8s_diana.yml") if config_path else None
+    write_kubernetes_spec(kubernetes_configuration, kubernetes_spec_file, namespace)
 
 
 def generate_config(services: set, config_path: Optional[str] = None,
-                    volume_driver: str = "none",  volumes: Optional[dict] = None):
+                    volume_driver: str = "none",  volumes: Optional[dict] = None,
+                    namespace: str = 'default'):
     """
     Generate orchestrator configuration for the specified services
     :param services: list of services to configure on this backend
     :param config_path: local path to write configuration files (default=NEON_CONFIG_PATH)
     :param volume_driver: Docker volume driver (https://docs.docker.com/storage/volumes/#use-a-volume-driver)
     :param volumes: Optional dict of volume names to directories (including hostnames for nfs volumes)
+    :param namespace: k8s namespace to configure
     """
     # Parse user and orchestrator configuration
     users_to_configure, neon_mq_user_auth, \
@@ -208,8 +215,8 @@ def generate_config(services: set, config_path: Optional[str] = None,
                          volume_driver, volumes)
 
     # Generate Kubernetes spec file
-    kubernetes_spec_file = join(expanduser(config_path), "kubernetes.yml") if config_path else None
-    write_kubernetes_spec(kubernetes_configuration, kubernetes_spec_file, volume_driver)
+    kubernetes_spec_file = join(expanduser(config_path), "k8s_diana.yml") if config_path else None
+    write_kubernetes_spec(kubernetes_configuration, kubernetes_spec_file, namespace)
 
 
 def write_neon_mq_config(credentials: dict, config_file: Optional[str] = None):

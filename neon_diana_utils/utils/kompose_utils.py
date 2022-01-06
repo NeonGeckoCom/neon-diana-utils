@@ -37,22 +37,44 @@ from neon_diana_utils.orchestrators import Orchestrator
 
 
 def write_kubernetes_spec(k8s_config: list, spec_file: Optional[str] = None,
-                          volume_type: str = "nfs"):
+                          mq_namespace: str = "default"):
     """
     Generates and writes a kubernetes.yml spec file according to the passed services
     :param k8s_config: list of k8s objects specified, usually read from service_mappings.yml
     :param spec_file: path to spec file to write
-    :param volume_type: volume type to use for config (TODO: Spec this)
+    :param mq_namespace: k8s namespace to configure backend MQ services for
     """
-    spec_file = spec_file or join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), "kubernetes.yml")
-    spec_file = expanduser(spec_file)
+    output_dir = dirname(expanduser(spec_file)) if spec_file else \
+        expanduser(getenv("NEON_CONFIG_PATH", "~/.config/neon"))
 
-    with open(join(dirname(dirname(__file__)), "templates", "kubernetes.yml")) as f:
-        spec_contents = YAML().load(f)
-    spec_contents["items"].extend(k8s_config)
+    diana_spec_file = spec_file or join(output_dir, "k8s_diana.yml")
+    ingress_spec_file = join(output_dir, "k8s_ingress_nginx_mq.yml")
 
-    with open(spec_file, "w+") as f:
-        YAML().dump(spec_contents, f)
+    # Write Diana services spec file
+    with open(join(dirname(dirname(__file__)), "templates",
+                   "kubernetes.yml")) as f:
+        diana_spec_contents = YAML().load(f)
+    diana_spec_contents["items"].extend(k8s_config)
+
+    with open(diana_spec_file, "w+") as f:
+        YAML().dump(diana_spec_contents, f)
+        f.seek(0)
+        string_contents = f.read()
+        string_contents = string_contents \
+            .replace("${MQ_NAMESPACE}", mq_namespace)
+        f.seek(0)
+        f.truncate(0)
+        f.write(string_contents)
+
+    # Write Ingress spec file
+    with open(join(dirname(dirname(__file__)), "templates",
+                   "k8s_ingress_nginx_mq.yml")) as f:
+        ingress_string_contents = f.read()
+    ingress_string_contents = ingress_string_contents\
+        .replace("${MQ_NAMESPACE}", mq_namespace)
+
+    with open(ingress_spec_file, "w+") as f:
+        f.write(ingress_string_contents)
 
 
 def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):

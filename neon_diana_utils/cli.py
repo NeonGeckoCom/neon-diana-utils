@@ -80,8 +80,11 @@ def neon_diana_cli(version: bool = False):
               help="Optional fully-qualified path to config (i.e. /opt/diana, 192.168.1.10:/opt/diana")
 @click.option('--skip-config', is_flag=True, default=False,
               help="Skip backend configuration and just generate orchestrator definitions")
+@click.option('--namespace', '-n', default='default',
+              help="Kubernetes namespace to configure services to run in")
 @click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def configure_backend(config_path, service, default, complete, user, password, volume_driver, volume_path, skip_config):
+def configure_backend(config_path, service, default, complete, user, password,
+                      volume_driver, volume_path, skip_config, namespace):
     # Determine Configuration Path
     config_path = expanduser(config_path)
     if not config_path:
@@ -111,7 +114,7 @@ def configure_backend(config_path, service, default, complete, user, password, v
         if services_to_configure:
             click.echo("Service set and individual services specified\n"
                        "Configuring specified services only.")
-        services_to_configure = list(service)
+        services_to_configure = set(service)
         # for service in services_to_configure:
         #     if service not in VALID_SERVICES:
         #         click.echo(f"Invalid service requested will be ignored: {service}")
@@ -140,9 +143,11 @@ def configure_backend(config_path, service, default, complete, user, password, v
     if not skip_config:
         from .utils import create_diana_configurations
         create_diana_configurations(user, password, services_to_configure,
-                                    config_path, volume_driver=volume_driver, volumes=volumes)
+                                    config_path, volume_driver=volume_driver,
+                                    volumes=volumes, namespace=namespace)
     else:
-        generate_config(services_to_configure, config_path, volume_driver, volumes)
+        generate_config(services_to_configure, config_path, volume_driver,
+                        volumes, namespace)
     sys.stdout = std_out
     click.echo(f"Configuration Complete")
 

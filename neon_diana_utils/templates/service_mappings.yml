@@ -40,7 +40,7 @@ neon-rabbitmq:
       kind: Deployment
       metadata:
         name: *name_rabbitmq
-#        namespace: backend
+        namespace: ${MQ_NAMESPACE}
       spec:
         replicas: 1
         selector:
@@ -124,7 +124,7 @@ neon-api-proxy:
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
-#        namespace: backend
+        namespace: ${MQ_NAMESPACE}
         labels:
           neon.diana.service: *name_api_proxy
         name: *name_api_proxy
@@ -205,7 +205,7 @@ neon-brands-service:
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
-#        namespace: backend
+        namespace: ${MQ_NAMESPACE}
         labels:
           neon.diana.service: *name_brands_service
         name: *name_brands_service
@@ -288,7 +288,7 @@ neon-email-proxy:
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
-#        namespace: backend
+        namespace: ${MQ_NAMESPACE}
         labels:
           neon.diana.service: *name_email_proxy
         name: *name_email_proxy
@@ -369,7 +369,7 @@ neon-script-parser:
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
-#        namespace: backend
+        namespace: ${MQ_NAMESPACE}
         labels:
           neon.diana.service: *name_script_parser
         name: *name_script_parser
@@ -451,7 +451,7 @@ neon-metrics-service:
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
-#        namespace: backend
+        namespace: ${MQ_NAMESPACE}
         labels:
           neon.diana.service: *name_metrics_service
         name: *name_metrics_service

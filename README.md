@@ -9,7 +9,12 @@ Install the Diana utilities Python package with: `pip install neon-diana-utils`
 The `diana` entrypoint is available to handle automated setup and some common administration tasks. You can see get detailed
 help via `diana --help`. A standard configuration is described here:
 
-### Configuring Default Backend Services
+### Docker Compose
+For testing or running on a dedicated host, `Docker Compose` offers a simple method for starting a set of services.
+This deployment assumes all services will run a single instance on a shared host with any configuration or other files 
+saved to the host filesystem or a configured NFS share.
+
+#### Configuring Default Backend Services
 A Diana backend can be configured automatically with `diana configure-backend`. A standard example is included here, but 
 a description of config options is available via: `diana configure-backend --help`.
 
@@ -21,11 +26,11 @@ diana configure-backend -d -u administrator -p password ~/neon_diana
 * `-p` specifies the password `password` for the `administrator` user
 * `~/neon_diana` specifies the output path for configuration files
 
-### Providing Backend Service Credentials
+#### Providing Backend Service Credentials
 Many backend services rely on configured credentials for authentication. Before running a configured backend, `ngi_auth_vars.yml`
 must be defined with the appropriate credentials. A more complete example can be seen in the [Configuration section](#configuration).
 
-#### ~/neon_diana/ngi_auth_vars.yml
+##### ~/neon_diana/ngi_auth_vars.yml
 ```yaml
 emails:
   mail: neon@neon.ai
@@ -43,7 +48,7 @@ api_services:
 * The `emails` config should reference a smtp email account used in `neon-email-proxy`
 * The `api_services` config should reference services used in `neon-api-proxy`
 
-### Running Configured Backend Services
+#### Running Configured Backend Services
 After a backend is configured, it can be started with `diana start-backend`. A standard example is included here, but 
 a description of config options is available via: `diana start-backend --help`.
 
@@ -52,13 +57,87 @@ diana start-backend ~/neon_diana
 ```
 * `~/neon_diana` specifies the path to backend configuration
 
-### Stopping a Running Backend
+#### Stopping a Running Backend
 After a backend is started, it can be stopped with `diana stop-backend`. A standard example is included here, but 
 a description of config options is available via: `diana stop-backend --help`.
 ```shell
 diana stop-backend ~/neon_diana
 ```
 * `~/neon_diana` specifies the path to backend configuration
+
+### Kubernetes
+For deployment, Kubernetes provides a managed solution that can handle scaling, rolling updates, and other benefits.
+This deployment assumes you have an existing cluster; it is assumed that the Cluster or system administrator will manage
+creation of `PersistentVolume` and `LoadBalancer` objects as necessary.
+
+#### Cluster Preparation
+The config generation in this project assumes your cluster has the `NGINX Ingress Controller` deployed.
+Installation instructions are available [from Kubernetes](https://kubernetes.github.io/ingress-nginx/deploy/).
+
+The `ingress-nginx-controller` service should have External Endpoints exposed. If you are deploying locally, you may use
+[MetalLB](https://metallb.universe.tf/) to configure a `LoadBalancer`.
+
+#### Configuring Default Backend Services
+A Diana backend can be configured automatically with `diana configure-backend`. A standard example is included here, but 
+a description of config options is available via: `diana configure-backend --help`.
+This will generate `k8s_secret_mq-config.yml`, `k8s_config_rabbitmq.yml`, and `kubernetes.yml` spec files.
+>*Note*: This will use `docker` on your local system to start and configure an instance of RabbitMQ 
+
+```shell
+diana configure-backend -d -u administrator -p password -n backend ~/neon_diana
+```
+* `-d` specifies that default backend services will be configured
+* `-u` specifies the MQ user `administrator` for admin portal access
+* `-p` specifies the password `password` for the `administrator` user
+* `-n` specifies the k8s namespace `backend` will be used for generated configurations
+* `~/neon_diana` specifies the output path for configuration files
+
+#### Providing Backend Service Credentials
+Many backend services rely on configured credentials for authentication. Before running a configured backend, `ngi_auth_vars.yml`
+must be defined with the appropriate credentials. A more complete example can be seen in the [Configuration section](#configuration).
+
+Generate a Kubernetes secret spec with these files (`k8s_secret_ngi-auth.yml`).
+
+```shell
+diana make-api-secrets -p ~/.config/neon ~/neon_diana
+```
+* `-p` specifies the path to the directory containing `ngi_auth_vars.yml`
+* `~/neon_diana` specifies the output path for configuration files
+
+##### ~/neon_diana/ngi_auth_vars.yml
+```yaml
+emails:
+  mail: neon@neon.ai
+  pass: 
+  host: smtp.gmail.com
+  port: '465'
+api_services:
+  wolfram_alpha:
+    api_key: ""
+  alpha_vantage:
+    api_key: ""
+  open_weather_map:
+    api_key: ""
+```
+* The `emails` config should reference a smtp email account used in `neon-email-proxy`
+* The `api_services` config should reference services used in `neon-api-proxy`
+
+#### Applying Configuration to a Cluster
+`kubectl` should be installed and configured to reference the Kubernetes cluster you are deploying to.
+If you are accessing private repositories, you will also need to configure the secret `github-auth`. Documentation 
+can be found [in the Kubernetes docs](https://kubernetes.io/dkocs/tasks/configure-pod-container/pull-image-private-registry/).
+
+```shell
+# Apply configuration and secrets
+kubectl apply -n backend -f ~/neon_diana/k8s_secret_mq-config.yml -f ~/neon_diana/k8s_config_rabbitmq.yml -f ~/neon_diana/k8s_secret_ngi-auth.yml
+
+# Apply ingress rules
+kubectl apply -f ~/neon_diana/k8s_ingress_nginx_mq.yml
+
+# Start backend services
+kubectl apply -f ~/neon_diana/k8s_diana.yml
+```
+
 
 ## Manual Configuration
 ### Running Services
