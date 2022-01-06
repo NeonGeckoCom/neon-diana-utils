@@ -24,7 +24,7 @@ neon-rabbitmq:
           neon.diana.service: *name_rabbitmq
         name: *name_rabbitmq
       spec:
-        type: LoadBalancer
+        type: ClusterIP
         ports:
           - name: "mq-admin"
             port: 15672
