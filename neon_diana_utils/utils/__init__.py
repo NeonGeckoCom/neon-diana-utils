@@ -230,7 +230,7 @@ def write_neon_mq_config(credentials: dict, config_file: Optional[str] = None):
         json.dump(configuration, new_config, indent=2)
 
     # Generate k8s secret
-    generate_secret("mq-config", {"mq_config.json": configuration},
+    generate_secret("mq-config", {"mq_config.json": json.dumps(configuration)},
                     join(config_path, "k8s_secret_mq-config.yml"))
 
 
@@ -252,9 +252,11 @@ def write_rabbit_config(api: RabbitMQAPI, config_file: Optional[str] = None):
         json.dump(config, exported, indent=2)
 
     config_basename = basename(config_file)
+    rmq_conf_contents = f"load_definitions = /config/{config_basename}"
     with open(join(config_path, "rabbitmq.conf"), 'w+') as rabbit:
-        rabbit.write(f"load_definitions = /config/{config_basename}")
+        rabbit.write(rmq_conf_contents)
 
     # Generate k8s config
-    generate_config_map("rabbitmq", {"rabbit_mq_config.json": config},
+    generate_config_map("rabbitmq", {"rabbit_mq_config.json": json.dumps(config),
+                                     "rabbitmq.conf": rmq_conf_contents},
                         join(config_path, "k8s_config_rabbitmq.yml"))
