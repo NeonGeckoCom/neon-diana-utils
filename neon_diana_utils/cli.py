@@ -177,27 +177,27 @@ def convert(kubernetes, openshift, config_path):
         convert_docker_compose(compose_file, Orchestrator.OPENSHIFT)
 
 
-@neon_diana_cli.command(help="Generate a volume config for NFS-based shares")
-@click.option("--hostname",
-              help="Hostname or IP address of NFS Server")
-@click.option("--config_path", "-c",
-              help="Host path to configuration share")
-@click.option("--metric_path", "-m",
-              help="Host path to metrics share")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def make_nfs_config(hostname, config_path, metric_path, output_path):
-    try:
-        output_path = expanduser(output_path)
-        if isdir(output_path):
-            output_file = join(output_path, "k8s_nfs_volumes.yml")
-        elif isfile(output_path):
-            output_file = output_path
-        else:
-            raise ValueError(f"Invalid output_path: {output_path}")
-        generate_nfs_volume_config(hostname, config_path, metric_path, output_file)
-        click.echo(f"Generated {output_file}")
-    except Exception as e:
-        click.echo(e)
+# @neon_diana_cli.command(help="Generate a volume config for NFS-based shares")
+# @click.option("--hostname",
+#               help="Hostname or IP address of NFS Server")
+# @click.option("--config_path", "-c",
+#               help="Host path to configuration share")
+# @click.option("--metric_path", "-m",
+#               help="Host path to metrics share")
+# @click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+# def make_nfs_config(hostname, config_path, metric_path, output_path):
+#     try:
+#         output_path = expanduser(output_path)
+#         if isdir(output_path):
+#             output_file = join(output_path, "k8s_nfs_volumes.yml")
+#         elif isfile(output_path):
+#             output_file = output_path
+#         else:
+#             raise ValueError(f"Invalid output_path: {output_path}")
+#         generate_nfs_volume_config(hostname, config_path, metric_path, output_file)
+#         click.echo(f"Generated {output_file}")
+#     except Exception as e:
+#         click.echo(e)
 
 
 @neon_diana_cli.command(help="Generate a Kubernetes ConfigMap for RabbitMQ")

@@ -250,6 +250,64 @@ load_definitions = /config/rabbit_mq_config.json
 ```
 
 
+## Kubernetes Cluster References
+The following configurations were used at the time of writing this document:
+
+- [ingress-nginx](https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.0/deploy/static/provider/cloud/deploy.yaml)
+- [cert-manager](https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml)
+
+### Certbot SSL
+The definition below can be used to configure LetsEncrypt
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: ${CERT_EMAIL}
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+```
+
+### Ingress Definitions
+The definition below can be used to configure ingress
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-backend
+  annotations:
+    cert-manager.io/issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+        - mqadmin.${domain}
+      secretName: ${domain}-tls
+  ingressClassName: nginx
+  rules:
+    - host: "mqadmin.${domain}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: neon-rabbitmq
+                port:
+                  number: 15672
+```
+
+
 ## Container Orchestration
 The default behavior for Diana assumes docker-compose will be used to run applications.
 Resources for `Kubernetes` and `OpenShift` can be optionally generated for deploying 

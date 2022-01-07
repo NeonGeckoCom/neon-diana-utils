@@ -26,6 +26,7 @@
 
 import json
 import os
+import shutil
 import sys
 import unittest
 import docker
@@ -39,8 +40,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from neon_diana_utils.utils import create_diana_configurations, write_neon_mq_config, write_rabbit_config
 from neon_diana_utils.utils.docker_utils import run_clean_rabbit_mq_docker,\
     cleanup_docker_container, write_docker_compose
-from neon_diana_utils.utils.kompose_utils import convert_docker_compose, generate_nfs_volume_config, \
-    generate_config_map, write_kubernetes_spec
+from neon_diana_utils.utils.kompose_utils import generate_config_map, write_kubernetes_spec, generate_secret
 
 
 class TestDianaUtils(unittest.TestCase):
@@ -218,27 +218,85 @@ class TestDockerUtils(unittest.TestCase):
 
 class TestKubernetesUtils(unittest.TestCase):
     def test_write_kubernetes_spec(self):
+        namespace = "test"
         with open(os.path.join(os.path.dirname(__file__), "config", "valid_k8s_config.json")) as f:
             k8s_config = json.load(f)
-        test_k8s_file = os.path.join(os.path.dirname(__file__), "config", "kubernetes.yml")
-        write_kubernetes_spec(k8s_config, test_k8s_file)
-        self.assertTrue(os.path.isfile(test_k8s_file))
-        with open(test_k8s_file) as f:
+        test_k8s_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(test_k8s_path)
+        write_kubernetes_spec(k8s_config, test_k8s_path, namespace)
+        k8s_diana = os.path.join(test_k8s_path, "k8s_diana.yml")
+        k8s_ingress = os.path.join(test_k8s_path, "k8s_ingress_nginx_mq.yml")
+
+        def _validate_k8s_spec(spec: dict):
+            self.assertIn("apiVersion", spec)
+            self.assertIn("kind", spec)
+            self.assertIn("metadata", spec)
+            self.assertIsInstance(spec["items"], list)
+            for item in spec["items"]:
+                self.assertIsInstance(item["kind"], str)
+                self.assertIsInstance(item["apiVersion"], str)
+                self.assertIsInstance(item["metadata"], dict)
+                self.assertIsInstance(item.get("spec", dict()), dict)
+
+        self.assertTrue(os.path.isfile(k8s_diana))
+        with open(k8s_diana) as f:
             kubernetes_spec = YAML().load(f)
-        self.assertIn("apiVersion", kubernetes_spec)
-        self.assertEqual(kubernetes_spec["items"], k8s_config)
-        os.remove(test_k8s_file)
+        _validate_k8s_spec(kubernetes_spec)
 
-    def test_convert_docker_compose(self):
-        pass
+        with open(k8s_ingress) as f:
+            nginx_ingress = YAML().load(f)
+            f.seek(0)
+            string_contents = f.read()
+        _validate_k8s_spec(nginx_ingress)
 
-    def test_generate_nfs_volume_config(self):
-        pass
+        # Validate MQ_NAMESPACE substitution
+        self.assertNotIn("${", string_contents)
+        self.assertIn(namespace, string_contents)
+
+        shutil.rmtree(test_k8s_path)
 
     def test_generate_config_map(self):
-        pass
+        output_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(output_path)
+        config_name = "test-config-map"
+        config_data = {"some_filename.test": "text file contents\n",
+                       "some_other_file.bak": b"byte contents"}
+
+        output_file = os.path.join(output_path, f"k8s_config_{config_name}.yml")
+        generate_config_map(config_name, config_data, output_file)
+        self.assertTrue(os.path.isfile(output_file))
+
+        with open(output_file) as f:
+            contents = YAML().load(f)
+
+        self.assertEqual(contents["metadata"]["name"], config_name)
+        self.assertEqual(contents["data"], config_data)
+        self.assertEqual(contents["kind"], "ConfigMap")
+
+        shutil.rmtree(output_path)
 
     def test_generate_secret(self):
+        output_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(output_path)
+        secret_name = "test-secret"
+        config_data = {"some_secret.test": "secret\ntext file contents\n",
+                       "some_other_secret.bak": b"secret byte contents"}
+
+        output_file = os.path.join(output_path, f"k8s_secret_{secret_name}.yml")
+        generate_secret(secret_name, config_data, output_file)
+        self.assertTrue(os.path.isfile(output_file))
+
+        with open(output_file) as f:
+            contents = YAML().load(f)
+
+        self.assertEqual(contents["metadata"]["name"], secret_name)
+        self.assertEqual(contents["stringData"], config_data)
+        self.assertEqual(contents["kind"], "Secret")
+        self.assertEqual(contents["type"], "Opaque")
+
+        shutil.rmtree(output_path)
+
+    def test_convert_docker_compose(self):
         pass
 
 

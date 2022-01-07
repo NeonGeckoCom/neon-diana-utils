@@ -189,8 +189,7 @@ def configure_diana_backend(url: str, admin_user: str, admin_pass: str,
                          volume_driver, volumes)
 
     # Generate Kubernetes spec file
-    kubernetes_spec_file = join(expanduser(config_path), "k8s_diana.yml") if config_path else None
-    write_kubernetes_spec(kubernetes_configuration, kubernetes_spec_file, namespace)
+    write_kubernetes_spec(kubernetes_configuration, config_path, namespace)
 
 
 def generate_config(services: set, config_path: Optional[str] = None,
@@ -215,8 +214,7 @@ def generate_config(services: set, config_path: Optional[str] = None,
                          volume_driver, volumes)
 
     # Generate Kubernetes spec file
-    kubernetes_spec_file = join(expanduser(config_path), "k8s_diana.yml") if config_path else None
-    write_kubernetes_spec(kubernetes_configuration, kubernetes_spec_file, namespace)
+    write_kubernetes_spec(kubernetes_configuration, config_path, namespace)
 
 
 def write_neon_mq_config(credentials: dict, config_file: Optional[str] = None):

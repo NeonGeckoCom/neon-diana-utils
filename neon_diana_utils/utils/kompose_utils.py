@@ -36,18 +36,18 @@ from ruamel.yaml import YAML
 from neon_diana_utils.orchestrators import Orchestrator
 
 
-def write_kubernetes_spec(k8s_config: list, spec_file: Optional[str] = None,
+def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
                           mq_namespace: str = "default"):
     """
     Generates and writes a kubernetes.yml spec file according to the passed services
     :param k8s_config: list of k8s objects specified, usually read from service_mappings.yml
-    :param spec_file: path to spec file to write
+    :param output_path: path to write spec files to
     :param mq_namespace: k8s namespace to configure backend MQ services for
     """
-    output_dir = dirname(expanduser(spec_file)) if spec_file else \
+    output_dir = expanduser(output_path) if output_path else \
         expanduser(getenv("NEON_CONFIG_PATH", "~/.config/neon"))
 
-    diana_spec_file = spec_file or join(output_dir, "k8s_diana.yml")
+    diana_spec_file = join(output_dir, "k8s_diana.yml")
     ingress_spec_file = join(output_dir, "k8s_ingress_nginx_mq.yml")
 
     # Write Diana services spec file
@@ -75,64 +75,6 @@ def write_kubernetes_spec(k8s_config: list, spec_file: Optional[str] = None,
 
     with open(ingress_spec_file, "w+") as f:
         f.write(ingress_string_contents)
-
-
-def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):
-    """
-    Convert the specified compose file into resources to deploy to Kubernetes.
-    :param compose_file: path to docker-compose.yml file to convert
-    :param orchestrator: orchestrator to generate resources for
-    """
-    LOG.warning("Kompose outputs are not validated and may require manual modifications")
-    docker_compose_dir = dirname(compose_file)
-    if orchestrator == Orchestrator.KUBERNETES:
-        provider = "kubernetes"
-    elif orchestrator == Orchestrator.OPENSHIFT:
-        provider = "openshift"
-    else:
-        LOG.error(f"Unhandled orchestrator: {orchestrator.name}. Fallback to Kubernetes")
-        provider = "kubernetes"
-    output_file = f'{join(docker_compose_dir, provider)}.yml'
-    subprocess.Popen(["/bin/bash", "-c",
-                      f"kompose convert -f {compose_file} "
-                      f"-o {output_file} "
-                      f"--provider {provider}"]).communicate()
-
-    # TODO: Volume R/W only applies to nfs shares, not config/secrets
-    # Patch Volume Read/Write
-    with open(output_file, 'r') as f:
-        contents = f.read()
-    contents = contents.replace("ReadWriteOnce", "ReadWriteMany")
-
-    k8s_config = yaml.safe_load(contents)
-    for item in k8s_config.get("items", list()):
-        # Remove NetworkPolicy that blocks outside connections and duplicated PVC
-        if item.get("kind") in ("NetworkPolicy", "PersistentVolumeClaim"):
-            k8s_config["items"].remove(item)
-
-    with open(output_file, 'w') as f:
-        yaml.safe_dump(k8s_config, f)
-
-
-def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, output_path: str):
-    """
-    Generate a Kubernetes configuration for NFS-based persistent volumes
-    :param host: NFS Server hostname
-    :param config_path: host path to config dir
-    :param metric_path: host path to metric dir
-    :param output_path: path to output file
-    """
-    output_path = expanduser(output_path)
-    nfs_volume_template = join(dirname(dirname(__file__)),
-                               "templates", "k8s_nfs_volume.yml")
-    with open(nfs_volume_template, 'r') as f:
-        nfs_config = f.read()
-    nfs_config = nfs_config.replace("${HOST}", host)\
-        .replace("${METRIC_PATH}", metric_path)\
-        .replace("${CONFIG_PATH}", config_path)
-
-    with open(output_path, 'w+') as f:
-        f.write(nfs_config)
 
 
 def generate_config_map(name: str, config_data: dict, output_path: str):
@@ -175,3 +117,61 @@ def generate_secret(name: str, secret_data: dict, output_path: Optional[str] = N
 
     with open(output_path, 'w+') as f:
         yaml.dump(config_map, f)
+
+
+# def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, output_path: str):
+#     """
+#     Generate a Kubernetes configuration for NFS-based persistent volumes
+#     :param host: NFS Server hostname
+#     :param config_path: host path to config dir
+#     :param metric_path: host path to metric dir
+#     :param output_path: path to output file
+#     """
+#     output_path = expanduser(output_path)
+#     nfs_volume_template = join(dirname(dirname(__file__)),
+#                                "templates", "k8s_nfs_volume.yml")
+#     with open(nfs_volume_template, 'r') as f:
+#         nfs_config = f.read()
+#     nfs_config = nfs_config.replace("${HOST}", host)\
+#         .replace("${METRIC_PATH}", metric_path)\
+#         .replace("${CONFIG_PATH}", config_path)
+#
+#     with open(output_path, 'w+') as f:
+#         f.write(nfs_config)
+
+
+def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):
+    """
+    Convert the specified compose file into resources to deploy to Kubernetes.
+    :param compose_file: path to docker-compose.yml file to convert
+    :param orchestrator: orchestrator to generate resources for
+    """
+    LOG.warning("Kompose outputs are not validated and may require manual modifications")
+    docker_compose_dir = dirname(compose_file)
+    if orchestrator == Orchestrator.KUBERNETES:
+        provider = "kubernetes"
+    elif orchestrator == Orchestrator.OPENSHIFT:
+        provider = "openshift"
+    else:
+        LOG.error(f"Unhandled orchestrator: {orchestrator.name}. Fallback to Kubernetes")
+        provider = "kubernetes"
+    output_file = f'{join(docker_compose_dir, provider)}.yml'
+    subprocess.Popen(["/bin/bash", "-c",
+                      f"kompose convert -f {compose_file} "
+                      f"-o {output_file} "
+                      f"--provider {provider}"]).communicate()
+
+    # TODO: Volume R/W only applies to nfs shares, not config/secrets
+    # Patch Volume Read/Write
+    with open(output_file, 'r') as f:
+        contents = f.read()
+    contents = contents.replace("ReadWriteOnce", "ReadWriteMany")
+
+    k8s_config = yaml.safe_load(contents)
+    for item in k8s_config.get("items", list()):
+        # Remove NetworkPolicy that blocks outside connections and duplicated PVC
+        if item.get("kind") in ("NetworkPolicy", "PersistentVolumeClaim"):
+            k8s_config["items"].remove(item)
+
+    with open(output_file, 'w') as f:
+        yaml.safe_dump(k8s_config, f)
