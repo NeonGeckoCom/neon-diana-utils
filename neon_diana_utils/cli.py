@@ -33,7 +33,7 @@ from click_default_group import DefaultGroup
 
 from neon_diana_utils.orchestrators import Orchestrator
 from neon_diana_utils.utils import generate_config
-from neon_diana_utils.utils.kompose_utils import convert_docker_compose, generate_nfs_volume_config, \
+from neon_diana_utils.utils.kompose_utils import convert_docker_compose, \
     generate_config_map, generate_secret
 from neon_diana_utils.version import __version__
 
