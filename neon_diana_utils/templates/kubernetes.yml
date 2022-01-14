@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: List
+metadata: {}
+items:
+  - kind: Namespace
+    apiVersion: v1
+    metadata:
+      name: ${MQ_NAMESPACE}
+      labels:
+        name: ${MQ_NAMESPACE}

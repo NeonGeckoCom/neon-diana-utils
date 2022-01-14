@@ -1,134 +1,498 @@
-neon_rabbitmq:
+neon-rabbitmq:
+  container_image: &image_rabbitmq rabbitmq:3-management
+  container_name: &name_rabbitmq neon-rabbitmq
   docker_compose:
-    container_name: neon-rabbitmq
-    image: rabbitmq:3-management
-    restart: unless-stopped
+    container_name: *name_rabbitmq
+    image: *image_rabbitmq
+    restart: always
     networks:
-      - mq_backend
+      - mq-backend
+    labels:
+      kompose.service.type: LoadBalancer
     ports:
       - 15672:15672
       - 5672:5672
+    environment:
+      - RABBITMQ_CONFIG_FILE=/config/rabbitmq.conf
     volumes:
-      - ${NEON_CONFIG_PATH}/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-      - ${NEON_CONFIG_PATH}:/config
-neon_api_proxy:
-  mq_service_name: neon_api_connector
-  mq_username: neon_api
-  mq_user_permissions:
-    neon_api:
-      /neon_api:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_api:
-        read: ./*
-        write: ./*
-        configure: ./*
-  mq_vhosts:
+      - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_rabbitmq
+        name: *name_rabbitmq
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "mq-admin"
+            port: 15672
+            targetPort: 15672
+            protocol: TCP
+          - name: "mq-traffic"
+            port: 5672
+            targetPort: 5672
+            protocol: TCP
+        selector:
+          neon.diana.service: neon-rabbitmq
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_rabbitmq
+        namespace: ${MQ_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_rabbitmq
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: mq-backend
+              neon.diana.service: *name_rabbitmq
+              neon.project.name: diana
+          spec:
+            containers:
+              - env:
+                  - name: RABBITMQ_CONFIG_FILE
+                    value: /config/rabbitmq.conf
+                image: *image_rabbitmq
+                name: *name_rabbitmq
+                ports:
+                  - containerPort: 15672
+                  - containerPort: 5672
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                configMap:
+                  name: rabbitmq
+                  items:
+                    - key: rabbit_mq_config.json
+                      path: rabbit_mq_config.json
+                    - key: rabbitmq.conf
+                      path: rabbitmq.conf
+neon-api-proxy:
+  container_image: &image_api_proxy ghcr.io/neongeckocom/neon_api_proxy:dev
+  container_name: &name_api_proxy neon-api-proxy
+  mq:
+    mq_service_name: neon_api_connector
+    mq_username: neon_api
+    mq_user_permissions:
+      neon_api:
+        /neon_api:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_api:
+          read: ./*
+          write: ./*
+          configure: ./*
+    mq_vhosts:
     - /neon_api
   docker_compose:
-    container_name: neon-api-proxy
-    image: ghcr.io/neongeckocom/neon_api_proxy:dev
-    restart: unless-stopped
+    container_name: *name_api_proxy
+    image: *image_api_proxy
+    restart: always
     networks:
-      - mq_backend
+      - mq-backend
+    labels:
+      kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
-neon_brands_service:
-  mq_service_name: neon_coupon_connector
-  mq_username: neon_coupons
-  mq_user_permissions:
-    neon_coupons:
-      /neon_coupons:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_coupons:
-        read: .*
-        write: .*
-        configure: .*
-  mq_vhosts:
+      - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_api_proxy
+        name: *name_api_proxy
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          neon.diana.service: *name_api_proxy
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        namespace: ${MQ_NAMESPACE}
+        labels:
+          neon.diana.service: *name_api_proxy
+        name: *name_api_proxy
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_api_proxy
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: mq-backend
+              neon.diana.service: *name_api_proxy
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_api_proxy
+                name: *name_api_proxy
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: ngi-auth
+                    - secret:
+                        name: mq-config
+neon-brands-service:
+  container_image: &image_brands_service ghcr.io/neongeckocom/neon_brands_service:dev
+  container_name: &name_brands_service neon-brands-service
+  mq:
+    mq_service_name: neon_coupon_connector
+    mq_username: neon_coupons
+    mq_user_permissions:
+      neon_coupons:
+        /neon_coupons:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_coupons:
+          read: .*
+          write: .*
+          configure: .*
+    mq_vhosts:
     - /neon_coupons
   docker_compose:
-    container_name: neon-brands-service
-    image: ghcr.io/neongeckocom/neon_brands_service:dev
-    restart: unless-stopped
+    container_name: *name_brands_service
+    image: *image_brands_service
+    restart: always
     networks:
-      - mq_backend
+      - mq-backend
+    labels:
+      kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
-neon_email_proxy:
-  mq_username: neon_email
-  mq_user_permissions:
-    neon_email:
-      /neon_emails:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_emails:
-        read: "^(?!neon_emails_input).*"
-        write: .*
-        configure: .*
-  mq_vhosts:
+      - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_brands_service
+        name: *name_brands_service
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          neon.diana.service: *name_brands_service
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        namespace: ${MQ_NAMESPACE}
+        labels:
+          neon.diana.service: *name_brands_service
+        name: *name_brands_service
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_brands_service
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: mq-backend
+              neon.diana.service: *name_brands_service
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_brands_service
+                name: *name_brands_service
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            imagePullSecrets:
+              - name: github-auth
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: ngi-auth
+                    - secret:
+                        name: mq-config
+neon-email-proxy:
+  container_image: &image_email_proxy ghcr.io/neongeckocom/neon_email_proxy:dev
+  container_name: &name_email_proxy neon-email-proxy
+  mq:
+    mq_service_name: neon_email_proxy
+    mq_username: neon_email
+    mq_user_permissions:
+      neon_email:
+        /neon_emails:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_emails:
+          read: "^(?!neon_emails_input).*"
+          write: .*
+          configure: .*
+    mq_vhosts:
     - /neon_emails
   docker_compose:
-    container_name: neon-email-proxy
-    image: ghcr.io/neongeckocom/neon_email_proxy:dev
-    restart: unless-stopped
+    container_name: *name_email_proxy
+    image: *image_email_proxy
+    restart: always
     networks:
-      - mq_backend
+      - mq-backend
+    labels:
+      kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
-neon_script_parser:
-  mq_service_name: neon_script_parser_service
-  mq_username: neon_script_parser
-  mq_user_permissions:
-    neon_script_parser:
-      /neon_script_parser:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_script_parser:
-        read: .*
-        write: .*
-        configure: .*
-  mq_vhosts:
+      - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_email_proxy
+        name: *name_email_proxy
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          neon.diana.service: *name_email_proxy
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        namespace: ${MQ_NAMESPACE}
+        labels:
+          neon.diana.service: *name_email_proxy
+        name: *name_email_proxy
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_email_proxy
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: mq-backend
+              neon.diana.service: *name_email_proxy
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_email_proxy
+                name: *name_email_proxy
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: ngi-auth
+                    - secret:
+                        name: mq-config
+neon-script-parser:
+  container_image: &image_script_parser ghcr.io/neongeckocom/neon-script-parser:dev
+  container_name: &name_script_parser neon-script-parser
+  mq:
+    mq_service_name: neon_script_parser_service
+    mq_username: neon_script_parser
+    mq_user_permissions:
+      neon_script_parser:
+        /neon_script_parser:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_script_parser:
+          read: .*
+          write: .*
+          configure: .*
+    mq_vhosts:
     - /neon_script_parser
-
   docker_compose:
-    container_name: neon-script-parser
-    image: ghcr.io/neongeckocom/neon-script-parser:dev
-    restart: unless-stopped
+    container_name: *name_script_parser
+    image: *image_script_parser
+    restart: always
     networks:
-      - mq_backend
+      - mq-backend
+    labels:
+      kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
-neon_metrics_service:
-  mq_service_name: neon_metrics_connector
-  mq_username: neon_metrics
-  mq_user_permissions:
-    neon_metrics:
-      /neon_metrics:
-        read: .*
-        write: .*
-        configure: .*
-    neon_api_utils:
-      /neon_metrics:
-        read: ""
-        write: .*
-        configure: .*
-  mq_vhosts:
+      - config:/config
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_script_parser
+        name: *name_script_parser
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          neon.diana.service: *name_script_parser
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        namespace: ${MQ_NAMESPACE}
+        labels:
+          neon.diana.service: *name_script_parser
+        name: *name_script_parser
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_script_parser
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: mq-backend
+              neon.diana.service: *name_script_parser
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_script_parser
+                name: *name_script_parser
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            imagePullSecrets:
+              - name: github-auth
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: mq-config
+neon-metrics-service:
+  container_image: &image_metrics_service ghcr.io/neongeckocom/neon_metrics_service:dev
+  container_name: &name_metrics_service neon-metrics-service
+  mq:
+    mq_service_name: neon_metrics_connector
+    mq_username: neon_metrics
+    mq_user_permissions:
+      neon_metrics:
+        /neon_metrics:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_metrics:
+          read: ""
+          write: .*
+          configure: .*
+    mq_vhosts:
     - /neon_metrics
   docker_compose:
-    container_name: neon-metrics-service
-    image: ghcr.io/neongeckocom/neon_metrics_service:dev
-    restart: unless-stopped
+    container_name: *name_metrics_service
+    image: *image_metrics_service
+    restart: always
     networks:
-      - mq_backend
+      - mq-backend
+    labels:
+      kompose.service.type: headless
     volumes:
-      - ${NEON_CONFIG_PATH}:/config
-      - ${NEON_METRIC_PATH}:/metrics
+      - config:/config
+      - metrics:/metrics
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_metrics_service
+        name: *name_metrics_service
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector:
+          neon.diana.service: *name_metrics_service
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        namespace: ${MQ_NAMESPACE}
+        labels:
+          neon.diana.service: *name_metrics_service
+        name: *name_metrics_service
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_metrics_service
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: mq-backend
+              neon.diana.service: *name_metrics_service
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_metrics_service
+                name: *name_metrics_service
+                resources: {}
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                projected:
+                  sources:
+                    - secret:
+                        name: mq-config
+              - name: metrics
+                persistentVolumeClaim:
+                  claimName: metrics
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: metrics
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
