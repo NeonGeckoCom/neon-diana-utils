@@ -262,6 +262,9 @@ class TestBackendUtils(unittest.TestCase):
         kubernetes_mock.assert_called_with(kubernetes_config, test_config_dir,
                                            namespace_config)
 
+    def test_configure_mq_backend(self):
+        pass
+
 
 class TestDockerUtils(unittest.TestCase):
     @classmethod
@@ -331,6 +334,22 @@ class TestKubernetesUtils(unittest.TestCase):
         self.assertEqual(set(args[1].keys()), {"rabbitmq.conf",
                                                "rabbit_mq_config.json"})
 
+        output_path = __file__
+        out = neon_diana_utils.utils.kubernetes_utils.cli_make_rmq_config_map(
+            input_path, output_path
+        )
+        self.assertEqual(output_path, out)
+
+        with self.assertRaises(FileNotFoundError):
+            neon_diana_utils.utils.kubernetes_utils.cli_make_rmq_config_map(
+                os.path.join(output_path, "__invalid"), output_path
+            )
+
+        with self.assertRaises(ValueError):
+            neon_diana_utils.utils.kubernetes_utils.cli_make_rmq_config_map(
+                input_path, "/tmp/__unlikely_path"
+            )
+
         neon_diana_utils.utils.kubernetes_utils.generate_config_map = \
             real_method
 
@@ -353,6 +372,11 @@ class TestKubernetesUtils(unittest.TestCase):
         self.assertIsInstance(args[1], dict)
         self.assertEqual(set(args[1].keys()), {"ngi_auth_vars.yml"})
         self.assertTrue(args[2].startswith(output_path))
+
+        with self.assertRaises(FileNotFoundError):
+            neon_diana_utils.utils.kubernetes_utils.cli_make_api_secret(
+                os.path.join(output_path, "__invalid"), output_path
+            )
 
         neon_diana_utils.utils.kubernetes_utils.generate_secret = real_method
 
