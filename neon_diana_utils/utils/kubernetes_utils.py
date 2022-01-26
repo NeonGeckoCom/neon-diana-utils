@@ -29,25 +29,73 @@ import ruamel.yaml as yaml
 
 from typing import Optional
 from os import getenv
-from os.path import dirname, join, isfile, isdir, expanduser
+from os.path import dirname, join, expanduser, isdir, isfile
 from neon_utils.logger import LOG
 from ruamel.yaml import YAML
 
-from neon_diana_utils.orchestrators import Orchestrator
+from neon_diana_utils.constants import Orchestrator
+
+
+def cli_make_rmq_config_map(input_path: str, output_path: str) -> str:
+    """
+    Generate a ConfigMap object for RabbitMQ from general config files
+    :param input_path: path to directory containing RabbitMQ config files
+    :param output_path: file or dir to write Kubernetes spec file to
+    """
+    file_path = expanduser(input_path)
+    if not isdir(file_path):
+        raise FileNotFoundError(f"Could not find requested directory: "
+                                f"{input_path}")
+    output_path = expanduser(output_path)
+    if isdir(output_path):
+        output_file = join(output_path, f"k8s_config_rabbitmq.yml")
+    elif isfile(output_path):
+        output_file = output_path
+    else:
+        raise ValueError(f"Invalid output_path: {output_path}")
+
+    with open(join(file_path, "rabbitmq.conf"), 'r') as f:
+        rabbitmq_file_contents = f.read()
+    with open(join(file_path, "rabbit_mq_config.json")) as f:
+        rmq_config = f.read()
+    generate_config_map("rabbitmq", {"rabbitmq.conf": rabbitmq_file_contents,
+                                     "rabbit_mq_config.json": rmq_config}, output_file)
+    return output_file
+
+
+def cli_make_api_secret(input_path: str, output_path: str) -> str:
+    """
+    Generate a Secret object for ngi-auth from general config files
+    :param input_path: path to directory containing ngi_auth_vars.yml
+    :param output_path: file or dir to write Kubernetes spec file to
+    """
+    file_path = expanduser(input_path)
+    if not isdir(file_path):
+        raise FileNotFoundError(f"Could not find requested directory: {input_path}")
+    output_path = expanduser(output_path)
+    if isfile(output_path):
+        output_path = dirname(output_path)
+
+    with open(join(file_path, "ngi_auth_vars.yml")) as f:
+        ngi_auth = f.read()
+    generate_secret("ngi-auth", {"ngi_auth_vars.yml": ngi_auth},
+                    join(output_path, "k8s_secret_ngi-auth.yml"))
+    return output_path
 
 
 def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
-                          mq_namespace: str = "default"):
+                          namespaces: dict = None):
     """
     Generates and writes a kubernetes.yml spec file according to the passed services
     :param k8s_config: list of k8s objects specified, usually read from service_mappings.yml
     :param output_path: path to write spec files to
-    :param mq_namespace: k8s namespace to configure backend MQ services for
+    :param namespaces: dict of placeholders to namespaces
     """
+    namespaces = namespaces or dict()
     output_dir = expanduser(output_path) if output_path else \
         expanduser(getenv("NEON_CONFIG_PATH", "~/.config/neon"))
 
-    diana_spec_file = join(output_dir, "k8s_diana.yml")
+    diana_spec_file = join(output_dir, "k8s_diana_backend.yml")
     ingress_spec_file = join(output_dir, "k8s_ingress_nginx_mq.yml")
 
     # Write Diana services spec file
@@ -60,8 +108,9 @@ def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
         YAML().dump(diana_spec_contents, f)
         f.seek(0)
         string_contents = f.read()
-        string_contents = string_contents \
-            .replace("${MQ_NAMESPACE}", mq_namespace)
+        for placeholder, replacement in namespaces.items():
+            string_contents = string_contents.replace(
+                '${' + placeholder + '}', replacement)
         f.seek(0)
         f.truncate(0)
         f.write(string_contents)
@@ -70,8 +119,9 @@ def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
     with open(join(dirname(dirname(__file__)), "templates",
                    "k8s_ingress_nginx_mq.yml")) as f:
         ingress_string_contents = f.read()
-    ingress_string_contents = ingress_string_contents\
-        .replace("${MQ_NAMESPACE}", mq_namespace)
+    for placeholder, replacement in namespaces.items():
+        ingress_string_contents = ingress_string_contents.replace(
+            '${' + placeholder + '}', replacement)
 
     with open(ingress_spec_file, "w+") as f:
         f.write(ingress_string_contents)
@@ -117,27 +167,6 @@ def generate_secret(name: str, secret_data: dict, output_path: Optional[str] = N
 
     with open(output_path, 'w+') as f:
         yaml.dump(config_map, f)
-
-
-# def generate_nfs_volume_config(host: str, config_path: str, metric_path: str, output_path: str):
-#     """
-#     Generate a Kubernetes configuration for NFS-based persistent volumes
-#     :param host: NFS Server hostname
-#     :param config_path: host path to config dir
-#     :param metric_path: host path to metric dir
-#     :param output_path: path to output file
-#     """
-#     output_path = expanduser(output_path)
-#     nfs_volume_template = join(dirname(dirname(__file__)),
-#                                "templates", "k8s_nfs_volume.yml")
-#     with open(nfs_volume_template, 'r') as f:
-#         nfs_config = f.read()
-#     nfs_config = nfs_config.replace("${HOST}", host)\
-#         .replace("${METRIC_PATH}", metric_path)\
-#         .replace("${CONFIG_PATH}", config_path)
-#
-#     with open(output_path, 'w+') as f:
-#         f.write(nfs_config)
 
 
 def convert_docker_compose(compose_file: str, orchestrator: Orchestrator):

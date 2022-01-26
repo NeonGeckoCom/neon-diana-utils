@@ -94,7 +94,7 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
     neon_metric_path = volumes.get("metrics") if volumes else \
         None or expanduser(getenv("NEON_METRIC_PATH", f"{neon_config_path}/metrics"))
 
-    if volume_type == "none":
+    if not volume_type or volume_type == "none":
         config_opts = "bind"
         metric_opts = "bind"
     elif volume_type == "nfs":
