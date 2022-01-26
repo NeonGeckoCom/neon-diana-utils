@@ -29,6 +29,14 @@ jobs:
         with:
           name: utils-test-results
           path: tests/utils-test-results.xml
+      - name: Run Constants Tests
+        run: |
+          pytest tests/test_constants.py --doctest-modules --junitxml=tests/constants-test-results.xml
+      - name: Upload Constants test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: constants-test-results
+          path: tests/constants-test-results.xml
       - name: Run Service Tests
         run: |
           pytest tests/test_diana_services.py --doctest-modules --junitxml=tests/services-test-results.xml
