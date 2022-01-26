@@ -24,17 +24,9 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import json
 import os
-import shutil
 import sys
 import unittest
-import docker
-import docker.models.containers
-
-from docker.errors import APIError
-from mock import Mock
-from ruamel.yaml import YAML
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from neon_diana_utils.constants import *

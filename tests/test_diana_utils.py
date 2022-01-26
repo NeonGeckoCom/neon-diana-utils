@@ -36,9 +36,8 @@ from docker.errors import APIError
 from mock import Mock
 from ruamel.yaml import YAML
 
-from neon_diana_utils.constants import Orchestrator
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from neon_diana_utils.constants import Orchestrator
 
 
 class TestBackendUtils(unittest.TestCase):
