@@ -54,7 +54,7 @@ def cli_configure_backend(config_path: str, mq_services: Set[str],
     if not config_path:
         raise ValueError("config_path not specified")
     # Get actual config path
-    config_path = expanduser(config_path)
+    config_path = join(expanduser(config_path), "backend")
     if isfile(config_path):
         raise FileExistsError(f"Specified output path is a file")
     if not isdir(config_path):

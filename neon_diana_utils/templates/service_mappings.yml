@@ -37,7 +37,7 @@ neon-rabbitmq:
             targetPort: 5672
             protocol: TCP
         selector:
-          neon.diana.service: neon-rabbitmq
+          neon.diana.service: *name_rabbitmq
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -855,3 +855,354 @@ ww-snowboy:
                 ports:
                   - containerPort: 8000
             restartPolicy: Always
+
+# Neon Core
+neon-messagebus:
+  container_image: &image_neon_messagebus ghcr.io/neongeckocom/neon_messagebus:dev
+  container_name: &name_neon_messagebus neon-messagebus
+  service_class: neon-core
+  docker_compose:
+    container_name: *name_neon_messagebus
+    image: *image_neon_messagebus
+    restart: always
+    ports:
+      - 8181:8181
+    networks:
+      neon-core:
+        aliases:
+          - messagebus
+    volumes:
+      - config:/config:ro
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_neon_messagebus
+        name: *name_neon_messagebus
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "messagebus"
+            port: 8181
+            targetPort: 8181
+            protocol: TCP
+        selector: *name_neon_messagebus
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_neon_messagebus
+        namespace: ${CORE_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_neon_messagebus
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: neon-core
+              neon.diana.service: *name_neon_messagebus
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_neon_messagebus
+                name: *name_neon_messagebus
+                ports:
+                  - containerPort: 8181
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                configMap:
+                  name: neon-core-config
+                  items:
+                    - key: ngi_local_conf.yml
+                      path: ngi_local_conf.yml
+neon-speech:
+  container_image: &image_neon_speech ghcr.io/neongeckocom/neon_speech:dev
+  container_name: &name_neon_speech neon-speech
+  service_class: neon-core
+  docker_compose:
+    container_name: *name_neon_speech
+    image: *image_neon_speech
+    restart: always
+    networks:
+      - neon-core
+    volumes:
+      - config:/config:ro
+      - ~/.config/pulse/cookie:/root/.config/pulse/cookie:ro
+      - ${XDG_RUNTIME_DIR}/pulse:${XDG_RUNTIME_DIR}/pulse:ro
+    environment:
+      - PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native
+      - PULSE_COOKIE=/root/.config/pulse/cookie
+    devices:
+      - /dev/snd:/dev/snd
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_neon_speech
+        name: *name_neon_speech
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector: *name_neon_speech
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_neon_speech
+        namespace: ${CORE_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_neon_speech
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: neon-core
+              neon.diana.service: *name_neon_speech
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_neon_speech
+                name: *name_neon_speech
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                configMap:
+                  name: neon-core-config
+                  items:
+                    - key: ngi_local_conf.yml
+                      path: ngi_local_conf.yml
+                    - key: ngi_user_info.yml
+                      path: ngi_user_info.yml
+                projected:
+                  sources:
+                    - secret:
+                        name: ngi-core-auth
+neon-skills:
+  container_image: &image_neon_skills ghcr.io/neondaniel/neon_skills-default_skills:latest
+  # TODO: Update to neongeckocom branch
+  container_name: &name_neon_skills neon-skills
+  service_class: neon-core
+  docker_compose:
+    container_name: *name_neon_skills
+    image: *image_neon_skills
+    hostname: *name_neon_skills
+    networks:
+      - neon-core
+    ports:
+      - 8000:8000
+    volumes:
+      - config:/config:ro
+      - ~/.config/pulse/cookie:/root/.config/pulse/cookie:ro
+      - ${XDG_RUNTIME_DIR}/pulse:${XDG_RUNTIME_DIR}/pulse:ro
+    environment:
+      - PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native
+      - PULSE_COOKIE=/root/.config/pulse/cookie
+    devices:
+      - /dev/snd:/dev/snd
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_neon_skills
+        name: *name_neon_skills
+      spec:
+        type: CluserIP
+        ports:
+          - name: "skill-fileserver"
+            port: 8000
+            targetPort: 8000
+        selector: *name_neon_skills
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_neon_skills
+        namespace: ${CORE_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_neon_skills
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: neon-core
+              neon.diana.service: *name_neon_skills
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_neon_skills
+                name: *name_neon_skills
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                configMap:
+                  name: neon-core-config
+                  items:
+                    - key: ngi_local_conf.yml
+                      path: ngi_local_conf.yml
+                    - key: ngi_user_info.yml
+                      path: ngi_user_info.yml
+                projected:
+                  sources:
+                    - secret:
+                        name: ngi-core-auth
+neon-audio:
+  container_image: &image_neon_audio ghcr.io/neongeckocom/neon_audio:dev
+  container_name: &name_neon_audio neon-audio
+  service_class: neon-core
+  docker_compose:
+    container_name: *name_neon_audio
+    image: *image_neon_audio
+    networks:
+      - neon-core
+    volumes:
+      - config:/config:ro
+      - ~/.config/pulse/cookie:/root/.config/pulse/cookie:ro
+      - ${XDG_RUNTIME_DIR}/pulse:${XDG_RUNTIME_DIR}/pulse:ro
+    environment:
+      - PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native
+      - PULSE_COOKIE=/root/.config/pulse/cookie
+    devices:
+      - /dev/snd:/dev/snd
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_neon_audio
+        name: *name_neon_audio
+      spec:
+        clusterIP: None
+        ports:
+          - name: headless
+            port: 55555
+            targetPort: 0
+        selector: *name_neon_audio
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_neon_audio
+        namespace: ${CORE_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_neon_audio
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: neon-core
+              neon.diana.service: *name_neon_audio
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_neon_audio
+                name: *name_neon_audio
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                configMap:
+                  name: neon-core-config
+                  items:
+                    - key: ngi_local_conf.yml
+                      path: ngi_local_conf.yml
+                    - key: ngi_user_info.yml
+                      path: ngi_user_info.yml
+                projected:
+                  sources:
+                    - secret:
+                        name: ngi-core-auth
+neon-gui:
+  container_image: &image_neon_gui ghcr.io/neongeckocom/neon_gui:dev
+  container_name: &name_neon_gui neon-gui
+  service_class: neon-core
+  docker_compose:
+    container_name: *name_neon_gui
+    image: *image_neon_gui
+    networks:
+      neon-core:
+        aliases:
+          - gui
+    ports:
+      - 18181:18181
+    volumes:
+      - config:/config:ro
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_neon_gui
+        name: *name_neon_gui
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "GUI bus"
+            port: 18181
+            targetPort: 18181
+            protocol: TCP
+        selector: *name_neon_gui
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_neon_gui
+        namespace: ${CORE_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_neon_gui
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              docker.network: neon-core
+              neon.diana.service: *name_neon_gui
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_neon_gui
+                name: *name_neon_gui
+                ports:
+                  - containerPort: 18181
+                volumeMounts:
+                  - mountPath: /config
+                    name: config
+            restartPolicy: Always
+            volumes:
+              - name: config
+                configMap:
+                  name: neon-core-config
+                  items:
+                    - key: ngi_local_conf.yml
+                      path: ngi_local_conf.yml

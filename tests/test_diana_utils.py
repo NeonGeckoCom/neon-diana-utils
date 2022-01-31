@@ -267,6 +267,92 @@ class TestBackendUtils(unittest.TestCase):
         pass
 
 
+class TestCoreUtils(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.cached_config_path = os.environ.get("NEON_CONFIG_PATH")
+        os.environ["NEON_CONFIG_PATH"] = os.path.join(os.path.dirname(__file__), "config")
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.environ.pop("NEON_CONFIG_PATH")
+        if cls.cached_config_path:
+            os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
+
+    def test_validate_core_configuration(self):
+        from neon_diana_utils.utils.core import _validate_core_configuration
+        invalid = os.path.dirname(__file__)
+        valid = os.path.join(invalid, "config")
+        self.assertFalse(_validate_core_configuration(invalid))
+        self.assertTrue(_validate_core_configuration(valid))
+
+    def test_parse_core_services(self):
+        from neon_diana_utils.utils.core import _parse_core_services
+        valid_services = ("neon-messagebus", "neon-speech", "neon-skills",
+                          "neon-audio", "neon-gui")
+        parsed = _parse_core_services()
+        docker_compose, kubernetes = parsed
+
+        self.assertIsInstance(parsed, tuple)
+        self.assertIsInstance(docker_compose, dict)
+        self.assertIsInstance(kubernetes, list)
+
+        self.assertTrue(all([svc in docker_compose for svc in valid_services]))
+        self.assertEqual(2 * len(docker_compose), len(kubernetes))
+
+    def test_cli_configure_core(self):
+        mock = Mock()
+        import neon_diana_utils.utils.core
+        neon_diana_utils.utils.core.generate_core_config = mock
+        cli_configure_core = neon_diana_utils.utils.core.cli_configure_core
+        valid_namespace = "test"
+        valid_config_dir = os.path.join(os.path.dirname(__file__), "config")
+        valid_output_dir = os.path.join(os.path.dirname(__file__),
+                                        "cli_test_dir")
+
+        with self.assertRaises(ValueError):
+            cli_configure_core("", "", valid_namespace)
+
+        with self.assertRaises(FileExistsError):
+            cli_configure_core(__file__, "", valid_namespace)
+
+        cli_configure_core(valid_config_dir, valid_output_dir, valid_namespace)
+        self.assertTrue(os.path.isdir(valid_output_dir))
+        shutil.rmtree(valid_output_dir)
+
+        mock.assert_called_once()
+        args = mock.call_args[0]
+        self.assertEqual(args[0], valid_config_dir)
+        self.assertEqual(args[1], os.path.join(valid_output_dir, "core"))
+        self.assertEqual(args[2], {"CORE_NAMESPACE": valid_namespace})
+        self.assertEqual(args[3], {"config": valid_config_dir})
+
+    def test_generate_core_config(self):
+        write_docker_compose = Mock()
+        write_kubernetes_spec = Mock()
+        generate_config_map = Mock()
+        generate_secret = Mock()
+        import neon_diana_utils.utils.docker_utils
+        import neon_diana_utils.utils.kubernetes_utils
+        neon_diana_utils.utils.docker_utils.write_docker_compose = write_docker_compose
+        neon_diana_utils.utils.kubernetes_utils.write_kubernetes_spec = write_kubernetes_spec
+        neon_diana_utils.utils.kubernetes_utils.generate_config_map = generate_config_map
+        neon_diana_utils.utils.kubernetes_utils.generate_secret = generate_secret
+        from neon_diana_utils.utils.core import generate_core_config
+
+        valid_config_dir = os.path.join(os.path.dirname(__file__), "config")
+        valid_output_dir = os.path.join(os.path.dirname(__file__),
+                                        "cli_test_dir")
+        namespaces = {"CORE_NAMESPACE": "test"}
+        volumes = {"config": valid_config_dir}
+        generate_core_config(valid_config_dir, valid_output_dir, namespaces, volumes)
+
+        write_docker_compose.assert_called_once()
+        write_kubernetes_spec.assert_called_once()
+        generate_config_map.assert_called_once()
+        generate_secret.assert_called_once()
+
+
 class TestDockerUtils(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

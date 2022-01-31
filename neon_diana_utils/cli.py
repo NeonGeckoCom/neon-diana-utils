@@ -233,3 +233,20 @@ def make_github_secret(username, token, output_path):
         click.echo(f"Generated outputs in {output_path}")
     except Exception as e:
         click.echo(e)
+
+
+# Core
+@neon_diana_cli.command(help="Generate Container Configuration for Neon Core")
+@click.option('--namespace', '-n', default='default',
+              help="Kubernetes namespace to configure services to run in")
+@click.option('--output', '-o', default=None,
+              help="Path to write generated files to")
+@click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def configure_core(namespace, output, config_path):
+    from neon_diana_utils.utils.core import cli_configure_core
+    output = output or config_path
+    try:
+        cli_configure_core(config_path, output, namespace)
+        click.echo(f"Configuration written to: {output}/core")
+    except Exception as e:
+        click.echo(e)

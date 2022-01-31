@@ -2,6 +2,7 @@ version: "3.1"
 
 networks:
   mq-backend:
+  neon-core:
 
 volumes:
   config:
