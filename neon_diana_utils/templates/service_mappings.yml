@@ -606,55 +606,55 @@ tts-mozilla:
                   - containerPort: 5002
             restartPolicy: Always
 tts-glados:
-  container_image: &image_glados_tts ghcr.io/neongeckocom/glados:dev
-    container_name: &name_glados_tts tts-glados
-    service_class: http-backend
-    docker_compose:
-      container_name: *name_glados_tts
-      image: *image_glados_tts
-      restart: always
-      ports:
-        - 9666:9666
-    kubernetes:
-      - apiVersion: v1
-        kind: Service
-        metadata:
-          labels:
+  container_image: &image_glados_tts ghcr.io/neongeckocom/neon-tts-plugin-glados:dev
+  container_name: &name_glados_tts tts-glados
+  service_class: http-backend
+  docker_compose:
+    container_name: *name_glados_tts
+    image: *image_glados_tts
+    restart: always
+    ports:
+      - 9666:9666
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_glados_tts
+        name: *name_glados_tts
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "glados-tts"
+            port: 9666
+            targetPort: 9666
+            protocol: TCP
+        selector:
+          neon.diana.service: *name_glados_tts
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_glados_tts
+        namespace: ${HTTP_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
             neon.diana.service: *name_glados_tts
-          name: *name_glados_tts
-        spec:
-          type: ClusterIP
-          ports:
-            - name: "glados-tts"
-              port: 9666
-              targetPort: 9666
-              protocol: TCP
-          selector:
-            neon.diana.service: *name_glados_tts
-      - apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: *name_glados_tts
-          namespace: ${HTTP_NAMESPACE}
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
               neon.diana.service: *name_glados_tts
-          strategy:
-            type: Recreate
-          template:
-            metadata:
-              labels:
-                neon.diana.service: *name_glados_tts
-                neon.project.name: diana
-            spec:
-              containers:
-                - image: *image_glados_tts
-                  name: *name_glados_tts
-                  ports:
-                    - containerPort: 9666
-              restartPolicy: Always
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_glados_tts
+                name: *name_glados_tts
+                ports:
+                  - containerPort: 9666
+            restartPolicy: Always
 lang-libretranslate:
   container_image: &image_libretranslate libretranslate/libretranslate:main
   container_name: &name_libretranslate lang-libretranslate
