@@ -37,13 +37,10 @@ from mock import Mock
 from ruamel.yaml import YAML
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from neon_diana_utils.utils import create_diana_configurations, write_neon_mq_config, write_rabbit_config
-from neon_diana_utils.utils.docker_utils import run_clean_rabbit_mq_docker,\
-    cleanup_docker_container, write_docker_compose
-from neon_diana_utils.utils.kompose_utils import generate_config_map, write_kubernetes_spec, generate_secret
+from neon_diana_utils.constants import Orchestrator
 
 
-class TestDianaUtils(unittest.TestCase):
+class TestBackendUtils(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.cached_config_path = os.environ.get("NEON_CONFIG_PATH")
@@ -55,18 +52,73 @@ class TestDianaUtils(unittest.TestCase):
         if cls.cached_config_path:
             os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
 
-    def test_create_diana_configurations(self):
-        create_diana_configurations("admin", "admin", {"neon-rabbitmq",
-                                                       "neon-api-proxy",
-                                                       "neon-metrics-service",
-                                                       "neon-unknown"})
-        valid_files = {"docker-compose.yml", "mq_config.json", "rabbitmq.conf", "rabbit_mq_config.json"}
-        for file in valid_files:
-            file_path = os.path.join(os.environ["NEON_CONFIG_PATH"], file)
-            self.assertTrue(os.path.isfile(file_path))
-            os.remove(file_path)
+    def test_cli_configure_backend(self):
+        from neon_diana_utils.constants import default_mq_services
+        from neon_diana_utils.utils.backend import cli_configure_backend
+        test_config_dir = os.path.join(os.path.dirname(__file__), "test_config")
+        os.makedirs(test_config_dir, exist_ok=True)
+
+        with self.assertRaises(ValueError):
+            cli_configure_backend(None, default_mq_services(),
+                                  "admin", "pass", True, "", "", True,
+                                  "mq-backend",
+                                  "http-backend")
+        with self.assertRaises(FileExistsError):
+            cli_configure_backend(__file__, default_mq_services(),
+                                  "admin", "pass", True, "", "", True,
+                                  "mq-backend",
+                                  "http-backend")
+        with self.assertRaises(ValueError):
+            cli_configure_backend(test_config_dir, default_mq_services(),
+                                  "admin", "", True, "", "", False,
+                                  "mq-backend",
+                                  "http-backend")
+
+        with self.assertRaises(ValueError):
+            cli_configure_backend(test_config_dir, set(),
+                                  "admin", "pass", False, "", "", False,
+                                  "mq-backend",
+                                  "http-backend")
+
+        cli_configure_backend(test_config_dir, default_mq_services(),
+                              "", "", True, "", "", True,
+                              "mq-backend",
+                              "http-backend")
+        docker_compose = os.path.join(test_config_dir, "docker-compose.yml")
+        kubernetes_spec = os.path.join(test_config_dir, "k8s_diana_backend.yml")
+        kubernetes_ingress = os.path.join(test_config_dir, "k8s_ingress_nginx_mq.yml")
+        for output in {docker_compose, kubernetes_spec, kubernetes_ingress}:
+            self.assertTrue(os.path.isfile(output))
+        shutil.rmtree(test_config_dir)
+
+    def test_cli_start_backend(self):
+        from neon_diana_utils.utils.backend import cli_start_backend
+        test_dir = os.path.join(os.path.dirname(__file__), "test_diana_services_config")
+
+        with self.assertRaises(ValueError):
+            cli_start_backend("", False, Orchestrator.DOCKER)
+
+        with self.assertRaises(ValueError):
+            cli_start_backend(os.path.dirname(__file__), False, Orchestrator.DOCKER)
+
+        with self.assertRaises(ValueError):
+            cli_start_backend(test_dir, False, Orchestrator.OPENSHIFT)
+
+    def test_cli_stop_backend(self):
+        from neon_diana_utils.utils.backend import cli_stop_backend
+        test_dir = os.path.join(os.path.dirname(__file__), "test_diana_services_config")
+
+        with self.assertRaises(ValueError):
+            cli_stop_backend("", Orchestrator.DOCKER)
+
+        with self.assertRaises(ValueError):
+            cli_stop_backend(os.path.dirname(__file__), Orchestrator.DOCKER)
+
+        with self.assertRaises(ValueError):
+            cli_stop_backend(test_dir, Orchestrator.OPENSHIFT)
 
     def test_write_neon_mq_config(self):
+        from neon_diana_utils.utils.backend import write_neon_mq_config
         sample_creds = {
             'neon_metrics_connector':
                 {'user': 'neon_metrics',
@@ -83,13 +135,15 @@ class TestDianaUtils(unittest.TestCase):
         self.assertIsInstance(config["server"], str)
         os.remove(config_file)
 
-    def test_write_neon_rabbit_config(self):
+    def test_write_rabbit_config(self):
+        from neon_diana_utils.utils.backend import write_rabbit_config
         with open(os.path.join(os.path.dirname(__file__), "config", "valid_rabbitmq.json")) as f:
             sample_config = json.load(f)
         api = Mock()
 
         def get_definitions():
             return sample_config
+
         api.get_definitions = get_definitions
 
         write_rabbit_config(api)
@@ -108,31 +162,44 @@ class TestDianaUtils(unittest.TestCase):
         os.remove(rabbitmq_conf)
 
     def test_parse_services(self):
-        from neon_diana_utils.cli import VALID_SERVICES
-        from neon_diana_utils.utils import _parse_services
+        from neon_diana_utils.constants import valid_mq_services,\
+            valid_http_services
+        from neon_diana_utils.utils.backend import _parse_services
         minimal_valid_services = {"neon-rabbitmq", "neon-api-proxy"}
-        all_valid_services = set(VALID_SERVICES)
+        mq_services = set(valid_mq_services())
         invalid_services = {"neon-invalid", "neon_invalid"}
+        http_services = valid_http_services()
+        all_services = mq_services.union(http_services)
 
         minimal = _parse_services(minimal_valid_services)
-        complete = _parse_services(all_valid_services)
+        all_mq = _parse_services(all_services)
         invalid = _parse_services(invalid_services)
+        http = _parse_services(http_services, "http-backend")
+        complete_http = _parse_services(all_services, "http-backend")
+        complete_mq = _parse_services(all_services)
 
         self.assertIsInstance(minimal, dict)
         self.assertEqual(set(minimal.keys()), minimal_valid_services)
         for _, val in minimal.items():
             self.assertIsInstance(val, dict)
 
-        self.assertIsInstance(complete, dict)
-        self.assertEqual(set(complete.keys()), all_valid_services)
-        for _, val in complete.items():
+        self.assertIsInstance(all_mq, dict)
+        self.assertEqual(all_mq, complete_mq)
+        self.assertEqual(set(all_mq.keys()), mq_services)
+        for _, val in all_mq.items():
             self.assertIsInstance(val, dict)
 
         self.assertIsInstance(invalid, dict)
         self.assertEqual(set(invalid.keys()), set())
 
+        self.assertIsInstance(http, dict)
+        self.assertEqual(http, complete_http)
+        self.assertEqual(set(http.keys()), http_services)
+        for _, val in http.items():
+            self.assertIsInstance(val, dict)
+
     def test_parse_vhosts(self):
-        from neon_diana_utils.utils import _parse_vhosts
+        from neon_diana_utils.utils.backend import _parse_vhosts
         with open(os.path.join(os.path.dirname(__file__), "config", "valid_services_to_configure.json")) as f:
             valid_services = json.load(f)
         vhosts = _parse_vhosts(valid_services)
@@ -140,7 +207,7 @@ class TestDianaUtils(unittest.TestCase):
         self.assertTrue(all(v.startswith('/') for v in vhosts))
 
     def test_parse_configuration(self):
-        from neon_diana_utils.utils import _parse_configuration
+        from neon_diana_utils.utils.backend import _parse_configuration
         with open(os.path.join(os.path.dirname(__file__), "config", "valid_services_to_configure.json")) as f:
             valid_services = json.load(f)
 
@@ -171,6 +238,31 @@ class TestDianaUtils(unittest.TestCase):
             self.assertIsInstance(config["spec"], dict)
 
     def test_generate_config(self):
+        import neon_diana_utils.utils.backend
+        docker_mock = Mock()
+        kubernetes_mock = Mock()
+        neon_diana_utils.utils.backend.write_docker_compose = docker_mock
+        neon_diana_utils.utils.backend.write_kubernetes_spec = \
+            kubernetes_mock
+        test_config_dir = os.path.dirname(__file__)
+        docker_config = {"docker": "test"}
+        kubernetes_config = ["k8s_test"]
+        namespace_config = {"MQ_NAMESPACE": "mq-ns",
+                            "HTTP_NAMESPACE": "http-ns"}
+        neon_diana_utils.utils.backend.generate_backend_config(
+            docker_config, kubernetes_config,
+            test_config_dir, namespaces=namespace_config)
+        docker_mock.assert_called_once()
+        docker_mock.assert_called_with(docker_config,
+                                       os.path.join(test_config_dir,
+                                                    "docker-compose.yml"),
+                                       "none", None
+                                       )
+        kubernetes_mock.assert_called_once()
+        kubernetes_mock.assert_called_with(kubernetes_config, test_config_dir,
+                                           namespace_config)
+
+    def test_configure_mq_backend(self):
         pass
 
 
@@ -186,7 +278,9 @@ class TestDockerUtils(unittest.TestCase):
         if cls.cached_config_path:
             os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
 
-    def test_run_clean_rmq_docker(self):
+    def test_run_and_cleanup_rabbit_mq_docker(self):
+        from neon_diana_utils.utils.docker_utils import \
+            run_clean_rabbit_mq_docker, cleanup_docker_container
         container = run_clean_rabbit_mq_docker()
         self.assertIsInstance(container, docker.models.containers.Container)
         self.assertIn(container, docker.from_env().containers.list())
@@ -203,6 +297,7 @@ class TestDockerUtils(unittest.TestCase):
         self.assertNotIn(container, docker.from_env().containers.list(all=True))
 
     def test_write_docker_compose(self):
+        from neon_diana_utils.utils.docker_utils import write_docker_compose
         with open(os.path.join(os.path.dirname(__file__), "config", "valid_docker-compose-services.json")) as f:
             sample_config = json.load(f)
         write_docker_compose(sample_config)
@@ -217,14 +312,85 @@ class TestDockerUtils(unittest.TestCase):
 
 
 class TestKubernetesUtils(unittest.TestCase):
+    def test_cli_make_rmq_config_map(self):
+        import neon_diana_utils.utils.kubernetes_utils
+        mock = Mock()
+        real_method = neon_diana_utils.utils.kubernetes_utils.generate_config_map
+        neon_diana_utils.utils.kubernetes_utils.generate_config_map = mock
+        input_path = os.path.join(os.path.dirname(__file__),
+                                  "test_diana_services_config")
+        output_path = os.path.dirname(__file__)
+        out = neon_diana_utils.utils.kubernetes_utils.cli_make_rmq_config_map(
+            input_path, output_path
+        )
+
+        self.assertEqual(os.path.join(output_path, "k8s_config_rabbitmq.yml"),
+                         out)
+
+        mock.assert_called_once()
+        args = mock.call_args[0]
+        self.assertEqual(args[0], "rabbitmq")
+        self.assertIsInstance(args[1], dict)
+        self.assertEqual(set(args[1].keys()), {"rabbitmq.conf",
+                                               "rabbit_mq_config.json"})
+
+        output_path = __file__
+        out = neon_diana_utils.utils.kubernetes_utils.cli_make_rmq_config_map(
+            input_path, output_path
+        )
+        self.assertEqual(output_path, out)
+
+        with self.assertRaises(FileNotFoundError):
+            neon_diana_utils.utils.kubernetes_utils.cli_make_rmq_config_map(
+                os.path.join(output_path, "__invalid"), output_path
+            )
+
+        with self.assertRaises(ValueError):
+            neon_diana_utils.utils.kubernetes_utils.cli_make_rmq_config_map(
+                input_path, "/tmp/__unlikely_path"
+            )
+
+        neon_diana_utils.utils.kubernetes_utils.generate_config_map = \
+            real_method
+
+    def test_cli_make_api_secret(self):
+        import neon_diana_utils.utils.kubernetes_utils
+        mock = Mock()
+        real_method = neon_diana_utils.utils.kubernetes_utils.generate_secret
+        neon_diana_utils.utils.kubernetes_utils.generate_secret = mock
+        input_path = os.path.join(os.path.dirname(__file__),
+                                  "test_diana_services_config")
+        output_path = os.path.dirname(__file__)
+        out = neon_diana_utils.utils.kubernetes_utils.cli_make_api_secret(
+            input_path, output_path
+        )
+        self.assertEqual(out, output_path)
+
+        mock.assert_called_once()
+        args = mock.call_args[0]
+        self.assertEqual(args[0], "ngi-auth")
+        self.assertIsInstance(args[1], dict)
+        self.assertEqual(set(args[1].keys()), {"ngi_auth_vars.yml"})
+        self.assertTrue(args[2].startswith(output_path))
+
+        with self.assertRaises(FileNotFoundError):
+            neon_diana_utils.utils.kubernetes_utils.cli_make_api_secret(
+                os.path.join(output_path, "__invalid"), output_path
+            )
+
+        neon_diana_utils.utils.kubernetes_utils.generate_secret = real_method
+
     def test_write_kubernetes_spec(self):
-        namespace = "test"
+        from neon_diana_utils.utils.kubernetes_utils import \
+            write_kubernetes_spec
+        namespaces = {"MQ_NAMESPACE": "mq_namespace",
+                      "HTTP_NAMESPACE": "http_namespace"}
         with open(os.path.join(os.path.dirname(__file__), "config", "valid_k8s_config.json")) as f:
             k8s_config = json.load(f)
         test_k8s_path = os.path.join(os.path.dirname(__file__), "outputs")
         os.makedirs(test_k8s_path)
-        write_kubernetes_spec(k8s_config, test_k8s_path, namespace)
-        k8s_diana = os.path.join(test_k8s_path, "k8s_diana.yml")
+        write_kubernetes_spec(k8s_config, test_k8s_path, namespaces)
+        k8s_diana = os.path.join(test_k8s_path, "k8s_diana_backend.yml")
         k8s_ingress = os.path.join(test_k8s_path, "k8s_ingress_nginx_mq.yml")
 
         def _validate_k8s_spec(spec: dict):
@@ -249,15 +415,15 @@ class TestKubernetesUtils(unittest.TestCase):
             string_contents = f.read()
         _validate_k8s_spec(nginx_ingress)
 
-        # Validate MQ_NAMESPACE substitution
+        # Validate namespace substitution
         self.assertNotIn("${", string_contents)
-        self.assertIn(namespace, string_contents)
 
         shutil.rmtree(test_k8s_path)
 
     def test_generate_config_map(self):
+        from neon_diana_utils.utils.kubernetes_utils import generate_config_map
         output_path = os.path.join(os.path.dirname(__file__), "outputs")
-        os.makedirs(output_path)
+        os.makedirs(output_path, exist_ok=True)
         config_name = "test-config-map"
         config_data = {"some_filename.test": "text file contents\n",
                        "some_other_file.bak": b"byte contents"}
@@ -276,6 +442,7 @@ class TestKubernetesUtils(unittest.TestCase):
         shutil.rmtree(output_path)
 
     def test_generate_secret(self):
+        from neon_diana_utils.utils.kubernetes_utils import generate_secret
         output_path = os.path.join(os.path.dirname(__file__), "outputs")
         os.makedirs(output_path)
         secret_name = "test-secret"

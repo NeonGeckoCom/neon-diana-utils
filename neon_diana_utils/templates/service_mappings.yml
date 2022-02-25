@@ -1,6 +1,8 @@
+# MQ Services
 neon-rabbitmq:
   container_image: &image_rabbitmq rabbitmq:3-management
   container_name: &name_rabbitmq neon-rabbitmq
+  service_class: mq-backend
   docker_compose:
     container_name: *name_rabbitmq
     image: *image_rabbitmq
@@ -80,6 +82,7 @@ neon-rabbitmq:
 neon-api-proxy:
   container_image: &image_api_proxy ghcr.io/neongeckocom/neon_api_proxy:dev
   container_name: &name_api_proxy neon-api-proxy
+  service_class: mq-backend
   mq:
     mq_service_name: neon_api_connector
     mq_username: neon_api
@@ -161,6 +164,7 @@ neon-api-proxy:
 neon-brands-service:
   container_image: &image_brands_service ghcr.io/neongeckocom/neon_brands_service:dev
   container_name: &name_brands_service neon-brands-service
+  service_class: mq-backend
   mq:
     mq_service_name: neon_coupon_connector
     mq_username: neon_coupons
@@ -244,6 +248,7 @@ neon-brands-service:
 neon-email-proxy:
   container_image: &image_email_proxy ghcr.io/neongeckocom/neon_email_proxy:dev
   container_name: &name_email_proxy neon-email-proxy
+  service_class: mq-backend
   mq:
     mq_service_name: neon_email_proxy
     mq_username: neon_email
@@ -325,6 +330,7 @@ neon-email-proxy:
 neon-script-parser:
   container_image: &image_script_parser ghcr.io/neongeckocom/neon-script-parser:dev
   container_name: &name_script_parser neon-script-parser
+  service_class: mq-backend
   mq:
     mq_service_name: neon_script_parser_service
     mq_username: neon_script_parser
@@ -406,6 +412,7 @@ neon-script-parser:
 neon-metrics-service:
   container_image: &image_metrics_service ghcr.io/neongeckocom/neon_metrics_service:dev
   container_name: &name_metrics_service neon-metrics-service
+  service_class: mq-backend
   mq:
     mq_service_name: neon_metrics_connector
     mq_username: neon_metrics
@@ -496,3 +503,255 @@ neon-metrics-service:
         resources:
           requests:
             storage: 1Gi
+
+# HTTP Services
+tts-larynx:
+  container_image: &image_larynx_server rhasspy/larynx:latest
+  container_name: &name_larynx_server tts-larynx
+  service_class: http-backend
+  docker_compose:
+    container_name: *name_larynx_server
+    image: *image_larynx_server
+    restart: always
+    ports:
+      - 5002:5002
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_larynx_server
+        name: *name_larynx_server
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "larynx-tts"
+            port: 5002
+            targetPort: 5002
+            protocol: TCP
+        selector:
+          neon.diana.service: *name_larynx_server
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_larynx_server
+        namespace: ${HTTP_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_larynx_server
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              neon.diana.service: *name_larynx_server
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_larynx_server
+                name: *name_larynx_server
+                ports:
+                  - containerPort: 5002
+            restartPolicy: Always
+tts-mozilla:
+  container_image: &image_mozilla_tts synesthesiam/mozilla-tts
+  container_name: &name_mozilla_tts tts-mozilla
+  service_class: http-backend
+  docker_compose:
+    container_name: *name_mozilla_tts
+    image: *image_mozilla_tts
+    restart: always
+    ports:
+      - 15002:5002
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_mozilla_tts
+        name: *name_mozilla_tts
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "mozilla-tts"
+            port: 5002
+            targetPort: 5002
+            protocol: TCP
+        selector:
+          neon.diana.service: *name_mozilla_tts
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_mozilla_tts
+        namespace: ${HTTP_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_mozilla_tts
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              neon.diana.service: *name_mozilla_tts
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_mozilla_tts
+                name: *name_mozilla_tts
+                ports:
+                  - containerPort: 5002
+            restartPolicy: Always
+tts-glados:
+  container_image: &image_glados_tts ghcr.io/neongeckocom/neon-tts-plugin-glados:dev
+  container_name: &name_glados_tts tts-glados
+  service_class: http-backend
+  docker_compose:
+    container_name: *name_glados_tts
+    image: *image_glados_tts
+    restart: always
+    ports:
+      - 9666:9666
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_glados_tts
+        name: *name_glados_tts
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "glados-tts"
+            port: 9666
+            targetPort: 9666
+            protocol: TCP
+        selector:
+          neon.diana.service: *name_glados_tts
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_glados_tts
+        namespace: ${HTTP_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_glados_tts
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              neon.diana.service: *name_glados_tts
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_glados_tts
+                name: *name_glados_tts
+                ports:
+                  - containerPort: 9666
+            restartPolicy: Always
+lang-libretranslate:
+  container_image: &image_libretranslate libretranslate/libretranslate:main
+  container_name: &name_libretranslate lang-libretranslate
+  service_class: http-backend
+  docker_compose:
+    container_name: *name_libretranslate
+    image: *image_libretranslate
+    restart: always
+    ports:
+      - 5000:5000
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_libretranslate
+        name: *name_libretranslate
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "libretranslate"
+            port: 5000
+            targetPort: 5000
+            protocol: TCP
+        selector:
+          neon.diana.service: *name_libretranslate
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_libretranslate
+        namespace: ${HTTP_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_libretranslate
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              neon.diana.service: *name_libretranslate
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_libretranslate
+                name: *name_libretranslate
+                ports:
+                  - containerPort: 5000
+            restartPolicy: Always
+ww-snowboy:
+  container_image: &image_snowboy rhasspy/snowboy-seasalt
+  container_name: &name_snowboy ww-snowboy
+  service_class: http-backend
+  docker_compose:
+    container_name: *name_snowboy
+    image: *image_snowboy
+    restart: always
+    ports:
+      - 8000:8000
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_snowboy
+        name: *name_snowboy
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "snowboy"
+            port: 8000
+            targetPort: 8000
+            protocol: TCP
+        selector:
+          neon.diana.service: *name_snowboy
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_snowboy
+        namespace: ${HTTP_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_snowboy
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              neon.diana.service: *name_snowboy
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_snowboy
+                name: *name_snowboy
+                ports:
+                  - containerPort: 8000
+            restartPolicy: Always
