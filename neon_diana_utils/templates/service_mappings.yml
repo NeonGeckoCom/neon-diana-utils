@@ -655,6 +655,106 @@ tts-glados:
                 ports:
                   - containerPort: 9666
             restartPolicy: Always
+tts-mimic2-nancy:
+  container_image: &image_mimic2_nancy_tts ghcr.io/openvoiceos/mimic2-nancy:dev
+  container_name: &name_mimic2_nancy_tts tts-mimic2-nancy
+  service_class: http-backend
+  docker_compose:
+    container_name: *name_mimic2_nancy_tts
+    image: *image_mimic2_nancy_tts
+    restart: always
+    ports:
+      - 9000:9000
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_mimic2_nancy_tts
+        name: *name_mimic2_nancy_tts
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "mimic2-nancy-tts"
+            port: 9000
+            targetPort: 9000
+            protocol: TCP
+        selector:
+          neon.diana.service: *name_mimic2_nancy_tts
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_mimic2_nancy_tts
+        namespace: ${HTTP_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_mimic2_nancy_tts
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              neon.diana.service: *name_mimic2_nancy_tts
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_mimic2_nancy_tts
+                name: *name_mimic2_nancy_tts
+                ports:
+                  - containerPort: 9000
+            restartPolicy: Always
+tts-mimic2-ljspeech:
+  container_image: &image_mimic2_ljspeech_tts ghcr.io/openvoiceos/mimic2-ljspeech:dev
+  container_name: &name_mimic2_ljspeech_tts tts-mimic2-ljspeech
+  service_class: http-backend
+  docker_compose:
+    container_name: *image_mimic2_ljspeech_tts
+    image: *image_mimic2_ljspeech_tts
+    restart: always
+    ports:
+      - 9001:9000
+  kubernetes:
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          neon.diana.service: *name_mimic2_ljspeech_tts
+        name: *name_mimic2_ljspeech_tts
+      spec:
+        type: ClusterIP
+        ports:
+          - name: "mimic2-ljspeech-tts"
+            port: 9000
+            targetPort: 9000
+            protocol: TCP
+        selector:
+          neon.diana.service: *name_mimic2_ljspeech_tts
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: *name_mimic2_ljspeech_tts
+        namespace: ${HTTP_NAMESPACE}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            neon.diana.service: *name_mimic2_ljspeech_tts
+        strategy:
+          type: Recreate
+        template:
+          metadata:
+            labels:
+              neon.diana.service: *name_mimic2_ljspeech_tts
+              neon.project.name: diana
+          spec:
+            containers:
+              - image: *image_mimic2_ljspeech_tts
+                name: *name_mimic2_ljspeech_tts
+                ports:
+                  - containerPort: 9000
+            restartPolicy: Always
 lang-libretranslate:
   container_image: &image_libretranslate libretranslate/libretranslate:main
   container_name: &name_libretranslate lang-libretranslate
