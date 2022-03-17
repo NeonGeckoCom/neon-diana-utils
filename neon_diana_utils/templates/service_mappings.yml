@@ -861,6 +861,22 @@ neon-messagebus:
   container_image: &image_neon_messagebus ghcr.io/neongeckocom/neon_messagebus:dev
   container_name: &name_neon_messagebus neon-messagebus
   service_class: neon-core
+  mq:
+    mq_service_name: neon_chat_api
+    mq_username: neon_ai
+    mq_user_permissions:
+      neon_ai:
+        /neon_chat_api:
+          read: .*
+          write: .*
+          configure: .*
+      neon_api_utils:
+        /neon_chat_api:
+          read: ^(?!neon_chat_api_request).*
+          write: ^(neon_chat_api_request|amq.default).*
+          configure: ./*
+    mq_vhosts:
+      - /neon_api
   docker_compose:
     container_name: *name_neon_messagebus
     image: *image_neon_messagebus
