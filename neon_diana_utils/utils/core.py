@@ -91,7 +91,12 @@ def cli_configure_core(config_path: str, output_path: str, namespace: str):
     if not isdir(output_path):
         makedirs(output_path)
 
-    volumes = {"config": config_path}
+    skills_dir = join(config_path, "skills")
+    if not isdir(skills_dir):
+        makedirs(skills_dir)
+
+    volumes = {"config": config_path,
+               "skills": skills_dir}
     namespaces = {"CORE_NAMESPACE": namespace}
     generate_core_config(config_path, output_path, namespaces, volumes)
 

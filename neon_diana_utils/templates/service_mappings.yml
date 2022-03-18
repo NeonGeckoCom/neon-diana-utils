@@ -602,6 +602,11 @@ tts-mozilla:
             containers:
               - image: *image_mozilla_tts
                 name: *name_mozilla_tts
+                resources:
+                  requests:
+                    memory: 700Mi
+                  limits:
+                    memory: 1500Mi
                 ports:
                   - containerPort: 5002
             restartPolicy: Always
@@ -858,7 +863,7 @@ ww-snowboy:
 
 # Neon Core
 neon-messagebus:
-  container_image: &image_neon_messagebus ghcr.io/neongeckocom/neon_messagebus:dev
+  container_image: &image_neon_messagebus ghcr.io/neondaniel/neon_messagebus:latest
   container_name: &name_neon_messagebus neon-messagebus
   service_class: neon-core
   mq:
@@ -903,7 +908,8 @@ neon-messagebus:
             port: 8181
             targetPort: 8181
             protocol: TCP
-        selector: *name_neon_messagebus
+        selector:
+          neon.diana.service: *name_neon_messagebus
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -971,7 +977,8 @@ neon-speech:
           - name: headless
             port: 55555
             targetPort: 0
-        selector: *name_neon_speech
+        selector:
+          neon.diana.service: *name_neon_speech
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -997,6 +1004,11 @@ neon-speech:
                 volumeMounts:
                   - mountPath: /config
                     name: config
+                resources:
+                  requests:
+                    memory: 1500Mi
+                  limits:
+                    memory: 2Gi
             restartPolicy: Always
             volumes:
               - name: config
@@ -1007,12 +1019,8 @@ neon-speech:
                       path: ngi_local_conf.yml
                     - key: ngi_user_info.yml
                       path: ngi_user_info.yml
-                projected:
-                  sources:
-                    - secret:
-                        name: ngi-core-auth
 neon-skills:
-  container_image: &image_neon_skills ghcr.io/neongeckocom/neon_skills-default_skills:dev
+  container_image: &image_neon_skills ghcr.io/neondaniel/neon_skills-default_skills:latest
   container_name: &name_neon_skills neon-skills
   service_class: neon-core
   docker_compose:
@@ -1025,6 +1033,7 @@ neon-skills:
       - 8000:8000
     volumes:
       - config:/config:ro
+      - skills:/skills:ro
       - ~/.config/pulse/cookie:/root/.config/pulse/cookie:ro
       - ${XDG_RUNTIME_DIR}/pulse:${XDG_RUNTIME_DIR}/pulse:ro
     environment:
@@ -1040,12 +1049,13 @@ neon-skills:
           neon.diana.service: *name_neon_skills
         name: *name_neon_skills
       spec:
-        type: CluserIP
+        type: ClusterIP
         ports:
           - name: "skill-fileserver"
             port: 8000
             targetPort: 8000
-        selector: *name_neon_skills
+        selector:
+          neon.diana.service: *name_neon_skills
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -1071,6 +1081,13 @@ neon-skills:
                 volumeMounts:
                   - mountPath: /config
                     name: config
+                  - mountPath: /skills
+                    name: config
+                resources:
+                  requests:
+                    memory: 1Gi
+                  limits:
+                    memory: 2Gi
             restartPolicy: Always
             volumes:
               - name: config
@@ -1081,12 +1098,12 @@ neon-skills:
                       path: ngi_local_conf.yml
                     - key: ngi_user_info.yml
                       path: ngi_user_info.yml
-                projected:
-                  sources:
-                    - secret:
-                        name: ngi-core-auth
+#                projected:
+#                  sources:
+#                    - secret:
+#                        name: ngi-core-auth
 neon-audio:
-  container_image: &image_neon_audio ghcr.io/neongeckocom/neon_audio:dev
+  container_image: &image_neon_audio ghcr.io/neondaniel/neon_audio:latest
   container_name: &name_neon_audio neon-audio
   service_class: neon-core
   docker_compose:
@@ -1116,7 +1133,8 @@ neon-audio:
           - name: headless
             port: 55555
             targetPort: 0
-        selector: *name_neon_audio
+        selector:
+          neon.diana.service: *name_neon_audio
     - apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -1152,10 +1170,10 @@ neon-audio:
                       path: ngi_local_conf.yml
                     - key: ngi_user_info.yml
                       path: ngi_user_info.yml
-                projected:
-                  sources:
-                    - secret:
-                        name: ngi-core-auth
+#                projected:
+#                  sources:
+#                    - secret:
+#                        name: ngi-core-auth
 neon-gui:
   container_image: &image_neon_gui ghcr.io/neongeckocom/neon_gui:dev
   container_name: &name_neon_gui neon-gui
@@ -1181,11 +1199,12 @@ neon-gui:
       spec:
         type: ClusterIP
         ports:
-          - name: "GUI bus"
+          - name: "gui-bus"
             port: 18181
             targetPort: 18181
             protocol: TCP
-        selector: *name_neon_gui
+        selector:
+          neon.diana.service: *name_neon_gui
     - apiVersion: apps/v1
       kind: Deployment
       metadata:

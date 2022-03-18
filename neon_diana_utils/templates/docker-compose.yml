@@ -4,18 +4,4 @@ networks:
   mq-backend:
   neon-core:
 
-volumes:
-  config:
-    driver_opts:
-      type: ${VOLUME_TYPE}-config
-      o: ${CONFIG_OPTS}
-      device: ${NEON_CONFIG_PATH}
-    labels:
-      kompose.volume.storage-class-name: nfs-config
-  metrics:
-    driver_opts:
-      type: ${VOLUME_TYPE}-metrics
-      o: ${METRIC_OPTS}
-      device: ${NEON_METRIC_PATH}
-    labels:
-      kompose.volume.storage-class-name: nfs-metrics
+volumes: {}
