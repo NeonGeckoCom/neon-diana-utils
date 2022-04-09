@@ -89,34 +89,25 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
         compose_boilerplate = YAML().load(f)
     compose_contents = {**compose_boilerplate, **{"services": services_config}}
 
-    neon_config_path = volumes.get("config") if volumes else \
-        None or dirname(compose_file)
-    neon_metric_path = volumes.get("metrics") if volumes else \
-        None or expanduser(getenv("NEON_METRIC_PATH", f"{neon_config_path}/metrics"))
-
-    if not volume_type or volume_type == "none":
-        config_opts = "bind"
-        metric_opts = "bind"
-    elif volume_type == "nfs":
-        config_host, config_path = neon_config_path.split(':')
-        neon_config_path = f"\":{config_path}\""
-        metric_host, metric_volume = neon_metric_path.split(':')
-        neon_metric_path = f"\":{metric_volume}\""
-        config_opts = f"addr={config_host},nolock,rw,soft,nfsvers=4"
-        metric_opts = f"addr={metric_host},nolock,rw,soft,nfsvers=4"
-    else:
-        raise ValueError(f"Unsupported volume_type requested: {volume_type}")
+    volumes = volumes or list()
+    for vol in volumes:
+        if volume_type == "nfs":
+            config_host, config_path = volumes[vol].split(':')
+            config_opts = f"addr={config_host},nolock,rw,soft,nfsvers=4"
+            neon_config_path = f"\":{config_path}\""
+        else:
+            config_opts = "bind"
+            neon_config_path = volumes[vol] or dirname(compose_file)
+        compose_contents["volumes"][vol] = {
+            "driver_opts": {
+                "type": f"{volume_type}-{vol}",
+                "o": config_opts,
+                "device": neon_config_path
+            },
+            "labels": {
+                "kompose.volume.storage-class-name": f"nfs-{vol}"
+            }
+        }
 
     with open(compose_file, "w+") as f:
         YAML().dump(compose_contents, f)
-        f.seek(0)
-        string_contents = f.read()
-        string_contents = string_contents\
-            .replace("${NEON_CONFIG_PATH}", neon_config_path)\
-            .replace("${NEON_METRIC_PATH}", neon_metric_path)\
-            .replace("${VOLUME_TYPE}", volume_type)\
-            .replace("${CONFIG_OPTS}", config_opts)\
-            .replace("${METRIC_OPTS}", metric_opts)
-        f.seek(0)
-        f.truncate(0)
-        f.write(string_contents)
