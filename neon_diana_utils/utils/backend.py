@@ -96,7 +96,9 @@ def cli_configure_backend(config_path: str, mq_services: Set[str],
 
     if not skip_config:
         configure_mq_backend(admin_user=admin_user, admin_pass=admin_pass,
-                             services=mq_services_config, users_config=users_to_configure,
+                             config_path=config_path,
+                             services=mq_services_config,
+                             users_config=users_to_configure,
                              neon_mq_user_auth=neon_mq_user_auth)
 
     generate_backend_config(docker_compose_config=docker_configuration,
@@ -224,6 +226,8 @@ def _parse_services(requested_services: set,
                          "service_mappings.yml")
     with open(template_file) as f:
         template_data = YAML().load(f)
+    if not requested_services:
+        return {}
     services_to_configure = {name: dict(template_data[name])
                              for name in requested_services if
                              name in template_data and
@@ -244,20 +248,29 @@ def _parse_vhosts(services_to_configure: dict) -> set:
     :param services_to_configure: service mapping parsed from service_mappings.yml
     :returns: set of vhosts to be created
     """
-    return set(itertools.chain.from_iterable([service.get("mq", service).get("mq_vhosts", [])
-                                              for service in services_to_configure.values()]))
+    default_vhosts = ["/neon_testing"]
+    vhosts = [service.get("mq", service).get("mq_vhosts", [])
+              for service in services_to_configure.values()]
+    vhosts.append(default_vhosts)
+    return set(itertools.chain.from_iterable(vhosts))
 
 
 def _parse_configuration(services_to_configure: dict) -> tuple:
     # Parse user and orchestrator configuration
-    user_permissions = dict()
+    user_permissions = {
+        "neon_api_utils": {"/neon_testing": {"read": "./*",
+                                             "write": "./*",
+                                             "configure": "./*"}}
+    }
     neon_mq_auth = dict()
     docker_compose_configuration = dict()
     kubernetes_configuration = list()
     for name, service in services_to_configure.items():
         # Get service MQ Config
         if service.get("mq"):
-            dict_merge(user_permissions, service.get("mq", service).get("mq_user_permissions", dict()))
+            dict_merge(user_permissions,
+                       service.get("mq", service).get("mq_user_permissions",
+                                                      dict()))
             if service["mq"].get("mq_username"):
                 # TODO: Update MQ services such that their service names match the container names DM
                 neon_mq_auth[service.get("mq",
