@@ -383,4 +383,4 @@ def generate_backend_config(docker_compose_config: dict,
                          volume_driver, volumes)
 
     # Generate Kubernetes spec file
-    write_kubernetes_spec(kubernetes_config, config_path, namespaces)
+    write_kubernetes_spec(kubernetes_config, config_path, namespaces, "backend")

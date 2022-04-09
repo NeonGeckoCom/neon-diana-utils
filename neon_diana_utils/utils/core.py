@@ -109,7 +109,7 @@ def generate_core_config(config_path: str, output_path: str, namespaces: dict,
     docker_compose, kubernetes = _parse_core_services()
     docker_compose_file = join(expanduser(output_path), "docker-compose.yml")
     write_docker_compose(docker_compose, docker_compose_file, "none", volumes)
-    write_kubernetes_spec(kubernetes, output_path, namespaces)
+    write_kubernetes_spec(kubernetes, output_path, namespaces, "core")
 
     with open(join(config_path, "ngi_local_conf.yml"), 'r+') as f:
         local_config = f.read()

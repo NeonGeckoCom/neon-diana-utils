@@ -113,23 +113,38 @@ def cli_update_tcp_config(service: str, port: str, namespace: str = "default",
 
 
 def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
-                          namespaces: dict = None):
+                          namespaces: dict = None, project: str = "backend"):
     """
     Generates and writes a kubernetes.yml spec file according to the passed services
     :param k8s_config: list of k8s objects specified, usually read from service_mappings.yml
     :param output_path: path to write spec files to
     :param namespaces: dict of placeholders to namespaces
+    :param project: string ID to include in spec filename
     """
     namespaces = namespaces or dict()
     output_dir = expanduser(output_path) if output_path else \
         expanduser(getenv("NEON_CONFIG_PATH", "~/.config/neon"))
 
-    diana_spec_file = join(output_dir, "k8s_diana_backend.yml")
+    diana_spec_file = join(output_dir, f"k8s_diana_{project}.yml")
 
     # Write Diana services spec file
     with open(join(dirname(dirname(__file__)), "templates",
                    "kubernetes.yml")) as f:
         diana_spec_contents = YAML().load(f)
+
+    for namespace in namespaces.values():
+        ns_config = {
+            "kind": "Namespace",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": namespace,
+                "labels": {
+                    "name": namespace
+                }
+            }
+        }
+        diana_spec_contents["items"].append(ns_config)
+
     diana_spec_contents["items"].extend(k8s_config)
 
     with open(diana_spec_file, "w+") as f:
