@@ -863,7 +863,7 @@ ww-snowboy:
 
 # Neon Core
 neon-messagebus:
-  container_image: &image_neon_messagebus ghcr.io/neondaniel/neon_messagebus:latest
+  container_image: &image_neon_messagebus ghcr.io/neongeckocom/neon_messagebus:dev
   container_name: &name_neon_messagebus neon-messagebus
   service_class: neon-core
   mq:
@@ -1020,7 +1020,7 @@ neon-speech:
                     - key: ngi_user_info.yml
                       path: ngi_user_info.yml
 neon-skills:
-  container_image: &image_neon_skills ghcr.io/neondaniel/neon_skills-default_skills:latest
+  container_image: &image_neon_skills ghcr.io/neongeckocom/neon_skills-default_skills:dev
   container_name: &name_neon_skills neon-skills
   service_class: neon-core
   docker_compose:
@@ -1103,7 +1103,7 @@ neon-skills:
 #                    - secret:
 #                        name: ngi-core-auth
 neon-audio:
-  container_image: &image_neon_audio ghcr.io/neondaniel/neon_audio:latest
+  container_image: &image_neon_audio ghcr.io/neongeckocom/neon_audio:dev
   container_name: &name_neon_audio neon-audio
   service_class: neon-core
   docker_compose:
