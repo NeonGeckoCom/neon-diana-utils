@@ -83,6 +83,19 @@ def cli_make_api_secret(input_path: str, output_path: str) -> str:
     return output_path
 
 
+def cli_make_github_secret(username: str, token: str, config_dir: str):
+    """
+    Generate a Secret object for a GitHub image pull secret
+    :param username: Github username
+    :param token: Github PAT with package_read permissions
+    :param config_dir: Directory to write output spec file to
+    """
+    output_file = _create_github_secret(username, token,
+                                        join(config_dir,
+                                             "k8s_secret_github.yml"))
+    return output_file
+
+
 def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
                           namespaces: dict = None):
     """
@@ -167,3 +180,38 @@ def generate_secret(name: str, secret_data: dict, output_path: Optional[str] = N
 
     with open(output_path, 'w+') as f:
         yaml.dump(config_map, f)
+
+
+def _create_github_secret(username: str, token: str,
+                          output_path: Optional[str] = None) -> str:
+    """
+    Generate a Kubernetes Secret to authenticate to github for image pulls
+    :param username: Github username
+    :param token: Github token with read_packages permission
+    :param output_path: output file to write
+    :returns: path to written Kubernetes config file
+    """
+    import json
+    from base64 import b64encode
+    output_path = output_path or join(getenv("NEON_CONFIG_PATH",
+                                             "~/.config/neon"),
+                                      f"k8s_secret_github.yml")
+    output_path = expanduser(output_path)
+    encoded_auth = b64encode(f"{username}:{token}".encode())
+    auth_dict = {"auths": {"ghcr.io": {"auth": encoded_auth.decode()}}}
+    auth_str = json.dumps(auth_dict)
+    encoded_config = b64encode(auth_str.encode())
+    secret_spec = {
+        "kind": "Secret",
+        "type": "kubernetes.io/dockerconfigjson",
+        "apiVersion": "v1",
+        "metadata": {
+            "name": "github-auth"
+        },
+        "data": {
+            ".dockerconfigjson": encoded_config.decode()
+        }
+    }
+    with open(output_path, 'w+') as f:
+        yaml.dump(secret_spec, f)
+    return output_path

@@ -218,3 +218,18 @@ def make_api_secrets(path, output_path):
         click.echo(f"Generated outputs in {output_path}")
     except Exception as e:
         click.echo(e)
+
+
+@neon_diana_cli.command(help="Generate Kubernetes secret for Github images")
+@click.option("--username", "-u",
+              help="Github username")
+@click.option("--token", "-t",
+              help="Github PAT with read_packages permission")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def make_github_secret(username, token, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_make_github_secret
+    try:
+        output_path = cli_make_github_secret(username, token, output_path)
+        click.echo(f"Generated outputs in {output_path}")
+    except Exception as e:
+        click.echo(e)

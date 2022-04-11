@@ -31,6 +31,7 @@ import sys
 import unittest
 import docker
 import docker.models.containers
+import yaml
 
 from docker.errors import APIError
 from mock import Mock
@@ -388,7 +389,7 @@ class TestKubernetesUtils(unittest.TestCase):
         with open(os.path.join(os.path.dirname(__file__), "config", "valid_k8s_config.json")) as f:
             k8s_config = json.load(f)
         test_k8s_path = os.path.join(os.path.dirname(__file__), "outputs")
-        os.makedirs(test_k8s_path)
+        os.makedirs(test_k8s_path, exist_ok=True)
         write_kubernetes_spec(k8s_config, test_k8s_path, namespaces)
         k8s_diana = os.path.join(test_k8s_path, "k8s_diana_backend.yml")
         k8s_ingress = os.path.join(test_k8s_path, "k8s_ingress_nginx_mq.yml")
@@ -444,7 +445,7 @@ class TestKubernetesUtils(unittest.TestCase):
     def test_generate_secret(self):
         from neon_diana_utils.utils.kubernetes_utils import generate_secret
         output_path = os.path.join(os.path.dirname(__file__), "outputs")
-        os.makedirs(output_path)
+        os.makedirs(output_path, exist_ok=True)
         secret_name = "test-secret"
         config_data = {"some_secret.test": "secret\ntext file contents\n",
                        "some_other_secret.bak": b"secret byte contents"}
@@ -461,6 +462,25 @@ class TestKubernetesUtils(unittest.TestCase):
         self.assertEqual(contents["kind"], "Secret")
         self.assertEqual(contents["type"], "Opaque")
 
+        shutil.rmtree(output_path)
+
+    def test_generate_github_auth(self):
+        from neon_diana_utils.utils.kubernetes_utils import cli_make_github_secret
+        output_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(output_path, exist_ok=True)
+        output_file = cli_make_github_secret("username",
+                                             "123123adsfasdf123123",
+                                             output_path)
+        self.assertTrue(os.path.isfile(output_file))
+        with open(output_file) as f:
+            contents = yaml.load(f)
+        self.assertEqual(contents['kind'], "Secret")
+        self.assertEqual(contents['type'], "kubernetes.io/dockerconfigjson")
+        self.assertEqual(contents['metadata']['name'], 'github-auth')
+        self.assertEqual(contents['data']['.dockerconfigjson'],
+                         "eyJhdXRocyI6IHsiZ2hjci5pbyI6IHsiYXV0aCI6ICJkWE5sY201"
+                         "aGJXVTZNVEl6TVRJellXUnpabUZ6WkdZeE1qTXhNak09In19fQ=="
+                         )
         shutil.rmtree(output_path)
 
     def test_convert_docker_compose(self):
