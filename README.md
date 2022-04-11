@@ -152,6 +152,15 @@ The `ingress-nginx-controller` service should have External Endpoints exposed. I
 The [Kubernets Cluser References section below](#kubernetes-cluster-references)
 contains references to documentation and guides used to configure a cluster.
 
+##### Providing GitHub Image Pull Secrets
+For private container images, you will need to specify GitHub credentials. Documentation for creating GitHub Personal 
+Access Tokens can be found [in the GitHub docs](https://docs.github.com/en/enterprise-cloud@latest/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+The configured token must have the permission: `read:packages`.
+
+```shell
+diana make-api-secrets -u <github_username> -t <github_pat> ~/neon_diana
+```
+
 ##### Providing Backend Service Credentials
 Kubernetes uses [secrets](https://kubernetes.io/docs/concepts/configuration/secret/) to store sensitive data in a cluster.
 Generate a Kubernetes secret spec with `ngi_auth_vars.yml` (`k8s_secret_ngi-auth.yml`).
@@ -169,7 +178,10 @@ can be found [in the Kubernetes docs](https://kubernetes.io/dkocs/tasks/configur
 
 ```shell
 # Apply configuration and secrets
-kubectl apply -n backend -f ~/neon_diana/k8s_secret_mq-config.yml -f ~/neon_diana/k8s_config_rabbitmq.yml -f ~/neon_diana/k8s_secret_ngi-auth.yml
+kubectl apply -f ~/neon_diana/k8s_secret_mq-config.yml -f ~/neon_diana/k8s_config_rabbitmq.yml -f ~/neon_diana/k8s_secret_ngi-auth.yml
+
+# If using private images
+kubectl apply -f ~/neon_diana/k8s_secret_github.yml
 
 # Apply ingress rules
 kubectl apply -f ~/neon_diana/k8s_ingress_nginx_mq.yml
@@ -189,6 +201,7 @@ These guides also may be useful for configuration that isn't handled in this rep
 - [NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/deploy/)
 - [cert-manager](https://cert-manager.io/docs/tutorials/acme/ingress/)
 - [MetalLB](https://metallb.universe.tf/installation/)
+- [GitHub Token Auth](https://dev.to/asizikov/using-github-container-registry-with-kubernetes-38fb)
 
 ### Certbot SSL
 The definition below can be used to configure LetsEncrypt
