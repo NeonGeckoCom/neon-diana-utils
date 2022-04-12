@@ -483,6 +483,39 @@ class TestKubernetesUtils(unittest.TestCase):
                          )
         shutil.rmtree(output_path)
 
+    def test_update_tcp_config(self):
+        from neon_diana_utils.utils.kubernetes_utils import _update_tcp_config
+        output_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(output_path, exist_ok=True)
+
+        output_file = os.path.join(output_path, "tcp_test.yml")
+
+        out_file = _update_tcp_config({'80': 'default/test:80'}, output_file)
+        self.assertTrue(os.path.isfile(out_file))
+        with open(out_file) as f:
+            config = yaml.load(f)
+        self.assertEqual(config['apiVersion'], 'v1')
+        self.assertEqual(config['kind'], 'ConfigMap')
+        self.assertEqual(config['metadata'], {'name': 'tcp-services',
+                                              'namespace': 'ingress-nginx'})
+        self.assertEqual(config['data'], {'80': 'default/test:80'})
+
+        file = _update_tcp_config({'80': 'default/test:80'}, output_file)
+        self.assertEqual(file, out_file)
+        with open(file) as f:
+            config_2 = yaml.load(f)
+
+        self.assertEqual(config, config_2)
+
+        file = _update_tcp_config({'443': 'test/test:443'}, output_file)
+        self.assertEqual(file, out_file)
+        with open(file) as f:
+            config = yaml.load(f)
+        self.assertEqual(config['data'], {'80': 'default/test:80',
+                                          '443': 'test/test:443'})
+
+        shutil.rmtree(output_path)
+
     def test_convert_docker_compose(self):
         pass
 
