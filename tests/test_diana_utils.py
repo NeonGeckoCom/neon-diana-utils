@@ -516,8 +516,93 @@ class TestKubernetesUtils(unittest.TestCase):
 
         shutil.rmtree(output_path)
 
-    def test_convert_docker_compose(self):
-        pass
+    def test_update_ingress_config(self):
+        from neon_diana_utils.utils.kubernetes_utils import _update_ingress_config
+        output_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(output_path, exist_ok=True)
+
+        output_file = os.path.join(output_path, "ingress_test.yml")
+        out_file = _update_ingress_config("test.neon.ai", "test_service", 80,
+                                          output_path=output_file)
+        self.assertTrue(os.path.isfile(out_file))
+        with open(out_file) as f:
+            config = yaml.load(f)
+        self.assertEqual(config['apiVersion'], 'networking.k8s.io/v1')
+        self.assertEqual(config['kind'], "Ingress")
+        self.assertIsInstance(
+            config['metadata']['annotations']['cert-manager.io/issuer'], str)
+        self.assertIn("test.neon.ai", config['spec']['tls'][0]['hosts'])
+        self.assertTrue(any(x for x in config['spec']['rules'] if
+                            x['host'] == "test.neon.ai" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['name'] == "test_service" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['port']['number'] == 80
+                            ))
+
+        with self.assertRaises(RuntimeError):
+            _update_ingress_config("test.neon.ai", "test_service",
+                                   80, "other-cert-issuer",
+                                   output_path=output_file)
+
+        out_file_2 = _update_ingress_config("test.neon.ai", "test_service", 80,
+                                            output_path=output_file)
+        self.assertEqual(out_file, out_file_2)
+        with open(out_file_2) as f:
+            config_2 = yaml.load(f)
+        self.assertEqual(config, config_2)
+
+        out_file = _update_ingress_config("valid.neon.ai", "valid_service",
+                                          8080, output_path=output_file)
+        with open(out_file) as f:
+            config = yaml.load(f)
+
+        self.assertIn("test.neon.ai", config['spec']['tls'][0]['hosts'])
+        self.assertIn("valid.neon.ai", config['spec']['tls'][0]['hosts'])
+        self.assertTrue(any(x for x in config['spec']['rules'] if
+                            x['host'] == "test.neon.ai" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['name'] == "test_service" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['port']['number'] == 80
+                            ))
+        self.assertTrue(any(x for x in config['spec']['rules'] if
+                            x['host'] == "valid.neon.ai" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['name'] == "valid_service" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['port']['number'] == 8080
+                            ))
+
+        shutil.rmtree(output_path)
+
+    def test_create_cert_issuer(self):
+        from neon_diana_utils.utils.kubernetes_utils import _create_cert_issuer
+        output_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(output_path, exist_ok=True)
+
+        output_file = os.path.join(output_path, "ingress_test.yml")
+        file = _create_cert_issuer("letsencrypt-prod", "test@neon.ai",
+                                   output_file)
+        self.assertEqual(file, output_file)
+        with open(file) as f:
+            config = yaml.load(f)
+
+        self.assertEqual(config['kind'], 'Issuer')
+        self.assertEqual(config['metadata']['name'], 'letsencrypt-prod')
+        self.assertEqual(config['spec']['acme']['email'], "test@neon.ai")
+
+        file = _create_cert_issuer("letsencrypt-test", "test1@neon.ai",
+                                   output_file)
+        self.assertEqual(file, output_file)
+        with open(file) as f:
+            config = yaml.load(f)
+
+        self.assertEqual(config['kind'], 'Issuer')
+        self.assertEqual(config['metadata']['name'], 'letsencrypt-test')
+        self.assertEqual(config['spec']['acme']['email'], "test1@neon.ai")
+
+        shutil.rmtree(output_path)
 
 
 if __name__ == '__main__':

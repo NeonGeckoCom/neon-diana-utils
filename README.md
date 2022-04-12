@@ -172,10 +172,29 @@ diana make-api-secrets -p ~/.config/neon ~/neon_diana
 * `~/neon_diana` specifies the output path for configuration files
 
 ##### Defining Ingress
+
+###### TCP Services
 `diana` includes cli utilities for generating ingress definitions for non-http services.
 In general, ingress definitions will be created or updated when relevant backend services are configured, but
 the `diana add-tcp-service` entrypoint is also available to define these manually. Note that adding configuration
 will modify existing spec files in the configured path.
+
+###### HTTP Services
+`diana` includes cli utilities for generating ingress rules for http services when using `ingress-nginx`.
+It is assumed that the `ingress-nginx` and `cert-manager` namespaced services are deployed as described 
+[below](#kubernetes-cluster-references) and that A Records are defined for all configured subdomains.
+
+HTTP `Ingress` is namespaced, so the configurations generated here must be applied to the same namespace
+as the HTTP `Service`s they forward to. The commands in this guide will assume everything is in the "default"
+namespace unless otherwise specified.
+
+```shell
+# Create a certificate issuer (must be deployed to each namespace)
+diana make-cert-issuer -e <email_address> ~/neon_diana
+
+# Update an Ingress configuration for every HTTP service
+diana add-ingress -s <service_name> -p <service_http_port> -h <url_for_service> ~/neon_diana
+```
 
 ##### Applying Configuration to a Cluster
 `kubectl` should be configured to reference the Kubernetes cluster you are deploying to.
@@ -189,6 +208,9 @@ kubectl apply -f ~/neon_diana/k8s_secret_mq-config.yml -f ~/neon_diana/k8s_confi
 # If using ingress-nginx, apply those configurations
 kubectl apply -f ~/neon_diana/ingress/k8s_config_tcp_services
 kubectl patch -n ingress-nginx service ingress-nginx-controller --patch-file ~/neon_diana/ingress/k8s_patch_nginx_service.yml
+
+# If using HTTP services, apply ingress rules
+kubectl apply -f ~/neon_diana/ingress/k8s_config_cert_issuer.yml -f ~/neon_diana/ingress/k8s_config_ingress.yml
 
 # If using private images
 kubectl apply -f ~/neon_diana/k8s_secret_github.yml

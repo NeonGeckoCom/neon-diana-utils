@@ -250,3 +250,43 @@ def add_tcp_service(service, port, namespace, output_path):
         click.echo(f"Wrote: {', '.join(files)}")
     except Exception as e:
         click.echo(e)
+
+
+@neon_diana_cli.command(help="Add ingress definition")
+@click.option("--service", "-s",
+              help="Service name")
+@click.option("--port", "-p",
+              help="Service port")
+@click.option("--host", "-h",
+              help="host (URL) to bind")
+@click.option("--namespace", "-n", default="default",
+              help="Namespace service is running in")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR",
+                                              "~/.config/neon/"))
+def add_ingress(service, port, host, namespace, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_update_ingress_config
+    try:
+        file = cli_update_ingress_config(service, int(port), host,
+                                         namespace, output_path)
+        click.echo(f"Wrote: {file}")
+    except Exception as e:
+        click.echo(e)
+
+
+@neon_diana_cli.command(help="Add issuer definition")
+@click.option("--name", "-n", default="letsencrypt-prod",
+              help="Issuer name")
+@click.option("--email", "-e",
+              help="Registered email address")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR",
+                                              "~/.config/neon/"))
+def make_cert_issuer(name, email, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_make_cert_issuer
+    try:
+        if not email:
+            click.echo("Email address is required")
+            return
+        file = cli_make_cert_issuer(name, email, output_path)
+        click.echo(f"Wrote: {file}")
+    except Exception as e:
+        click.echo(e)

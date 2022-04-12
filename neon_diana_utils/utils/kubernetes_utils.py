@@ -23,8 +23,8 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import os.path
-import subprocess
 import ruamel.yaml as yaml
 
 from typing import Optional
@@ -33,14 +33,13 @@ from os.path import dirname, join, expanduser, isdir, isfile
 from neon_utils.logger import LOG
 from ruamel.yaml import YAML
 
-from neon_diana_utils.constants import Orchestrator
-
 
 def cli_make_rmq_config_map(input_path: str, output_path: str) -> str:
     """
     Generate a ConfigMap object for RabbitMQ from general config files
     :param input_path: path to directory containing RabbitMQ config files
     :param output_path: file or dir to write Kubernetes spec file to
+    :returns: path to output config file
     """
     file_path = expanduser(input_path)
     if not isdir(file_path):
@@ -68,6 +67,7 @@ def cli_make_api_secret(input_path: str, output_path: str) -> str:
     Generate a Secret object for ngi-auth from general config files
     :param input_path: path to directory containing ngi_auth_vars.yml
     :param output_path: file or dir to write Kubernetes spec file to
+    :returns: path to output config file
     """
     file_path = expanduser(input_path)
     if not isdir(file_path):
@@ -83,12 +83,13 @@ def cli_make_api_secret(input_path: str, output_path: str) -> str:
     return output_path
 
 
-def cli_make_github_secret(username: str, token: str, config_dir: str):
+def cli_make_github_secret(username: str, token: str, config_dir: str) -> str:
     """
     Generate a Secret object for a GitHub image pull secret
     :param username: Github username
     :param token: Github PAT with package_read permissions
     :param config_dir: Directory to write output spec file to
+    :returns: path to output config file
     """
     output_file = _create_github_secret(username, token,
                                         join(config_dir,
@@ -96,23 +97,65 @@ def cli_make_github_secret(username: str, token: str, config_dir: str):
     return output_file
 
 
+def cli_make_cert_issuer(name: str, email: str,
+                         output_path: str = getenv("NEON_CONFIG_PATH",
+                                                   "~/.config/neon")) -> str:
+    """
+
+    """
+    config_path = expanduser(join(output_path, "ingress",
+                                  "k8s_config_cert_issuer.yml"))
+    os.makedirs(dirname(config_path), exist_ok=True)
+    config_path = _create_cert_issuer(name, email, config_path)
+    return config_path
+
+
 def cli_update_tcp_config(service: str, port: int, namespace: str = "default",
-                          output_path: Optional[str] = None):
+                          output_path: str = getenv("NEON_CONFIG_PATH",
+                                                    "~/.config/neon")) -> \
+        (str, str):
     """
     Generate an updated tcp-services config map
     :param service: service name to configure
     :param port: port to configure
     :param namespace: namespace associated with service
     :param output_path: Directory to write output spec file to
+    :returns: path to tcp service config, path to nginx service patch
     """
+    config_path = expanduser(join(output_path, "ingress",
+                                  "k8s_config_tcp_services.yml"))
+    os.makedirs(dirname(config_path), exist_ok=True)
+
     tcp_config_path = _update_tcp_config(
         {port: f"{namespace}/{service}:{port}"},
-        join(output_path, "ingress", "k8s_config_tcp_services.yml"))
+        config_path)
     patched_nginx_service = _patch_ingress_nginx_controller_service(
         f"{namespace}-{service}", int(port),
         output_path=join(output_path, "ingress",
                          "k8s_patch_nginx_service.yml"))
     return tcp_config_path, patched_nginx_service
+
+
+def cli_update_ingress_config(service: str, port: int, host: str,
+                              namespace: str = "default",
+                              output_path: str = getenv("NEON_CONFIG_PATH",
+                                                        "~/.config/neon")) -> \
+        str:
+    """
+    Generate an updated ingress configuration
+    :param service: service name to configure
+    :param port: service port to configure
+    :param host: host (URL) to bind to service
+    :param namespace: namespace of service to configure
+    :param output_path: Directory to write output files to
+    :returns: path to output config file
+    """
+    output_file = expanduser(join(output_path, "ingress",
+                                  f"k8s_config_ingress_{namespace}.yml"))
+    os.makedirs(dirname(output_file), exist_ok=True)
+    ingress_config = _update_ingress_config(host, service,
+                                            port, output_path=output_file)
+    return ingress_config
 
 
 def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
@@ -159,16 +202,6 @@ def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
                          "k8s_patch_nginx_service.yml"))
     LOG.info(f"Wrote {ingress_config}")
 
-    # with open(join(dirname(dirname(__file__)), "templates",
-    #                "k8s_ingress_nginx_mq.yml")) as f:
-    #     ingress_string_contents = f.read()
-    # for placeholder, replacement in namespaces.items():
-    #     ingress_string_contents = ingress_string_contents.replace(
-    #         '${' + placeholder + '}', replacement)
-    #
-    # with open(ingress_spec_file, "w+") as f:
-    #     f.write(ingress_string_contents)
-
 
 def generate_config_map(name: str, config_data: dict, output_path: str):
     """
@@ -191,14 +224,17 @@ def generate_config_map(name: str, config_data: dict, output_path: str):
         yaml.dump(config_map, f)
 
 
-def generate_secret(name: str, secret_data: dict, output_path: Optional[str] = None):
+def generate_secret(name: str, secret_data: dict,
+                    output_path: Optional[str] = None):
     """
     Generate a Kubernetes Secret yml definition
     :param name: ConfigMap name
     :param secret_data: Dict data to store
     :param output_path: output file to write
     """
-    output_path = output_path or join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), f"k8s_secret_{name}.yml")
+    output_path = output_path or join(getenv("NEON_CONFIG_PATH",
+                                             "~/.config/neon"),
+                                      f"k8s_secret_{name}.yml")
     output_path = expanduser(output_path)
     config_template = join(dirname(dirname(__file__)),
                            "templates", "k8s_secret.yml")
@@ -312,4 +348,111 @@ def _patch_ingress_nginx_controller_service(name: str, port: int,
 
     with open(output_file, 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
+    return output_file
+
+
+def _update_ingress_config(address: str, service: str, port: int,
+                           cert_issuer: str = "letsencrypt-prod",
+                           output_path: Optional[str] = None):
+    """
+    Update routing rules to route traffic to a service.
+    Note this assumes you are using ingress-nginx and tls
+    :param address: hostname rule applies to
+    :param service: service name
+    :param port: exposed container port service is running on
+    :param cert_issuer: Name of k8s Issuer to provide TLS certificates
+    :param output_path: path to output file to write
+    """
+    output_file = output_path or join(getenv("NEON_CONFIG_PATH",
+                                             "~/.config/neon"), "ingress",
+                                      f"k8s_config_ingress.yml")
+    output_file = expanduser(output_file)
+    if os.path.isfile(output_file):
+        LOG.info(f"Reading ingress config from {output_file}")
+        with open(output_file) as f:
+            config = yaml.safe_load(f)
+        if config['metadata']['annotations']['cert-manager.io/issuer'] != cert_issuer:
+            raise RuntimeError("Config cert_issuer conflict, skipping update")
+    else:
+        config = {
+            "kind": "Ingress",
+            "apiVersion": "networking.k8s.io/v1",
+            "metadata": {
+                "name": "ingress-diana",
+                "annotations": {
+                    "cert-manager.io/issuer": cert_issuer
+                }
+            },
+            "spec": {
+                "ingressClassName": "nginx",
+                "tls": [
+                    {"hosts": [],
+                     "secretName": f"tls-{cert_issuer}"}
+                ],
+                "rules": []
+            }
+        }
+
+    if address in config['spec']['tls'][0]['hosts']:
+        LOG.warning(f"Skipping address already configured: {address}")
+        return output_file
+
+    config['spec']['tls'][0]['hosts'].append(address)
+    config['spec']['rules'].append({"host": address,
+                                    "http": {"paths": [
+                                        {"path": '/',
+                                         "pathType": "Prefix",
+                                         "backend": {
+                                             "service": {
+                                                 "name": service,
+                                                 "port": {
+                                                     "number": port
+                                                 }
+                                             }
+                                         }}
+                                    ]}})
+    with open(output_file, 'w+') as f:
+        yaml.dump(config, f, default_flow_style=False)
+    return output_file
+
+
+def _create_cert_issuer(name: str, email: str,
+                        output_path: Optional[str] = None) -> str:
+    """
+    Create a certificate Issuer k8s spec
+    :param name: name for Issuer
+    :param email: email to use for ACME registration
+    :param output_path: spec file to write
+    """
+    output_file = output_path or join(getenv("NEON_CONFIG_PATH",
+                                             "~/.config/neon"), "ingress",
+                                      f"k8s_config_cert_issuer.yml")
+    output_file = expanduser(output_file)
+    spec = {
+        "apiVersion": "cert-manager.io/v1",
+        "kind": "Issuer",
+        "metadata": {
+            "name": name
+        },
+        "spec": {
+            "acme": {
+                "server": "https://acme-v02.api.letsencrypt.org/directory",
+                "email": email,
+                "privateKeySecretRef": {
+                    "name": name
+                },
+                "solvers": [
+                    {
+                        "http01": {
+                            "ingress": {
+                                "class": "nginx"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    with open(output_file, 'w+') as f:
+        yaml.dump(spec, f, default_flow_style=False)
     return output_file
