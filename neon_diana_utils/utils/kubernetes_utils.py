@@ -96,7 +96,7 @@ def cli_make_github_secret(username: str, token: str, config_dir: str):
     return output_file
 
 
-def cli_update_tcp_config(service: str, port: str, namespace: str = "default",
+def cli_update_tcp_config(service: str, port: int, namespace: str = "default",
                           output_path: Optional[str] = None):
     """
     Generate an updated tcp-services config map
@@ -106,9 +106,12 @@ def cli_update_tcp_config(service: str, port: str, namespace: str = "default",
     :param output_path: Directory to write output spec file to
     """
     tcp_config_path = _update_tcp_config(
-        {port: f"{namespace}/{service}:{port}"}, output_path)
+        {port: f"{namespace}/{service}:{port}"},
+        join(output_path, "ingress", "k8s_config_tcp_services.yml"))
     patched_nginx_service = _patch_ingress_nginx_controller_service(
-        service, port, output_path=output_path)
+        f"{namespace}-{service}", int(port),
+        output_path=join(output_path, "ingress",
+                         "k8s_patch_nginx_service.yml"))
     return tcp_config_path, patched_nginx_service
 
 
@@ -147,12 +150,13 @@ def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
     tcp_config = {'5672': f"{namespaces.get('MQ_NAMESPACE') or 'default'}"
                           f"/neon-rabbitmq:5672"}
     tcp_config = _update_tcp_config(tcp_config,
-                                    join(output_path,
+                                    join(output_path, "ingress"
                                          "k8s_config_tcp_services.yml"))
     LOG.info(f"Wrote {tcp_config}")
     ingress_config = _patch_ingress_nginx_controller_service(
-        "neon-rabbitmq", "5672",
-        output_path=join(output_path, "k8s_patch_nginx_service.yml"))
+        "neon-rabbitmq", 5672,
+        output_path=join(output_path, "ingress",
+                         "k8s_patch_nginx_service.yml"))
     LOG.info(f"Wrote {ingress_config}")
 
     # with open(join(dirname(dirname(__file__)), "templates",
@@ -252,13 +256,13 @@ def _update_tcp_config(port_config: dict,
     :returns: path to `tcp-services` k8s config map spec to be applied
     """
     output_file = output_path or join(getenv("NEON_CONFIG_PATH",
-                                             "~/.config/neon"),
+                                             "~/.config/neon"), "ingress",
                                       f"k8s_config_tcp_services.yml")
     output_file = expanduser(output_file)
 
     if isfile(output_file):
         with open(output_file) as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
     else:
         config = {'apiVersion': 'v1',
                   'kind': 'ConfigMap',
@@ -270,12 +274,12 @@ def _update_tcp_config(port_config: dict,
                   }
     config['data'] = {**config['data'], **port_config}
     with open(output_file, 'w') as f:
-        yaml.dump(config, f)
+        yaml.dump(config, f, default_flow_style=False)
     return output_file
 
 
-def _patch_ingress_nginx_controller_service(name: str, port: str,
-                                            target_port: Optional[str] = None,
+def _patch_ingress_nginx_controller_service(name: str, port: int,
+                                            target_port: Optional[int] = None,
                                             protocol: str = "TCP",
                                             output_path: Optional[str] = None):
     """
@@ -288,20 +292,15 @@ def _patch_ingress_nginx_controller_service(name: str, port: str,
     """
 
     output_file = output_path or join(getenv("NEON_CONFIG_PATH",
-                                             "~/.config/neon"),
+                                             "~/.config/neon"), "ingress",
                                       f"k8s_patch_nginx_service.yml")
     output_file = expanduser(output_file)
     if os.path.isfile(output_file):
         LOG.info(f"Reading ingress config from {output_file}")
         with open(output_file) as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
     else:
-        LOG.info("Reading ingress config from Kubernetes")
-        from kubernetes import client, config
-        config.load_kube_config()
-        k8s_client = client.CoreV1Api()
-        config = k8s_client.read_namespaced_service("ingress-nginx-controller",
-                                                    "ingress-nginx").to_dict()
+        config = {"spec": {"ports": []}}
 
     if any([i['name'] == name for i in config['spec']['ports']]):
         LOG.info(f"Skipping already configured port: {name}")
@@ -312,5 +311,5 @@ def _patch_ingress_nginx_controller_service(name: str, port: str,
                                     'protocol': protocol})
 
     with open(output_file, 'w') as f:
-        yaml.dump(config, f)
+        yaml.dump(config, f, default_flow_style=False)
     return output_file

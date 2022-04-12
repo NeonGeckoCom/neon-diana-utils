@@ -233,3 +233,20 @@ def make_github_secret(username, token, output_path):
         click.echo(f"Generated outputs in {output_path}")
     except Exception as e:
         click.echo(e)
+
+
+@neon_diana_cli.command(help="Add routing for TCP service to ingress")
+@click.option("--service", "-s",
+              help="Service Name")
+@click.option("--port", "-p",
+              help="TCP port to forward")
+@click.option("--namespace", "-n", default="default",
+              help="Namespace service is running in")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def add_tcp_service(service, port, namespace, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_update_tcp_config
+    try:
+        files = cli_update_tcp_config(service, port, namespace, output_path)
+        click.echo(f"Wrote: {', '.join(files)}")
+    except Exception as e:
+        click.echo(e)

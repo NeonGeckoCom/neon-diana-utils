@@ -171,6 +171,12 @@ diana make-api-secrets -p ~/.config/neon ~/neon_diana
 * `-p` specifies the path to the directory containing `ngi_auth_vars.yml`
 * `~/neon_diana` specifies the output path for configuration files
 
+##### Defining Ingress
+`diana` includes cli utilities for generating ingress definitions for non-http services.
+In general, ingress definitions will be created or updated when relevant backend services are configured, but
+the `diana add-tcp-service` entrypoint is also available to define these manually. Note that adding configuration
+will modify existing spec files in the configured path.
+
 ##### Applying Configuration to a Cluster
 `kubectl` should be configured to reference the Kubernetes cluster you are deploying to.
 If you are accessing private repositories, you will also need to configure the secret `github-auth`. Documentation 
@@ -179,6 +185,10 @@ can be found [in the Kubernetes docs](https://kubernetes.io/dkocs/tasks/configur
 ```shell
 # Apply configuration and secrets
 kubectl apply -f ~/neon_diana/k8s_secret_mq-config.yml -f ~/neon_diana/k8s_config_rabbitmq.yml -f ~/neon_diana/k8s_secret_ngi-auth.yml
+
+# If using ingress-nginx, apply those configurations
+kubectl apply -f ~/neon_diana/ingress/k8s_config_tcp_services
+kubectl patch -n ingress-nginx service ingress-nginx-controller --patch-file ~/neon_diana/ingress/k8s_patch_nginx_service.yml
 
 # If using private images
 kubectl apply -f ~/neon_diana/k8s_secret_github.yml
