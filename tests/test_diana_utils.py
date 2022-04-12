@@ -87,8 +87,12 @@ class TestBackendUtils(unittest.TestCase):
                               "http-backend")
         docker_compose = os.path.join(test_config_dir, "docker-compose.yml")
         kubernetes_spec = os.path.join(test_config_dir, "k8s_diana_backend.yml")
-        kubernetes_ingress = os.path.join(test_config_dir, "k8s_ingress_nginx_mq.yml")
-        for output in {docker_compose, kubernetes_spec, kubernetes_ingress}:
+        kubernetes_ingress = os.path.join(test_config_dir, "ingress",
+                                          "k8s_patch_nginx_service.yml")
+        kubernetes_tcp = os.path.join(test_config_dir, "ingress",
+                                      "k8s_config_tcp_services.yml")
+        for output in {docker_compose, kubernetes_spec, kubernetes_ingress,
+                       kubernetes_tcp}:
             self.assertTrue(os.path.isfile(output))
         shutil.rmtree(test_config_dir)
 

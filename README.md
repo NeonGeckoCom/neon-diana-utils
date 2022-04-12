@@ -206,7 +206,7 @@ can be found [in the Kubernetes docs](https://kubernetes.io/dkocs/tasks/configur
 kubectl apply -f ~/neon_diana/k8s_secret_mq-config.yml -f ~/neon_diana/k8s_config_rabbitmq.yml -f ~/neon_diana/k8s_secret_ngi-auth.yml
 
 # If using ingress-nginx, apply those configurations
-kubectl apply -f ~/neon_diana/ingress/k8s_config_tcp_services
+kubectl apply -f ~/neon_diana/ingress/k8s_config_tcp_services.yml
 kubectl patch -n ingress-nginx service ingress-nginx-controller --patch-file ~/neon_diana/ingress/k8s_patch_nginx_service.yml
 
 # If using HTTP services, apply ingress rules
@@ -214,9 +214,6 @@ kubectl apply -f ~/neon_diana/ingress/k8s_config_cert_issuer.yml -f ~/neon_diana
 
 # If using private images
 kubectl apply -f ~/neon_diana/k8s_secret_github.yml
-
-# Apply ingress rules
-kubectl apply -f ~/neon_diana/k8s_ingress_nginx_mq.yml
 
 # Start backend services
 kubectl apply -f ~/neon_diana/k8s_diana_backend.yml
