@@ -309,7 +309,7 @@ def _update_tcp_config(port_config: dict,
                   'data': {}
                   }
     config['data'] = {**config['data'], **port_config}
-    with open(output_file, 'w') as f:
+    with open(output_file, 'w+') as f:
         yaml.dump(config, f, default_flow_style=False)
     return output_file
 
@@ -346,7 +346,7 @@ def _patch_ingress_nginx_controller_service(name: str, port: int,
                                     'targetPort': target_port or port,
                                     'protocol': protocol})
 
-    with open(output_file, 'w') as f:
+    with open(output_file, 'w+') as f:
         yaml.dump(config, f, default_flow_style=False)
     return output_file
 
