@@ -392,7 +392,8 @@ class TestKubernetesUtils(unittest.TestCase):
         os.makedirs(test_k8s_path, exist_ok=True)
         write_kubernetes_spec(k8s_config, test_k8s_path, namespaces)
         k8s_diana = os.path.join(test_k8s_path, "k8s_diana_backend.yml")
-        k8s_ingress = os.path.join(test_k8s_path, "k8s_ingress_nginx_mq.yml")
+        k8s_ingress = os.path.join(test_k8s_path, "ingress",
+                                   "k8s_patch_nginx_service.yml")
 
         def _validate_k8s_spec(spec: dict):
             self.assertIn("apiVersion", spec)
@@ -414,7 +415,7 @@ class TestKubernetesUtils(unittest.TestCase):
             nginx_ingress = YAML().load(f)
             f.seek(0)
             string_contents = f.read()
-        _validate_k8s_spec(nginx_ingress)
+        self.assertIsInstance(nginx_ingress['spec']['ports'][0], dict)
 
         # Validate namespace substitution
         self.assertNotIn("${", string_contents)

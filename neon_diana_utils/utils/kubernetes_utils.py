@@ -190,13 +190,14 @@ def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
         f.write(string_contents)
 
     # Write Ingress spec file
+    os.makedirs(join(output_path, "ingress"), exist_ok=True)
+
     tcp_config = {'5672': f"{namespaces.get('MQ_NAMESPACE') or 'default'}"
                           f"/neon-rabbitmq:5672"}
     tcp_config = _update_tcp_config(tcp_config,
-                                    join(output_path, "ingress"
+                                    join(output_path, "ingress",
                                          "k8s_config_tcp_services.yml"))
     LOG.info(f"Wrote {tcp_config}")
-    os.makedirs(join(output_path, "ingress"))
     ingress_config = _patch_ingress_nginx_controller_service(
         "neon-rabbitmq", 5672,
         output_path=join(output_path, "ingress",
