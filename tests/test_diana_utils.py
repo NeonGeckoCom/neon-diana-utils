@@ -86,7 +86,8 @@ class TestBackendUtils(unittest.TestCase):
                               "mq-backend",
                               "http-backend")
         docker_compose = os.path.join(test_config_dir, "docker-compose.yml")
-        kubernetes_spec = os.path.join(test_config_dir, "k8s_diana_backend.yml")
+        kubernetes_spec = os.path.join(test_config_dir, "services",
+                                       "k8s_diana_backend.yml")
         kubernetes_ingress = os.path.join(test_config_dir, "ingress",
                                           "k8s_patch_nginx_service.yml")
         kubernetes_tcp = os.path.join(test_config_dir, "ingress",
@@ -390,12 +391,14 @@ class TestKubernetesUtils(unittest.TestCase):
             write_kubernetes_spec
         namespaces = {"MQ_NAMESPACE": "mq_namespace",
                       "HTTP_NAMESPACE": "http_namespace"}
-        with open(os.path.join(os.path.dirname(__file__), "config", "valid_k8s_config.json")) as f:
+        with open(os.path.join(os.path.dirname(__file__), "config",
+                               "valid_k8s_config.json")) as f:
             k8s_config = json.load(f)
         test_k8s_path = os.path.join(os.path.dirname(__file__), "outputs")
         os.makedirs(test_k8s_path, exist_ok=True)
         write_kubernetes_spec(k8s_config, test_k8s_path, namespaces)
-        k8s_diana = os.path.join(test_k8s_path, "k8s_diana_backend.yml")
+        k8s_diana = os.path.join(test_k8s_path, "services",
+                                 "k8s_diana_backend.yml")
         k8s_ingress = os.path.join(test_k8s_path, "ingress",
                                    "k8s_patch_nginx_service.yml")
 
