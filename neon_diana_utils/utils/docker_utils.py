@@ -26,8 +26,8 @@
 
 import docker
 
-from os import getenv
-from os.path import join, dirname, expanduser
+from os import getenv, makedirs
+from os.path import join, dirname, expanduser, isdir
 from typing import Optional
 
 from docker.errors import APIError
@@ -92,17 +92,19 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
     volumes = volumes or list()
     for vol in volumes:
         if volume_type == "nfs":
-            config_host, config_path = volumes[vol].split(':')
-            config_opts = f"addr={config_host},nolock,rw,soft,nfsvers=4"
-            neon_config_path = f"\":{config_path}\""
+            volume_host, volume_path = volumes[vol].split(':')
+            volume_opts = f"addr={volume_host},nolock,rw,soft,nfsvers=4"
+            volume_path = f"\":{volume_path}\""
         else:
-            config_opts = "bind"
-            neon_config_path = volumes[vol] or dirname(compose_file)
+            volume_opts = "bind"
+            volume_path = volumes[vol] or dirname(compose_file)
+            if not isdir(volume_path):
+                makedirs(volume_path)
         compose_contents["volumes"][vol] = {
             "driver_opts": {
-                "type": f"{volume_type}-{vol}",
-                "o": config_opts,
-                "device": neon_config_path
+                "type": f"{volume_type}-{vol}" if volume_type else vol,
+                "o": volume_opts,
+                "device": volume_path
             },
             "labels": {
                 "kompose.volume.storage-class-name": f"nfs-{vol}"

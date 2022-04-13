@@ -69,10 +69,10 @@ def cli_configure_backend(config_path: str, mq_services: Set[str],
         raise ValueError("No services specified")
 
     # Parse volume paths
-    volumes = None
-    if volume_path:
-        volumes = {"config": join(volume_path, "config"),
-                   "metrics": join(volume_path, "metrics")}
+    volumes = {"config": join(volume_path, "config") if volume_path
+               else config_path,
+               "metrics": join(volume_path, "metrics") if volume_path
+               else join(config_path, "metrics")}
 
     # Parse Namespaces
     namespaces = {"MQ_NAMESPACE": mq_namespace,
@@ -179,7 +179,7 @@ def write_neon_mq_config(credentials: dict, config_file: Optional[str] = None):
 
     # Generate k8s secret
     generate_secret("mq-config", {"mq_config.json": json.dumps(configuration)},
-                    join(config_path, "k8s_secret_mq-config.yml"))
+                    join(config_path, "config", "k8s_secret_mq-config.yml"))
 
 
 def write_rabbit_config(api: RabbitMQAPI, config_file: Optional[str] = None):
@@ -209,7 +209,7 @@ def write_rabbit_config(api: RabbitMQAPI, config_file: Optional[str] = None):
     # Generate k8s config
     generate_config_map("rabbitmq", {"rabbit_mq_config.json": json.dumps(config),
                                      "rabbitmq.conf": rmq_conf_contents},
-                        join(config_path, "k8s_config_rabbitmq.yml"))
+                        join(config_path, "config", "k8s_config_rabbitmq.yml"))
 
 
 def _parse_services(requested_services: set,

@@ -170,7 +170,8 @@ def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
     output_dir = expanduser(output_path) if output_path else \
         expanduser(getenv("NEON_CONFIG_PATH", "~/.config/neon"))
 
-    diana_spec_file = join(output_dir, "k8s_diana_backend.yml")
+    diana_spec_file = join(output_dir, "services", "k8s_diana_backend.yml")
+    os.makedirs(dirname(diana_spec_file), exist_ok=True)
 
     # Write Diana services spec file
     with open(join(dirname(dirname(__file__)), "templates",
@@ -214,6 +215,8 @@ def generate_config_map(name: str, config_data: dict, output_path: str):
     """
     output_path = output_path or join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), f"k8s_config_{name}.yml")
     output_path = expanduser(output_path)
+    if not isdir(dirname(output_path)):
+        os.makedirs(dirname(output_path), exist_ok=True)
     config_template = join(dirname(dirname(__file__)),
                            "templates", "k8s_config_map.yml")
     with open(config_template) as f:
@@ -238,6 +241,8 @@ def generate_secret(name: str, secret_data: dict,
                                              "~/.config/neon"),
                                       f"k8s_secret_{name}.yml")
     output_path = expanduser(output_path)
+    if not isdir(dirname(output_path)):
+        os.makedirs(dirname(output_path), exist_ok=True)
     config_template = join(dirname(dirname(__file__)),
                            "templates", "k8s_secret.yml")
     with open(config_template) as f:

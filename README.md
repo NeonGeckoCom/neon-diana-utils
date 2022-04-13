@@ -124,6 +124,10 @@ saved to the host filesystem or a configured NFS share. The configuration files
 After a backend is configured, it can be started with `diana start-backend`. A standard example is included here, but 
 a description of config options is available via: `diana start-backend --help`.
 
+> *Note*: If running private containers, you will need to authenticate with Docker.
+> Documentation is available [from docker](https://docs.docker.com/engine/reference/commandline/login/).
+> Containers from NeonGecko are published to the `ghcr.io` server
+
 ```shell
 diana start-backend ~/neon_diana
 ```
@@ -203,7 +207,7 @@ can be found [in the Kubernetes docs](https://kubernetes.io/dkocs/tasks/configur
 
 ```shell
 # Apply configuration and secrets
-kubectl apply -f ~/neon_diana/k8s_secret_mq-config.yml -f ~/neon_diana/k8s_config_rabbitmq.yml -f ~/neon_diana/k8s_secret_ngi-auth.yml
+kubectl apply -f ~/neon_diana/config/k8s_secret_mq-config.yml -f ~/neon_diana/config/k8s_config_rabbitmq.yml -f ~/neon_diana/k8s_secret_ngi-auth.yml
 
 # If using ingress-nginx, apply those configurations
 kubectl apply -f ~/neon_diana/ingress/k8s_config_tcp_services.yml
@@ -216,7 +220,7 @@ kubectl apply -f ~/neon_diana/ingress/k8s_config_cert_issuer.yml -f ~/neon_diana
 kubectl apply -f ~/neon_diana/k8s_secret_github.yml
 
 # Start backend services
-kubectl apply -f ~/neon_diana/k8s_diana_backend.yml
+kubectl apply -f ~/neon_diana/services/k8s_diana_backend.yml
 ```
 
 # Kubernetes Cluster References
