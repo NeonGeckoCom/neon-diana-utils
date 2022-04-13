@@ -1,5 +1,5 @@
 {
-  "server": "neon_rabbitmq",
+  "server": "neon-rabbitmq",
   "users": {
     "neon_metrics_connector": {
       "user": "neon_metrics",

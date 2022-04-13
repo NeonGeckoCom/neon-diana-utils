@@ -24,28 +24,13 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import subprocess
 import click
 
-from os import makedirs, getenv
-from os.path import expanduser, isdir, isfile, join
+from os import getenv
 from click_default_group import DefaultGroup
 
-from .version import __version__
-
-# TODO: Valid services can be read from service_mappings.yml directly
-VALID_SERVICES = ("neon_rabbitmq",
-                  "neon_api_proxy",
-                  "neon_brands_service",
-                  "neon_email_proxy",
-                  "neon_script_parser",
-                  "neon_metrics_service")
-
-# TODO: Consider tagging these in service_mappings.yml or some other method for easier extensibility DM
-DEFAULT_SERVICES = ("neon_rabbitmq",
-                    "neon_api_proxy",
-                    "neon_email_proxy",
-                    "neon_metrics_service")
+from neon_diana_utils.constants import valid_mq_services, default_mq_services, Orchestrator
+from neon_diana_utils.version import __version__
 
 
 @click.group("diana", cls=DefaultGroup,
@@ -59,108 +44,249 @@ def neon_diana_cli(version: bool = False):
         click.echo(f"Diana version {__version__}")
 
 
+# Backend
 @neon_diana_cli.command(help="Configure a Diana Backend")
 @click.option('--service', '-s', multiple=True,
               help="Optional service to configure")
 @click.option('--default', '-d', is_flag=True, default=False,
-              help="Configure the Default Backend Services")
-@click.option('--complete', '-c', is_flag=True, default=False,
-              help="Configure All Backend Services. (NOTE: This includes packages that require authentication)")
+              help="Configure the Default MQ Backend Services")
+@click.option('--complete', '-c', '-a', is_flag=True, default=False,
+              help="Configure All MQ Backend Services. (NOTE: This includes packages that require authentication)")
 @click.option('--user', '-u', default="admin",
               help="Username to configure for administration")
 @click.option('--password', '-p',
               help="Password associated with admin user to login to console")
+@click.option('--volume-driver', default='none',
+              help="Docker Volume Driver to use. 'none' and 'nfs' are currently supported")
+@click.option('--volume-path', default=None,
+              help="Optional fully-qualified path to config (i.e. /opt/diana, 192.168.1.10:/opt/diana")
+@click.option('--skip-config', is_flag=True, default=False,
+              help="Skip backend configuration and just generate orchestrator definitions")
+@click.option('--namespace', '-n', default='default',
+              help="Kubernetes namespace to configure services to run in")
+@click.option('--mq-namespace', default=None,
+              help="Kubernetes namespace to configure MQ services to run in")
+@click.option('--http-namespace', default=None,
+              help="Kubernetes namespace to configure HTTP services to run in")
+@click.option('--http', is_flag=True, default=False,
+              help="Configure HTTP backend services in addition to MQ")
 @click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def configure_backend(config_path, service, default, complete, user, password):
-    # Determine Configuration Path
-    config_path = expanduser(config_path)
-    if not config_path:
-        return ValueError("Null config_path")
-    if not isdir(config_path):
-        try:
-            makedirs(config_path)
-        except Exception:
-            return ValueError(f"Unable to create config directory: {config_path}")
-
-    # Determine admin credentials
-    if not password:
-        click.echo(f"No password specified, please specify a password for RabbitMQ admin access")
-        return ValueError("Null password")
-
-    click.echo(f"Configuring RabbitMQ Administrator: {user}")
-
+def configure_backend(config_path, service, default, complete, user, password,
+                      volume_driver, volume_path, skip_config, namespace, http,
+                      mq_namespace, http_namespace):
+    from neon_diana_utils.utils.backend import cli_configure_backend
     # Determine Services to Configure
     if complete:
-        services_to_configure = VALID_SERVICES
+        services_to_configure = valid_mq_services()
     elif default:
-        services_to_configure = DEFAULT_SERVICES
+        services_to_configure = default_mq_services()
     else:
         services_to_configure = None
     if service:
         if services_to_configure:
             click.echo("Service set and individual services specified\n"
                        "Configuring specified services only.")
-        services_to_configure = list(service)
-        for service in services_to_configure:
-            if service not in VALID_SERVICES:
-                click.echo(f"Invalid service requested will be ignored: {service}")
-                services_to_configure.remove(service)
-        services_to_configure = set(services_to_configure)
-    if not services_to_configure:
-        click.echo("No services specified. Call `diana configure-backend --help` for more info")
-        return ValueError("No services provided")
-    click.echo(f"Configuring API Services: {services_to_configure}")
-    click.echo(f"Configuration will be written to: {config_path}")
+        services_to_configure = set(service)
 
     # Call setup
     import sys
     std_out = sys.stdout
-    sys.stdout = open("/dev/null", 'a+')
-    from .utils import create_diana_configurations
-    create_diana_configurations(user, password, services_to_configure, config_path)
-    sys.stdout = std_out
-    click.echo(f"Configuration Complete")
-    click.echo(f"Remember to place `ngi_auth_vars.yml` in {config_path}")
+    try:
+        sys.stdout = open("/dev/null", 'a+')
+        mq_namespace = mq_namespace or namespace
+        http_namespace = http_namespace or namespace
+        cli_configure_backend(config_path, services_to_configure, user,
+                              password, http, volume_driver, volume_path,
+                              skip_config, mq_namespace, http_namespace)
+        sys.stdout = std_out
+        if not skip_config:
+            click.echo(f"Configured RabbitMQ Administrator: {user}")
+            click.echo(f"Remember to place `ngi_auth_vars.yml` in {config_path}")
+        click.echo(f"Configured API Services: {services_to_configure}")
+        click.echo(f"Configuration was written to: {config_path}")
+    except Exception as e:
+        sys.stdout = std_out
+        if not isinstance(e, ValueError):
+            click.echo("An unexpected error occurred during configuration:")
+        click.echo(e)
+        click.echo("Call `diana configure-backend --help` for more info")
 
 
 @neon_diana_cli.command(help="Start a Diana Backend")
-@click.option('--service', '-s', multiple=True,
-              help="Optional service to start")
 @click.option('--attach', '-a', is_flag=True, default=False,
               help="Attach terminal to the started containers")
+@click.option('--orchestrator', '-o', default="docker",
+              help="Orchestrator (docker|kubernetes|openshift")
 @click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def start_backend(config_path, service, attach):
-    # Validate path to docker-compose.yml
-    config_path = expanduser(config_path)
-    if not config_path:
-        return ValueError("Null config_path")
-    if not isfile(join(config_path, "docker-compose.yml")):
-        click.echo(f"docker-compose.yml not found in {config_path}")
-        return ValueError(f"docker-compose.yml not found")
+def start_backend(config_path, attach, orchestrator):
+    from neon_diana_utils.utils.backend import cli_start_backend
 
-    docker_compose_command = "docker-compose up"
-    if service:
-        # TODO: Validate services are in docker compose file
-        docker_compose_command = " ".join((docker_compose_command, " ".join(service)))
-    if not attach:
-        docker_compose_command += " --detach"
-        subprocess.Popen(["/bin/bash", "-c", f"cd {config_path} && {docker_compose_command}"]).communicate()
-        click.echo("Diana Backend Started")
+    # Determine requested orchestrator
+    if orchestrator == "docker":
+        orchestrator = Orchestrator.DOCKER
+    elif orchestrator == "kubernetes":
+        orchestrator = Orchestrator.KUBERNETES
+    elif orchestrator == "openshift":
+        orchestrator = Orchestrator.OPENSHIFT
     else:
-        subprocess.Popen(["/bin/bash", "-c", f"cd {config_path} && {docker_compose_command}"]).communicate()
+        click.echo(f"Invalid orchestrator specified: {orchestrator}")
+        return
+
+    # Start the backend
+    click.echo(f"Starting backend")
+    try:
+        cli_start_backend(config_path, attach, orchestrator)
+        if not attach:
+            click.echo("Diana Backend Started")
+    except Exception as e:
+        if not isinstance(e, ValueError):
+            click.echo("An unexpected error occurred during configuration:")
+        click.echo(e)
 
 
 @neon_diana_cli.command(help="Stop a Diana Backend")
+@click.option('--orchestrator', '-o', default="docker",
+              help="Orchestrator (docker|kubernetes|openshift")
 @click.argument('config_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def stop_backend(config_path):
-    # Validate path to docker-compose.yml
-    config_path = expanduser(config_path)
-    if not config_path:
-        return ValueError("Null config_path")
-    if not isfile(join(config_path, "docker-compose.yml")):
-        click.echo(f"docker-compose.yml not found in {config_path}")
-        return ValueError(f"docker-compose.yml not found")
+def stop_backend(config_path, orchestrator):
+    from neon_diana_utils.utils.backend import cli_stop_backend
 
-    docker_compose_command = "docker-compose down"
-    subprocess.Popen(["/bin/bash", "-c", f"cd {config_path} && {docker_compose_command}"]).communicate()
-    click.echo("Diana Backend Stopped")
+    # Determine requested orchestrator
+    if orchestrator == "docker":
+        orchestrator = Orchestrator.DOCKER
+    elif orchestrator == "kubernetes":
+        orchestrator = Orchestrator.KUBERNETES
+    elif orchestrator == "openshift":
+        orchestrator = Orchestrator.OPENSHIFT
+    else:
+        click.echo(f"Invalid orchestrator specified: {orchestrator}")
+        return
+
+    try:
+        cli_stop_backend(config_path, orchestrator)
+        click.echo("Diana Backend Stopped")
+    except Exception as e:
+        if not isinstance(e, ValueError):
+            click.echo("An unexpected error occurred during configuration:")
+        click.echo(e)
+
+
+# @neon_diana_cli.command(help="Generate a volume config for NFS-based shares")
+# @click.option("--hostname",
+#               help="Hostname or IP address of NFS Server")
+# @click.option("--config_path", "-c",
+#               help="Host path to configuration share")
+# @click.option("--metric_path", "-m",
+#               help="Host path to metrics share")
+# @click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+# def make_nfs_config(hostname, config_path, metric_path, output_path):
+#     try:
+#         output_path = expanduser(output_path)
+#         if isdir(output_path):
+#             output_file = join(output_path, "k8s_nfs_volumes.yml")
+#         elif isfile(output_path):
+#             output_file = output_path
+#         else:
+#             raise ValueError(f"Invalid output_path: {output_path}")
+#         generate_nfs_volume_config(hostname, config_path, metric_path, output_file)
+#         click.echo(f"Generated {output_file}")
+#     except Exception as e:
+#         click.echo(e)
+
+# Kubernetes
+@neon_diana_cli.command(help="Generate a Kubernetes ConfigMap for RabbitMQ")
+@click.option("--path", "-p",
+              help="Path to config files to populate")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def make_config_map(path, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_make_rmq_config_map
+    try:
+        output_file = cli_make_rmq_config_map(path, output_path)
+        click.echo(f"Generated {output_file}")
+    except Exception as e:
+        click.echo(e)
+
+
+@neon_diana_cli.command(help="Generate Kubernetes Secrets for ngi_auth_vars.yml")
+@click.option("--path", "-p",
+              help="Path to config files to populate")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def make_api_secrets(path, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_make_api_secret
+    try:
+        output_path = cli_make_api_secret(path, output_path)
+        click.echo(f"Generated outputs in {output_path}")
+    except Exception as e:
+        click.echo(e)
+
+
+@neon_diana_cli.command(help="Generate Kubernetes secret for Github images")
+@click.option("--username", "-u",
+              help="Github username")
+@click.option("--token", "-t",
+              help="Github PAT with read_packages permission")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def make_github_secret(username, token, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_make_github_secret
+    try:
+        output_path = cli_make_github_secret(username, token, output_path)
+        click.echo(f"Generated outputs in {output_path}")
+    except Exception as e:
+        click.echo(e)
+
+
+@neon_diana_cli.command(help="Add routing for TCP service to ingress")
+@click.option("--service", "-s",
+              help="Service Name")
+@click.option("--port", "-p",
+              help="TCP port to forward")
+@click.option("--namespace", "-n", default="default",
+              help="Namespace service is running in")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
+def add_tcp_service(service, port, namespace, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_update_tcp_config
+    try:
+        files = cli_update_tcp_config(service, port, namespace, output_path)
+        click.echo(f"Wrote: {', '.join(files)}")
+    except Exception as e:
+        click.echo(e)
+
+
+@neon_diana_cli.command(help="Add ingress definition")
+@click.option("--service", "-s",
+              help="Service name")
+@click.option("--port", "-p",
+              help="Service port")
+@click.option("--host", "-h",
+              help="host (URL) to bind")
+@click.option("--namespace", "-n", default="default",
+              help="Namespace service is running in")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR",
+                                              "~/.config/neon/"))
+def add_ingress(service, port, host, namespace, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_update_ingress_config
+    try:
+        file = cli_update_ingress_config(service, int(port), host,
+                                         namespace, output_path)
+        click.echo(f"Wrote: {file}")
+    except Exception as e:
+        click.echo(e)
+
+
+@neon_diana_cli.command(help="Add issuer definition")
+@click.option("--name", "-n", default="letsencrypt-prod",
+              help="Issuer name")
+@click.option("--email", "-e",
+              help="Registered email address")
+@click.argument('output_path', default=getenv("NEON_CONFIG_DIR",
+                                              "~/.config/neon/"))
+def make_cert_issuer(name, email, output_path):
+    from neon_diana_utils.utils.kubernetes_utils import cli_make_cert_issuer
+    try:
+        if not email:
+            click.echo("Email address is required")
+            return
+        file = cli_make_cert_issuer(name, email, output_path)
+        click.echo(f"Wrote: {file}")
+    except Exception as e:
+        click.echo(e)
