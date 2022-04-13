@@ -124,6 +124,10 @@ saved to the host filesystem or a configured NFS share. The configuration files
 After a backend is configured, it can be started with `diana start-backend`. A standard example is included here, but 
 a description of config options is available via: `diana start-backend --help`.
 
+> *Note*: If running private containers, you will need to authenticate with Docker.
+> Documentation is available [from docker](https://docs.docker.com/engine/reference/commandline/login/).
+> Containers from NeonGecko are published to the `ghcr.io` server
+
 ```shell
 diana start-backend ~/neon_diana
 ```
@@ -171,6 +175,31 @@ diana make-api-secrets -p ~/.config/neon ~/neon_diana
 * `-p` specifies the path to the directory containing `ngi_auth_vars.yml`
 * `~/neon_diana` specifies the output path for configuration files
 
+##### Defining Ingress
+
+###### TCP Services
+`diana` includes cli utilities for generating ingress definitions for non-http services.
+In general, ingress definitions will be created or updated when relevant backend services are configured, but
+the `diana add-tcp-service` entrypoint is also available to define these manually. Note that adding configuration
+will modify existing spec files in the configured path.
+
+###### HTTP Services
+`diana` includes cli utilities for generating ingress rules for http services when using `ingress-nginx`.
+It is assumed that the `ingress-nginx` and `cert-manager` namespaced services are deployed as described 
+[below](#kubernetes-cluster-references) and that A Records are defined for all configured subdomains.
+
+HTTP `Ingress` is namespaced, so the configurations generated here must be applied to the same namespace
+as the HTTP `Service`s they forward to. The commands in this guide will assume everything is in the "default"
+namespace unless otherwise specified.
+
+```shell
+# Create a certificate issuer (must be deployed to each namespace)
+diana make-cert-issuer -e <email_address> ~/neon_diana
+
+# Update an Ingress configuration for every HTTP service
+diana add-ingress -s <service_name> -p <service_http_port> -h <url_for_service> ~/neon_diana
+```
+
 ##### Applying Configuration to a Cluster
 `kubectl` should be configured to reference the Kubernetes cluster you are deploying to.
 If you are accessing private repositories, you will also need to configure the secret `github-auth`. Documentation 
@@ -178,16 +207,20 @@ can be found [in the Kubernetes docs](https://kubernetes.io/dkocs/tasks/configur
 
 ```shell
 # Apply configuration and secrets
-kubectl apply -f ~/neon_diana/k8s_secret_mq-config.yml -f ~/neon_diana/k8s_config_rabbitmq.yml -f ~/neon_diana/k8s_secret_ngi-auth.yml
+kubectl apply -f ~/neon_diana/config/k8s_secret_mq-config.yml -f ~/neon_diana/config/k8s_config_rabbitmq.yml -f ~/neon_diana/k8s_secret_ngi-auth.yml
+
+# If using ingress-nginx, apply those configurations
+kubectl apply -f ~/neon_diana/ingress/k8s_config_tcp_services.yml
+kubectl patch -n ingress-nginx service ingress-nginx-controller --patch-file ~/neon_diana/ingress/k8s_patch_nginx_service.yml
+
+# If using HTTP services, apply ingress rules
+kubectl apply -f ~/neon_diana/ingress/k8s_config_cert_issuer.yml -f ~/neon_diana/ingress/k8s_config_ingress.yml
 
 # If using private images
 kubectl apply -f ~/neon_diana/k8s_secret_github.yml
 
-# Apply ingress rules
-kubectl apply -f ~/neon_diana/k8s_ingress_nginx_mq.yml
-
 # Start backend services
-kubectl apply -f ~/neon_diana/k8s_diana_backend.yml
+kubectl apply -f ~/neon_diana/services/k8s_diana_backend.yml
 ```
 
 # Kubernetes Cluster References

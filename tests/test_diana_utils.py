@@ -86,9 +86,14 @@ class TestBackendUtils(unittest.TestCase):
                               "mq-backend",
                               "http-backend")
         docker_compose = os.path.join(test_config_dir, "docker-compose.yml")
-        kubernetes_spec = os.path.join(test_config_dir, "k8s_diana_backend.yml")
-        kubernetes_ingress = os.path.join(test_config_dir, "k8s_ingress_nginx_mq.yml")
-        for output in {docker_compose, kubernetes_spec, kubernetes_ingress}:
+        kubernetes_spec = os.path.join(test_config_dir, "services",
+                                       "k8s_diana_backend.yml")
+        kubernetes_ingress = os.path.join(test_config_dir, "ingress",
+                                          "k8s_patch_nginx_service.yml")
+        kubernetes_tcp = os.path.join(test_config_dir, "ingress",
+                                      "k8s_config_tcp_services.yml")
+        for output in {docker_compose, kubernetes_spec, kubernetes_ingress,
+                       kubernetes_tcp}:
             self.assertTrue(os.path.isfile(output))
         shutil.rmtree(test_config_dir)
 
@@ -386,13 +391,16 @@ class TestKubernetesUtils(unittest.TestCase):
             write_kubernetes_spec
         namespaces = {"MQ_NAMESPACE": "mq_namespace",
                       "HTTP_NAMESPACE": "http_namespace"}
-        with open(os.path.join(os.path.dirname(__file__), "config", "valid_k8s_config.json")) as f:
+        with open(os.path.join(os.path.dirname(__file__), "config",
+                               "valid_k8s_config.json")) as f:
             k8s_config = json.load(f)
         test_k8s_path = os.path.join(os.path.dirname(__file__), "outputs")
         os.makedirs(test_k8s_path, exist_ok=True)
         write_kubernetes_spec(k8s_config, test_k8s_path, namespaces)
-        k8s_diana = os.path.join(test_k8s_path, "k8s_diana_backend.yml")
-        k8s_ingress = os.path.join(test_k8s_path, "k8s_ingress_nginx_mq.yml")
+        k8s_diana = os.path.join(test_k8s_path, "services",
+                                 "k8s_diana_backend.yml")
+        k8s_ingress = os.path.join(test_k8s_path, "ingress",
+                                   "k8s_patch_nginx_service.yml")
 
         def _validate_k8s_spec(spec: dict):
             self.assertIn("apiVersion", spec)
@@ -414,7 +422,7 @@ class TestKubernetesUtils(unittest.TestCase):
             nginx_ingress = YAML().load(f)
             f.seek(0)
             string_contents = f.read()
-        _validate_k8s_spec(nginx_ingress)
+        self.assertIsInstance(nginx_ingress['spec']['ports'][0], dict)
 
         # Validate namespace substitution
         self.assertNotIn("${", string_contents)
@@ -483,8 +491,126 @@ class TestKubernetesUtils(unittest.TestCase):
                          )
         shutil.rmtree(output_path)
 
-    def test_convert_docker_compose(self):
-        pass
+    def test_update_tcp_config(self):
+        from neon_diana_utils.utils.kubernetes_utils import _update_tcp_config
+        output_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(output_path, exist_ok=True)
+
+        output_file = os.path.join(output_path, "tcp_test.yml")
+
+        out_file = _update_tcp_config({'80': 'default/test:80'}, output_file)
+        self.assertTrue(os.path.isfile(out_file))
+        with open(out_file) as f:
+            config = yaml.load(f)
+        self.assertEqual(config['apiVersion'], 'v1')
+        self.assertEqual(config['kind'], 'ConfigMap')
+        self.assertEqual(config['metadata'], {'name': 'tcp-services',
+                                              'namespace': 'ingress-nginx'})
+        self.assertEqual(config['data'], {'80': 'default/test:80'})
+
+        file = _update_tcp_config({'80': 'default/test:80'}, output_file)
+        self.assertEqual(file, out_file)
+        with open(file) as f:
+            config_2 = yaml.load(f)
+
+        self.assertEqual(config, config_2)
+
+        file = _update_tcp_config({'443': 'test/test:443'}, output_file)
+        self.assertEqual(file, out_file)
+        with open(file) as f:
+            config = yaml.load(f)
+        self.assertEqual(config['data'], {'80': 'default/test:80',
+                                          '443': 'test/test:443'})
+
+        shutil.rmtree(output_path)
+
+    def test_update_ingress_config(self):
+        from neon_diana_utils.utils.kubernetes_utils import _update_ingress_config
+        output_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(output_path, exist_ok=True)
+
+        output_file = os.path.join(output_path, "ingress_test.yml")
+        out_file = _update_ingress_config("test.neon.ai", "test_service", 80,
+                                          output_path=output_file)
+        self.assertTrue(os.path.isfile(out_file))
+        with open(out_file) as f:
+            config = yaml.load(f)
+        self.assertEqual(config['apiVersion'], 'networking.k8s.io/v1')
+        self.assertEqual(config['kind'], "Ingress")
+        self.assertIsInstance(
+            config['metadata']['annotations']['cert-manager.io/issuer'], str)
+        self.assertIn("test.neon.ai", config['spec']['tls'][0]['hosts'])
+        self.assertTrue(any(x for x in config['spec']['rules'] if
+                            x['host'] == "test.neon.ai" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['name'] == "test_service" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['port']['number'] == 80
+                            ))
+
+        with self.assertRaises(RuntimeError):
+            _update_ingress_config("test.neon.ai", "test_service",
+                                   80, "other-cert-issuer",
+                                   output_path=output_file)
+
+        out_file_2 = _update_ingress_config("test.neon.ai", "test_service", 80,
+                                            output_path=output_file)
+        self.assertEqual(out_file, out_file_2)
+        with open(out_file_2) as f:
+            config_2 = yaml.load(f)
+        self.assertEqual(config, config_2)
+
+        out_file = _update_ingress_config("valid.neon.ai", "valid_service",
+                                          8080, output_path=output_file)
+        with open(out_file) as f:
+            config = yaml.load(f)
+
+        self.assertIn("test.neon.ai", config['spec']['tls'][0]['hosts'])
+        self.assertIn("valid.neon.ai", config['spec']['tls'][0]['hosts'])
+        self.assertTrue(any(x for x in config['spec']['rules'] if
+                            x['host'] == "test.neon.ai" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['name'] == "test_service" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['port']['number'] == 80
+                            ))
+        self.assertTrue(any(x for x in config['spec']['rules'] if
+                            x['host'] == "valid.neon.ai" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['name'] == "valid_service" and
+                            x['http']['paths'][0]['backend']['service']
+                            ['port']['number'] == 8080
+                            ))
+
+        shutil.rmtree(output_path)
+
+    def test_create_cert_issuer(self):
+        from neon_diana_utils.utils.kubernetes_utils import _create_cert_issuer
+        output_path = os.path.join(os.path.dirname(__file__), "outputs")
+        os.makedirs(output_path, exist_ok=True)
+
+        output_file = os.path.join(output_path, "ingress_test.yml")
+        file = _create_cert_issuer("letsencrypt-prod", "test@neon.ai",
+                                   output_file)
+        self.assertEqual(file, output_file)
+        with open(file) as f:
+            config = yaml.load(f)
+
+        self.assertEqual(config['kind'], 'Issuer')
+        self.assertEqual(config['metadata']['name'], 'letsencrypt-prod')
+        self.assertEqual(config['spec']['acme']['email'], "test@neon.ai")
+
+        file = _create_cert_issuer("letsencrypt-test", "test1@neon.ai",
+                                   output_file)
+        self.assertEqual(file, output_file)
+        with open(file) as f:
+            config = yaml.load(f)
+
+        self.assertEqual(config['kind'], 'Issuer')
+        self.assertEqual(config['metadata']['name'], 'letsencrypt-test')
+        self.assertEqual(config['spec']['acme']['email'], "test1@neon.ai")
+
+        shutil.rmtree(output_path)
 
 
 if __name__ == '__main__':
