@@ -5,7 +5,7 @@ metadata:
   labels:
     neon.project.name: diana
     neon.diana.service: {{ tpl .Chart.Name . }}
-    neon.service.class: http
+    neon.service.class: http-backend
   name: {{ tpl .Chart.Name . }}
 spec:
   type: ClusterIP

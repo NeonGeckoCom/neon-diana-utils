@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: {{ tpl .Chart.Name . }}
 spec:
-  replicas: 1
+  replicas: {{ tpl .Values.replicaCount . }}
   selector:
     matchLabels:
       neon.diana.service: {{ tpl .Chart.Name . }}
@@ -16,7 +16,7 @@ spec:
       labels:
         neon.diana.service: {{ tpl .Chart.Name . }}
         neon.project.name: diana
-        neon.service.class: http
+        neon.service.class: http-backend
     spec:
       containers:
         - image: {{ tpl .Values.image.repository . }}:{{ tpl .Values.image.tag . }}
