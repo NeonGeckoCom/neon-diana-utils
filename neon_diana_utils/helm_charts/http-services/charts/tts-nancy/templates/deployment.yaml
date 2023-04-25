@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &deployment_name {{ .Chart.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      neon.diana.service: *deployment_name
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        neon.diana.service: *deployment_name
+        neon.project.name: diana
+        neon.service.class: http
+    spec:
+      containers:
+        - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          name: *deployment_name
+          ports:
+            - name: *deployment_name
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+      restartPolicy: Always

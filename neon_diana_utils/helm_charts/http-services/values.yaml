@@ -1,0 +1,49 @@
+lang-libretranslate:
+  hostname: &host_libretranslate libretranslate.diana.k8s
+  ingress.enabled: False
+tts-coqui:
+  hostname: &host_coqui coqui.diana.k8s
+  ingress.enabled: False
+tts-glados:
+  hostname: &host_glados glados.diana.k8s
+  ingress.enabled: False
+tts-larynx:
+  hostname: &host_larynx larynx.diana.k8s
+  ingress.enabled: False
+tts-ljspeech:
+  hostname: &host_ljspeech ljspeech.diana.k8s
+  ingress.enabled: False
+tts-mozilla:
+  hostname: &host_mtts mtts.diana.k8s
+  ingress.enabled: False
+tts-nancy:
+  hostname: &host_nancy nancy.diana.k8s
+  ingress.enabled: False
+ww-snowboy:
+  hostname: &host_snowboy snowboy.diana.k8s
+  ingress.enabled: False
+
+ingress:
+  className: nginx
+  tls:
+    hosts:
+      - *host_libretranslate
+      - *host_coqui
+      - *host_glados
+      - *host_larynx
+      - *host_ljspeech
+      - *host_mtts
+      - *host_nancy
+      - *host_snowboy
+    secretName: tls-letsencrypt-prod
+  rules:
+    - host: lang-libretranslate
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lang-libretranslate
+                port:
+                  number: 5000

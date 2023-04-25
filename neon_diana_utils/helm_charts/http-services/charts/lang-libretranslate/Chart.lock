@@ -1,0 +1,6 @@
+dependencies:
+- name: base-http
+  repository: file://../base-http
+  version: 0.0.1
+digest: sha256:03d79dc43aea94442e7593983ac4c4b181495ef62c235a47986aaf0436c9c815
+generated: "2023-04-24T20:29:21.323317759-07:00"
