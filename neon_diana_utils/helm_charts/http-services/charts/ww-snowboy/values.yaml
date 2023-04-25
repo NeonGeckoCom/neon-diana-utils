@@ -4,7 +4,7 @@
 
 replicaCount: 1
 hostname: snowboy.diana.local
-
+servicePort: "8000"
 image:
   repository: rhasspy/snowboy-seasalt
   pullPolicy: Always
@@ -12,10 +12,8 @@ image:
   tag: latest
 
 service:
-  name: &service_name ww-snowboy
   type: ClusterIP
-  port: &service_port 8000
-  targetPort: 8000
+  targetPort: "8000"
 
 ingress:
   enabled: true
@@ -29,8 +27,5 @@ ingress:
           pathType: Prefix
           backend:
             service:
-              name: *service_name
-              port:
-                number: *service_port
   tls:
     secretName: tls-letsencrypt-prod

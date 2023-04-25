@@ -4,6 +4,7 @@
 
 replicaCount: 1
 hostname: larynx.diana.local
+servicePort: "5002"
 
 image:
   repository: rhasspy/larynx
@@ -12,10 +13,8 @@ image:
   tag: latest
 
 service:
-  name: &service_name tts-larynx
   type: ClusterIP
-  port: &service_port 5002
-  targetPort: 5002
+  targetPort: "5002"
 
 ingress:
   enabled: true
@@ -29,8 +28,5 @@ ingress:
           pathType: Prefix
           backend:
             service:
-              name: *service_name
-              port:
-                number: *service_port
   tls:
     secretName: tls-letsencrypt-prod

@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "lang-libretranslate.name" -}}
+{{- define "tts-mozilla.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "lang-libretranslate.fullname" -}}
+{{- define "tts-mozilla.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "lang-libretranslate.chart" -}}
+{{- define "tts-mozilla.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "lang-libretranslate.labels" -}}
-helm.sh/chart: {{ include "lang-libretranslate.chart" . }}
-{{ include "lang-libretranslate.selectorLabels" . }}
+{{- define "tts-mozilla.labels" -}}
+helm.sh/chart: {{ include "tts-mozilla.chart" . }}
+{{ include "tts-mozilla.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "lang-libretranslate.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "lang-libretranslate.name" . }}
+{{- define "tts-mozilla.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "tts-mozilla.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "lang-libretranslate.serviceAccountName" -}}
+{{- define "tts-mozilla.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "lang-libretranslate.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "tts-mozilla.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}

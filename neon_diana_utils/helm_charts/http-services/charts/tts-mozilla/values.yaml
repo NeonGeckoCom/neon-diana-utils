@@ -4,6 +4,7 @@
 
 replicaCount: 1
 hostname: mtts.diana.local
+servicePort: "5002"
 
 image:
   repository: synesthesiam/mozilla-tts
@@ -12,10 +13,8 @@ image:
   tag: latest
 
 service:
-  name: &service_name tts-mozilla
   type: ClusterIP
-  port: &service_port 5002
-  targetPort: 5002
+  targetPort: "5002"
 
 ingress:
   enabled: true
@@ -29,8 +28,5 @@ ingress:
           pathType: Prefix
           backend:
             service:
-              name: *service_name
-              port:
-                number: *service_port
   tls:
     secretName: tls-letsencrypt-prod

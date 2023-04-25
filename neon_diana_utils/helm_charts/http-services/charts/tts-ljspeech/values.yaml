@@ -4,6 +4,7 @@
 
 replicaCount: 1
 hostname: ljspeech.diana.local
+servicePort: "9000"
 
 image:
   repository: ghcr.io/openvoiceos/mimic2-ljspeech
@@ -12,10 +13,8 @@ image:
   tag: dev
 
 service:
-  name: &service_name tts-ljspeech
   type: ClusterIP
-  port: &service_port 9000
-  targetPort: 9000
+  targetPort: "9000"
 
 ingress:
   enabled: true
@@ -29,8 +28,5 @@ ingress:
           pathType: Prefix
           backend:
             service:
-              name: *service_name
-              port:
-                number: *service_port
   tls:
     secretName: tls-letsencrypt-prod

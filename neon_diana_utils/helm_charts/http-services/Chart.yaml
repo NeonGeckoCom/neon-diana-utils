@@ -1,0 +1,40 @@
+apiVersion: v2
+name: diana-http
+description: Deploy DIANA HTTP Services
+
+type: application
+version: &chart_version 0.0.1
+appVersion: "0.0.1"
+dependencies:
+  - name: libretranslate
+    alias: libretranslate
+    version: *chart_version
+    repository: file://charts/libretranslate
+  - name: tts-coqui
+    alias: tts-coqui
+    version: *chart_version
+    repository: file://charts/tts-coqui
+  - name: tts-glados
+    alias: tts-glados
+    version: *chart_version
+    repository: file://charts/tts-glados
+  - name: tts-larynx
+    alias: tts-larynx
+    version: *chart_version
+    repository: file://charts/tts-larynx
+  - name: tts-ljspeech
+    alias: tts-ljspeech
+    version: *chart_version
+    repository: file://charts/tts-ljspeech
+  - name: tts-mozilla
+    alias: tts-mozilla
+    version: *chart_version
+    repository: file://charts/tts-mozilla
+  - name: tts-nancy
+    alias: tts-nancy
+    version: *chart_version
+    repository: file://charts/tts-nancy
+  - name: ww-snowboy
+    alias: ww-snowboy
+    version: *chart_version
+    repository: file://charts/ww-snowboy

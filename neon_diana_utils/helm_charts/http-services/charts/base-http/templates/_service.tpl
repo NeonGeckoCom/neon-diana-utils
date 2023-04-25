@@ -11,7 +11,7 @@ spec:
   type: ClusterIP
   ports:
     - name: {{ tpl .Chart.Name . }}
-      port: {{ tpl .Values.service_port . }}
+      port: {{ tpl .Values.servicePort . }}
       targetPort: {{ tpl .Values.service.targetPort . }}
       protocol: TCP
   selector:

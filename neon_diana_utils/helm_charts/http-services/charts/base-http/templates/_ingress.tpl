@@ -1,7 +1,7 @@
 {{- define "base-http.ingress" -}}
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := .Values.service_name -}}
-{{- $svcPort := .Values.service_port -}}
+{{- $fullName := .Chart.Name -}}
+{{- $svcPort := .Values.servicePort -}}
 {{- $hostname := .Values.hostname -}}
 {{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}

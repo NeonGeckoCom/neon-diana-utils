@@ -1,8 +1,32 @@
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
 kind: Ingress
 metadata:
   name: ingress-diana-http
 spec:
-    ingressClassName: {{ .Values.ingress.className }}
-    tls: {{.Values.ingress.tls}}
-    rules: {{.Values.ingress.rules}}
+  ingressClassName: nginx
+  tls:
+    - secretName: {{ .Values.ingress.tlsSecretName }}
+      hosts:
+        {{- range .Values.ingress.tlsHosts }}
+        - {{ . }}
+        {{- end }}
+
+  rules:
+    {{- range .Values.ingress.rules }}
+    - host: {{ .host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .serviceName }}
+                port:
+                  number: {{ .servicePort}}
+    {{- end }}

@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "lang-libretranslate.name" -}}
+{{- define "tts-coqui.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "lang-libretranslate.fullname" -}}
+{{- define "tts-coqui.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "lang-libretranslate.chart" -}}
+{{- define "tts-coqui.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "lang-libretranslate.labels" -}}
-helm.sh/chart: {{ include "lang-libretranslate.chart" . }}
-{{ include "lang-libretranslate.selectorLabels" . }}
+{{- define "tts-coqui.labels" -}}
+helm.sh/chart: {{ include "tts-coqui.chart" . }}
+{{ include "tts-coqui.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "lang-libretranslate.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "lang-libretranslate.name" . }}
+{{- define "tts-coqui.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "tts-coqui.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "lang-libretranslate.serviceAccountName" -}}
+{{- define "tts-coqui.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "lang-libretranslate.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "tts-coqui.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}

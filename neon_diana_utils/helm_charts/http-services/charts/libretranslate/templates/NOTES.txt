@@ -20,4 +20,4 @@
   echo "Visit http://127.0.0.1:8080 to use your application"
   kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
 {{- end }}
-> NOTE: This container is still under development
+> This container includes an MQ integration that is not yet implemented in Helm deployments.

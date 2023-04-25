@@ -1,17 +1,1 @@
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    neon.project.name: diana
-    neon.diana.service: &service_name {{ .Chart.Name }}
-    neon.service.class: http
-  name: *service_name
-spec:
-  type: ClusterIP
-  ports:
-    - name: *service_name
-      port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.targetPort }}
-      protocol: TCP
-  selector:
-    neon.diana.service: *service_name
+{{- include "base-http.service" .}}

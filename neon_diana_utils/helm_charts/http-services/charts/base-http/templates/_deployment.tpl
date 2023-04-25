@@ -22,8 +22,8 @@ spec:
         - image: {{ tpl .Values.image.repository . }}:{{ tpl .Values.image.tag . }}
           name: {{ tpl .Chart.Name . }}
           ports:
-            - name: {{ tpl .Values.service_name . }}
-              containerPort: {{ tpl .Values.service_port . }}
+            - name: {{ tpl .Chart.Name . }}
+              containerPort: {{ tpl .Values.servicePort . }}
               protocol: TCP
       restartPolicy: Always
 {{- end -}}

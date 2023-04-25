@@ -1,49 +1,87 @@
-lang-libretranslate:
+containerPort: &default_port "4430"
+libretranslate:
   hostname: &host_libretranslate libretranslate.diana.k8s
-  ingress.enabled: False
+  servicePort: *default_port
+  ingress:
+    enabled: False
+#  image.tag:
 tts-coqui:
   hostname: &host_coqui coqui.diana.k8s
-  ingress.enabled: False
+  servicePort: *default_port
+  ingress:
+    enabled: False
+#  image.tag:
 tts-glados:
   hostname: &host_glados glados.diana.k8s
-  ingress.enabled: False
+  servicePort: *default_port
+  ingress:
+    enabled: False
+#  image.tag:
 tts-larynx:
   hostname: &host_larynx larynx.diana.k8s
-  ingress.enabled: False
+  servicePort: *default_port
+  ingress:
+    enabled: False
+#  image.tag:
 tts-ljspeech:
   hostname: &host_ljspeech ljspeech.diana.k8s
-  ingress.enabled: False
+  servicePort: *default_port
+  ingress:
+    enabled: False
+#  image.tag:
 tts-mozilla:
   hostname: &host_mtts mtts.diana.k8s
-  ingress.enabled: False
+  servicePort: *default_port
+  ingress:
+    enabled: False
+#  image.tag:
 tts-nancy:
   hostname: &host_nancy nancy.diana.k8s
-  ingress.enabled: False
+  servicePort: *default_port
+  ingress:
+    enabled: False
+#  image.tag:
 ww-snowboy:
   hostname: &host_snowboy snowboy.diana.k8s
-  ingress.enabled: False
+  servicePort: *default_port
+  ingress:
+    enabled: False
+#  image.tag:
 
 ingress:
-  className: nginx
-  tls:
-    hosts:
-      - *host_libretranslate
-      - *host_coqui
-      - *host_glados
-      - *host_larynx
-      - *host_ljspeech
-      - *host_mtts
-      - *host_nancy
-      - *host_snowboy
-    secretName: tls-letsencrypt-prod
+  ingressClassName: nginx
+  tlsSecretName: tls-letsencrypt-prod
+  tlsHosts:
+    - *host_libretranslate
+    - *host_coqui
+    - *host_glados
+    - *host_larynx
+    - *host_ljspeech
+    - *host_mtts
+    - *host_nancy
+    - *host_snowboy
   rules:
-    - host: lang-libretranslate
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: lang-libretranslate
-                port:
-                  number: 5000
+    - host: *host_libretranslate
+      serviceName: libretranslate
+      servicePort: *default_port
+    - host: *host_coqui
+      serviceName: tts-coqui
+      servicePort: *default_port
+    - host: *host_glados
+      serviceName: tts-glados
+      servicePort: *default_port
+    - host: *host_larynx
+      serviceName: tts-larynx
+      servicePort: *default_port
+    - host: *host_ljspeech
+      serviceName: tts-ljspeech
+      servicePort: *default_port
+    - host: *host_mtts
+      serviceName: tts-mozilla
+      servicePort: *default_port
+    - host: *host_nancy
+      serviceName: tts-nancy
+      servicePort: *default_port
+    - host: *host_snowboy
+      serviceName: ww-snowboy
+      servicePort: *default_port

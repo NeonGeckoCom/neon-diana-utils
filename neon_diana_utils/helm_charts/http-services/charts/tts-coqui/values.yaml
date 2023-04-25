@@ -4,6 +4,7 @@
 
 replicaCount: 1
 hostname: coqui.diana.local
+servicePort: "9666"
 
 image:
   repository: ghcr.io/neongeckocom/neon-tts-plugin-coqui
@@ -12,10 +13,8 @@ image:
   tag: dev
 
 service:
-  name: &service_name tts-coqui
   type: ClusterIP
-  port: &service_port 9666
-  targetPort: 9666
+  targetPort: "9666"
 
 ingress:
   enabled: true
@@ -29,8 +28,5 @@ ingress:
           pathType: Prefix
           backend:
             service:
-              name: *service_name
-              port:
-                number: *service_port
   tls:
     secretName: tls-letsencrypt-prod

@@ -4,8 +4,7 @@
 
 replicaCount: 1
 hostname: libretranslate.diana.local
-service_name: libretranslate
-service_port: "5000"
+servicePort: "5000"
 
 image:
   repository: ghcr.io/neongeckocom/libretranslate
