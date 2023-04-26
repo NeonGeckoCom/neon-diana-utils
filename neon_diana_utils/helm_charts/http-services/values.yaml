@@ -1,65 +1,58 @@
 containerPort: &default_port "4430"
+domain: diana.k8s
 libretranslate:
-  hostname: &host_libretranslate libretranslate.diana.k8s
+  subdomain: &host_libretranslate libretranslate
   servicePort: *default_port
   ingress:
     enabled: False
 #  image.tag:
 tts-coqui:
-  hostname: &host_coqui coqui.diana.k8s
+  subdomain: &host_coqui coqui
   servicePort: *default_port
   ingress:
     enabled: False
 #  image.tag:
 tts-glados:
-  hostname: &host_glados glados.diana.k8s
+  subdomain: &host_glados glados
   servicePort: *default_port
   ingress:
     enabled: False
 #  image.tag:
 tts-larynx:
-  hostname: &host_larynx larynx.diana.k8s
+  subdomain: &host_larynx larynx
   servicePort: *default_port
   ingress:
     enabled: False
 #  image.tag:
 tts-ljspeech:
-  hostname: &host_ljspeech ljspeech.diana.k8s
+  subdomain: &host_ljspeech ljspeech
   servicePort: *default_port
   ingress:
     enabled: False
 #  image.tag:
 tts-mozilla:
-  hostname: &host_mtts mtts.diana.k8s
+  subdomain: &host_mtts mtts
   servicePort: *default_port
   ingress:
     enabled: False
 #  image.tag:
 tts-nancy:
-  hostname: &host_nancy nancy.diana.k8s
+  subdomain: &host_nancy nancy
   servicePort: *default_port
   ingress:
     enabled: False
 #  image.tag:
 ww-snowboy:
-  hostname: &host_snowboy snowboy.diana.k8s
+  subdomain: &host_snowboy snowboy
   servicePort: *default_port
   ingress:
     enabled: False
 #  image.tag:
 
 ingress:
+  enabled: True
   ingressClassName: nginx
   tlsSecretName: tls-letsencrypt-prod
-  tlsHosts:
-    - *host_libretranslate
-    - *host_coqui
-    - *host_glados
-    - *host_larynx
-    - *host_ljspeech
-    - *host_mtts
-    - *host_nancy
-    - *host_snowboy
   rules:
     - host: *host_libretranslate
       serviceName: libretranslate
@@ -85,3 +78,4 @@ ingress:
     - host: *host_snowboy
       serviceName: ww-snowboy
       servicePort: *default_port
+  extra_rules: []

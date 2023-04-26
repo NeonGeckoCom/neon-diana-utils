@@ -3,7 +3,8 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-hostname: mtts.diana.local
+subdomain: mtts
+domain: diana.local
 servicePort: "5002"
 
 image:

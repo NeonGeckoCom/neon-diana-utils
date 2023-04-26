@@ -1,3 +1,6 @@
+{{ if .Values.ingress.enabled }}
+{{- $domain := .Values.domain -}}
+{{- $rules := concat .Values.ingress.rules .Values.ingress.extra_rules }}
 {{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1
 {{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
@@ -13,13 +16,16 @@ spec:
   tls:
     - secretName: {{ .Values.ingress.tlsSecretName }}
       hosts:
-        {{- range .Values.ingress.tlsHosts }}
-        - {{ . }}
+        {{- range .Values.ingress.rules }}
+        - {{ printf "%s.%s " .host $domain }}
+        {{- end }}
+        {{- range .Values.ingress.extra_rules }}
+        - {{ printf "%s.%s " .host $domain }}
         {{- end }}
 
   rules:
     {{- range .Values.ingress.rules }}
-    - host: {{ .host }}
+    - host: {{ printf "%s.%s " .host $domain }}
       http:
         paths:
           - path: /
@@ -30,3 +36,16 @@ spec:
                 port:
                   number: {{ .servicePort}}
     {{- end }}
+    {{- range .Values.ingress.extra_rules }}
+    - host: {{ printf "%s.%s " .host $domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .serviceName }}
+                port:
+                  number: {{ .servicePort}}
+    {{- end }}
+  {{- end }}

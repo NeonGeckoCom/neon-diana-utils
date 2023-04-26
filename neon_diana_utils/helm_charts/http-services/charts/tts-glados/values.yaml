@@ -3,7 +3,8 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-hostname: glados.diana.local
+subdomain: glados
+domain: diana.local
 servicePort: "9666"
 
 image:

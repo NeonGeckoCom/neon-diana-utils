@@ -3,7 +3,8 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-hostname: snowboy.diana.local
+subdomain: snowboy
+domain: diana.local
 servicePort: "8000"
 image:
   repository: rhasspy/snowboy-seasalt
