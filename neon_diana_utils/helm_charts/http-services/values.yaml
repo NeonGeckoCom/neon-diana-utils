@@ -78,4 +78,4 @@ ingress:
     - host: *host_snowboy
       serviceName: ww-snowboy
       servicePort: *default_port
-  extra_rules: []
+  extraRules: []

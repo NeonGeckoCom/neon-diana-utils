@@ -1,0 +1,8 @@
+ingress-nginx:
+  nameOverride: &name ingress-nginx
+  fullnameOverride: *name
+  serviceAccount:
+    create: true
+    name: ingress-nginx
+  tcp:
+    5672: "default/neon-rabbitmq:5672"

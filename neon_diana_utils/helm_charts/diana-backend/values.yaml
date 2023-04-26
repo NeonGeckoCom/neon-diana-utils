@@ -1,0 +1,23 @@
+# TODO: Update `domain`
+domain: diana.k8s
+
+# Deploys RabbitMQ with specified auth credentials
+rabbitmq:
+  nameOverride: &name_rmq neon-rabbitmq
+  fullnameOverride: *name_rmq
+  commonLabels:
+    neon.project.name: diana
+    neon.diana.service: *name_rmq
+    neon.service.class: communication
+  auth:
+    username: neon
+    password: neon
+    # TODO: Update the default account credentials that are stored on first run
+
+# Deploys HTTP Services
+diana-http:
+  ingress:
+    extraRules:
+      - host: mqadmin
+        serviceName: *name_rmq
+        servicePort: 15672

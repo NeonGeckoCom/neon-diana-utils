@@ -1,0 +1,9 @@
+dependencies:
+- name: rabbitmq
+  repository: https://charts.bitnami.com/bitnami
+  version: 11.13.0
+- name: diana-http
+  repository: file://../http-services
+  version: 0.0.1
+digest: sha256:deef065960238341191b0f3b8e6ff8db2dc05432a6f343ea032d39f5cde2f675
+generated: "2023-04-26T14:07:09.469735559-07:00"
