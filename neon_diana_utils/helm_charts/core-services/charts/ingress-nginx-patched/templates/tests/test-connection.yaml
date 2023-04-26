@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "ingress-nginx.fullname" . }}-test-connection"
+  labels:
+    {{- include "ingress-nginx.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "ingress-nginx.fullname" . }}:443']
+  restartPolicy: Never
