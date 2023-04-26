@@ -8,10 +8,16 @@ sudo snap install microk8s --classic
 sudo usermod -aG microk8s $USER
 newgrp microk8s
 ```
-3. Enable the Kubernetes Dashboard. You will need to run this in a separate terminal, or
+3. Ebable services for persistent storage, DNS, Dashboard, and MetalLB
+```shell
+microk8s enable hostpath-storage
+microk8s enable dns
+microk8s enable dashboard
+microk8s enable metallb
+```
+3. Forward the Kubernetes Dashboard port. You will need to run this in a separate terminal, or
    fork the process to the background to continue after starting the dashboard.
 ```shell
-microk8s enable dashboard
 microk8s kubectl create token default  # Copy this token
 microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 1443:443
 # Dashboard is now available at: https://localhost:1443 using the token generated earlier
@@ -20,7 +26,6 @@ microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 1443:4
 ## Configure Ingress (NGINX)
 Next, NGINX ingress is installed via Helm Chart:
 ```shell
-microk8s enable metallb
 # When prompted, choose a subnet that is different than anything your router uses, 
 # i.e. 10.10.10.10-10.10.10.20
 microk8s helm upgrade --install ingress-nginx ingress-nginx \
