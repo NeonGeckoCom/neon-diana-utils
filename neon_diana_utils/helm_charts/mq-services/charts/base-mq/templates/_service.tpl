@@ -4,9 +4,9 @@ kind: Service
 metadata:
   labels:
     neon.project.name: diana
-    neon.diana.service: {{ tpl .Chart.Name . }}
+    neon.diana.service: {{ .Chart.Name }}
     neon.service.class: mq-backend
-  name: {{ tpl .Chart.Name . }}
+  name: {{ .Chart.Name }}
 spec:
   clusterIP: None
   ports:
@@ -14,5 +14,5 @@ spec:
       port: 55555
       targetPort: 0
   selector:
-    neon.diana.service: {{ tpl .Chart.Name . }}
+    neon.diana.service: {{ .Chart.Name }}
 {{- end -}}
