@@ -25,13 +25,12 @@
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os.path
-import ruamel.yaml as yaml
+import yaml
 
 from typing import Optional
 from os import getenv
 from os.path import dirname, join, expanduser, isdir, isfile
 from neon_utils.logger import LOG
-from ruamel.yaml import YAML
 
 
 def cli_make_rmq_config_map(input_path: str, output_path: str) -> str:
@@ -97,67 +96,6 @@ def cli_make_github_secret(username: str, token: str, config_dir: str) -> str:
     return output_file
 
 
-def cli_make_cert_issuer(name: str, email: str,
-                         output_path: str = getenv("NEON_CONFIG_PATH",
-                                                   "~/.config/neon")) -> str:
-    """
-
-    """
-    config_path = expanduser(join(output_path, "ingress",
-                                  "k8s_config_cert_issuer.yml"))
-    os.makedirs(dirname(config_path), exist_ok=True)
-    config_path = _create_cert_issuer(name, email, config_path)
-    return config_path
-
-
-def cli_update_tcp_config(service: str, port: int, namespace: str = "default",
-                          output_path: str = getenv("NEON_CONFIG_PATH",
-                                                    "~/.config/neon")) -> \
-        (str, str):
-    """
-    Generate an updated tcp-services config map
-    :param service: service name to configure
-    :param port: port to configure
-    :param namespace: namespace associated with service
-    :param output_path: Directory to write output spec file to
-    :returns: path to tcp service config, path to nginx service patch
-    """
-    config_path = expanduser(join(output_path, "ingress",
-                                  "k8s_config_tcp_services.yml"))
-    os.makedirs(dirname(config_path), exist_ok=True)
-
-    tcp_config_path = _update_tcp_config(
-        {port: f"{namespace}/{service}:{port}"},
-        config_path)
-    patched_nginx_service = _patch_ingress_nginx_controller_service(
-        f"{namespace}-{service}", int(port),
-        output_path=join(output_path, "ingress",
-                         "k8s_patch_nginx_service.yml"))
-    return tcp_config_path, patched_nginx_service
-
-
-def cli_update_ingress_config(service: str, port: int, host: str,
-                              namespace: str = "default",
-                              output_path: str = getenv("NEON_CONFIG_PATH",
-                                                        "~/.config/neon")) -> \
-        str:
-    """
-    Generate an updated ingress configuration
-    :param service: service name to configure
-    :param port: service port to configure
-    :param host: host (URL) to bind to service
-    :param namespace: namespace of service to configure
-    :param output_path: Directory to write output files to
-    :returns: path to output config file
-    """
-    output_file = expanduser(join(output_path, "ingress",
-                                  f"k8s_config_ingress_{namespace}.yml"))
-    os.makedirs(dirname(output_file), exist_ok=True)
-    ingress_config = _update_ingress_config(host, service,
-                                            port, output_path=output_file)
-    return ingress_config
-
-
 def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
                           namespaces: dict = None):
     """
@@ -176,11 +114,11 @@ def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
     # Write Diana services spec file
     with open(join(dirname(dirname(__file__)), "templates",
                    "kubernetes.yml")) as f:
-        diana_spec_contents = YAML().load(f)
+        diana_spec_contents = yaml.safe_load(f)
     diana_spec_contents["items"].extend(k8s_config)
 
     with open(diana_spec_file, "w+") as f:
-        YAML().dump(diana_spec_contents, f)
+        yaml.dump(diana_spec_contents, f)
         f.seek(0)
         string_contents = f.read()
         for placeholder, replacement in namespaces.items():
@@ -461,5 +399,5 @@ def _create_cert_issuer(name: str, email: str,
         }
     }
     with open(output_file, 'w+') as f:
-        yaml.dump(spec, f, default_flow_style=False)
+        yaml.safe_dump(spec, f, default_flow_style=False)
     return output_file

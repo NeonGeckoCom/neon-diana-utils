@@ -26,7 +26,7 @@
 
 from enum import Enum, IntEnum
 from os.path import join, dirname
-from ruamel.yaml import YAML
+import yaml
 
 
 class Orchestrator(IntEnum):
@@ -47,7 +47,7 @@ def _get_services_by_class() -> dict:
     """
     service_mappings = join(dirname(__file__), "templates", "service_mappings.yml")
     with open(service_mappings) as f:
-        services = YAML().load(f)
+        services = yaml.safe_load(f)
     # valid_service_classes = set([svc.get("service_class") for name, svc in services.items()])
     services_by_class = dict()
     for name, data in services.items():

@@ -18,67 +18,7 @@ neon-rabbitmq:
       - RABBITMQ_CONFIG_FILE=/config/rabbitmq.conf
     volumes:
       - config:/config
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_rabbitmq
-        name: *name_rabbitmq
-      spec:
-        type: ClusterIP
-        ports:
-          - name: "mq-admin"
-            port: 15672
-            targetPort: 15672
-            protocol: TCP
-          - name: "mq-traffic"
-            port: 5672
-            targetPort: 5672
-            protocol: TCP
-        selector:
-          neon.diana.service: neon-rabbitmq
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: *name_rabbitmq
-        namespace: ${MQ_NAMESPACE}
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_rabbitmq
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              docker.network: mq-backend
-              neon.diana.service: *name_rabbitmq
-              neon.project.name: diana
-          spec:
-            containers:
-              - env:
-                  - name: RABBITMQ_CONFIG_FILE
-                    value: /config/rabbitmq.conf
-                image: *image_rabbitmq
-                name: *name_rabbitmq
-                ports:
-                  - containerPort: 15672
-                  - containerPort: 5672
-                volumeMounts:
-                  - mountPath: /config
-                    name: config
-            restartPolicy: Always
-            volumes:
-              - name: config
-                configMap:
-                  name: rabbitmq
-                  items:
-                    - key: rabbit_mq_config.json
-                      path: rabbit_mq_config.json
-                    - key: rabbitmq.conf
-                      path: rabbitmq.conf
+
 neon-api-proxy:
   container_image: &image_api_proxy ghcr.io/neongeckocom/neon_api_proxy:dev
   container_name: &name_api_proxy neon-api-proxy
@@ -515,46 +455,6 @@ tts-larynx:
     restart: always
     ports:
       - 5002:5002
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_larynx_server
-        name: *name_larynx_server
-      spec:
-        type: ClusterIP
-        ports:
-          - name: "larynx-tts"
-            port: 5002
-            targetPort: 5002
-            protocol: TCP
-        selector:
-          neon.diana.service: *name_larynx_server
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: *name_larynx_server
-        namespace: ${HTTP_NAMESPACE}
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_larynx_server
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              neon.diana.service: *name_larynx_server
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_larynx_server
-                name: *name_larynx_server
-                ports:
-                  - containerPort: 5002
-            restartPolicy: Always
 tts-mozilla:
   container_image: &image_mozilla_tts synesthesiam/mozilla-tts
   container_name: &name_mozilla_tts tts-mozilla
@@ -565,46 +465,6 @@ tts-mozilla:
     restart: always
     ports:
       - 15002:5002
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_mozilla_tts
-        name: *name_mozilla_tts
-      spec:
-        type: ClusterIP
-        ports:
-          - name: "mozilla-tts"
-            port: 5002
-            targetPort: 5002
-            protocol: TCP
-        selector:
-          neon.diana.service: *name_mozilla_tts
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: *name_mozilla_tts
-        namespace: ${HTTP_NAMESPACE}
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_mozilla_tts
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              neon.diana.service: *name_mozilla_tts
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_mozilla_tts
-                name: *name_mozilla_tts
-                ports:
-                  - containerPort: 5002
-            restartPolicy: Always
 tts-glados:
   container_image: &image_glados_tts ghcr.io/neongeckocom/neon-tts-plugin-glados:dev
   container_name: &name_glados_tts tts-glados
@@ -615,46 +475,6 @@ tts-glados:
     restart: always
     ports:
       - 9666:9666
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_glados_tts
-        name: *name_glados_tts
-      spec:
-        type: ClusterIP
-        ports:
-          - name: "glados-tts"
-            port: 9666
-            targetPort: 9666
-            protocol: TCP
-        selector:
-          neon.diana.service: *name_glados_tts
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: *name_glados_tts
-        namespace: ${HTTP_NAMESPACE}
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_glados_tts
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              neon.diana.service: *name_glados_tts
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_glados_tts
-                name: *name_glados_tts
-                ports:
-                  - containerPort: 9666
-            restartPolicy: Always
 tts-mimic2-nancy:
   container_image: &image_mimic2_nancy_tts ghcr.io/openvoiceos/mimic2-nancy:dev
   container_name: &name_mimic2_nancy_tts tts-mimic2-nancy
@@ -665,46 +485,6 @@ tts-mimic2-nancy:
     restart: always
     ports:
       - 9000:9000
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_mimic2_nancy_tts
-        name: *name_mimic2_nancy_tts
-      spec:
-        type: ClusterIP
-        ports:
-          - name: "mimic2-nancy-tts"
-            port: 9000
-            targetPort: 9000
-            protocol: TCP
-        selector:
-          neon.diana.service: *name_mimic2_nancy_tts
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: *name_mimic2_nancy_tts
-        namespace: ${HTTP_NAMESPACE}
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_mimic2_nancy_tts
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              neon.diana.service: *name_mimic2_nancy_tts
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_mimic2_nancy_tts
-                name: *name_mimic2_nancy_tts
-                ports:
-                  - containerPort: 9000
-            restartPolicy: Always
 tts-mimic2-ljspeech:
   container_image: &image_mimic2_ljspeech_tts ghcr.io/openvoiceos/mimic2-ljspeech:dev
   container_name: &name_mimic2_ljspeech_tts tts-mimic2-ljspeech
@@ -715,46 +495,6 @@ tts-mimic2-ljspeech:
     restart: always
     ports:
       - 9001:9000
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_mimic2_ljspeech_tts
-        name: *name_mimic2_ljspeech_tts
-      spec:
-        type: ClusterIP
-        ports:
-          - name: "mimic2-ljspeech-tts"
-            port: 9000
-            targetPort: 9000
-            protocol: TCP
-        selector:
-          neon.diana.service: *name_mimic2_ljspeech_tts
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: *name_mimic2_ljspeech_tts
-        namespace: ${HTTP_NAMESPACE}
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_mimic2_ljspeech_tts
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              neon.diana.service: *name_mimic2_ljspeech_tts
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_mimic2_ljspeech_tts
-                name: *name_mimic2_ljspeech_tts
-                ports:
-                  - containerPort: 9000
-            restartPolicy: Always
 lang-libretranslate:
   container_image: &image_libretranslate libretranslate/libretranslate:main
   container_name: &name_libretranslate lang-libretranslate
@@ -765,46 +505,6 @@ lang-libretranslate:
     restart: always
     ports:
       - 5000:5000
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_libretranslate
-        name: *name_libretranslate
-      spec:
-        type: ClusterIP
-        ports:
-          - name: "libretranslate"
-            port: 5000
-            targetPort: 5000
-            protocol: TCP
-        selector:
-          neon.diana.service: *name_libretranslate
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: *name_libretranslate
-        namespace: ${HTTP_NAMESPACE}
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_libretranslate
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              neon.diana.service: *name_libretranslate
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_libretranslate
-                name: *name_libretranslate
-                ports:
-                  - containerPort: 5000
-            restartPolicy: Always
 ww-snowboy:
   container_image: &image_snowboy rhasspy/snowboy-seasalt
   container_name: &name_snowboy ww-snowboy
@@ -815,43 +515,3 @@ ww-snowboy:
     restart: always
     ports:
       - 8000:8000
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_snowboy
-        name: *name_snowboy
-      spec:
-        type: ClusterIP
-        ports:
-          - name: "snowboy"
-            port: 8000
-            targetPort: 8000
-            protocol: TCP
-        selector:
-          neon.diana.service: *name_snowboy
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: *name_snowboy
-        namespace: ${HTTP_NAMESPACE}
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_snowboy
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              neon.diana.service: *name_snowboy
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_snowboy
-                name: *name_snowboy
-                ports:
-                  - containerPort: 8000
-            restartPolicy: Always

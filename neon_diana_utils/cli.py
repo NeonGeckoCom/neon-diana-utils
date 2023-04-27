@@ -24,11 +24,15 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import logging
 import click
 
-from os import getenv
+from ovos_utils.log import LOG
+from os import getenv, makedirs
+from os.path import isdir, join, expanduser, isfile
+from pprint import pformat
 from click_default_group import DefaultGroup
-
+from ovos_utils.xdg_utils import xdg_config_home
 from neon_diana_utils.constants import valid_mq_services, default_mq_services, Orchestrator
 from neon_diana_utils.version import __version__
 
@@ -171,38 +175,30 @@ def stop_backend(config_path, orchestrator):
         click.echo(e)
 
 
-# @neon_diana_cli.command(help="Generate a volume config for NFS-based shares")
-# @click.option("--hostname",
-#               help="Hostname or IP address of NFS Server")
-# @click.option("--config_path", "-c",
-#               help="Host path to configuration share")
-# @click.option("--metric_path", "-m",
-#               help="Host path to metrics share")
-# @click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-# def make_nfs_config(hostname, config_path, metric_path, output_path):
-#     try:
-#         output_path = expanduser(output_path)
-#         if isdir(output_path):
-#             output_file = join(output_path, "k8s_nfs_volumes.yml")
-#         elif isfile(output_path):
-#             output_file = output_path
-#         else:
-#             raise ValueError(f"Invalid output_path: {output_path}")
-#         generate_nfs_volume_config(hostname, config_path, metric_path, output_file)
-#         click.echo(f"Generated {output_file}")
-#     except Exception as e:
-#         click.echo(e)
-
 # Kubernetes
-@neon_diana_cli.command(help="Generate a Kubernetes ConfigMap for RabbitMQ")
-@click.option("--path", "-p",
-              help="Path to config files to populate")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def make_config_map(path, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_make_rmq_config_map
+@neon_diana_cli.command(help="Configure RabbitMQ and export user credentials")
+@click.option("--username", "-u", help="RabbitMQ username")
+@click.option("--password", "-p", help="RabbitMQ password")
+@click.option("--url", help="RabbitMQ Management URL")
+@click.option("--output_path", default=None)
+def configure_mq_backend(username, password, url, output_path):
+    output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
+    if isfile(output_path):
+        click.echo(f"Expected dir and got file: {output_path}")
+    elif not isdir(output_path):
+        makedirs(output_path)
+
+    username = username or click.prompt("RabbitMQ Admin Username", type=str)
+    password = password or click.prompt("RabbitMQ Admin Password", type=str,
+                                        hide_input=True)
+    url = url or click.prompt("RabbitMQ Management URL", type=str)
+    click.confirm(f"Configure users on: {url}?", abort=True)
+    LOG.level = logging.ERROR
+    from neon_diana_utils.utils.backend import configure_mq_backend
     try:
-        output_file = cli_make_rmq_config_map(path, output_path)
-        click.echo(f"Generated {output_file}")
+        config = configure_mq_backend(username, password, url=url)
+        click.echo(pformat(config))
+        # TODO: Get other config params and write .yaml
     except Exception as e:
         click.echo(e)
 
@@ -231,62 +227,5 @@ def make_github_secret(username, token, output_path):
     try:
         output_path = cli_make_github_secret(username, token, output_path)
         click.echo(f"Generated outputs in {output_path}")
-    except Exception as e:
-        click.echo(e)
-
-
-@neon_diana_cli.command(help="Add routing for TCP service to ingress")
-@click.option("--service", "-s",
-              help="Service Name")
-@click.option("--port", "-p",
-              help="TCP port to forward")
-@click.option("--namespace", "-n", default="default",
-              help="Namespace service is running in")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def add_tcp_service(service, port, namespace, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_update_tcp_config
-    try:
-        files = cli_update_tcp_config(service, port, namespace, output_path)
-        click.echo(f"Wrote: {', '.join(files)}")
-    except Exception as e:
-        click.echo(e)
-
-
-@neon_diana_cli.command(help="Add ingress definition")
-@click.option("--service", "-s",
-              help="Service name")
-@click.option("--port", "-p",
-              help="Service port")
-@click.option("--host", "-h",
-              help="host (URL) to bind")
-@click.option("--namespace", "-n", default="default",
-              help="Namespace service is running in")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR",
-                                              "~/.config/neon/"))
-def add_ingress(service, port, host, namespace, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_update_ingress_config
-    try:
-        file = cli_update_ingress_config(service, int(port), host,
-                                         namespace, output_path)
-        click.echo(f"Wrote: {file}")
-    except Exception as e:
-        click.echo(e)
-
-
-@neon_diana_cli.command(help="Add issuer definition")
-@click.option("--name", "-n", default="letsencrypt-prod",
-              help="Issuer name")
-@click.option("--email", "-e",
-              help="Registered email address")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR",
-                                              "~/.config/neon/"))
-def make_cert_issuer(name, email, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_make_cert_issuer
-    try:
-        if not email:
-            click.echo("Email address is required")
-            return
-        file = cli_make_cert_issuer(name, email, output_path)
-        click.echo(f"Wrote: {file}")
     except Exception as e:
         click.echo(e)
