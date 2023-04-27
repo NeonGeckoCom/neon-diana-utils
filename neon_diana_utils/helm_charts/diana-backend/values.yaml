@@ -1,5 +1,6 @@
 # TODO: Update `domain`
 domain: diana.k8s
+configSecret: diana-config
 
 letsencrypt:
   sslSecret: &ssl_secret letsencrypt-staging
