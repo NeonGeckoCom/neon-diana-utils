@@ -23,7 +23,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: rabbitmq
+                name: neon-rabbitmq
                 port:
                   number: 15672
 {{- end }}

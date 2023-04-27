@@ -1,6 +1,12 @@
 # TODO: Update `domain`
 domain: diana.k8s
 
+letsencrypt:
+  sslSecret: &ssl_secret letsencrypt-staging
+  server: https://acme-staging-v02.api.letsencrypt.org/directory
+  email: developers@neon.ai
+  # TODO: Update server and email to valid options
+
 # Deploys RabbitMQ with specified auth credentials
 rabbitmq:
   nameOverride: &name_rmq neon-rabbitmq
@@ -17,6 +23,7 @@ rabbitmq:
 # Deploys HTTP Services
 diana-http:
   ingress:
+    tlsSecretName: *ssl_secret
     extraRules:
       - host: mqadmin
         serviceName: *name_rmq

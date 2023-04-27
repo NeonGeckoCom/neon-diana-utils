@@ -11,6 +11,9 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: ingress-diana-http
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.ingressClassName }}
+    cert-manager.io/issuer: {{ .Values.ingress.tlsSecretName }}
 spec:
   ingressClassName: nginx
   tls:

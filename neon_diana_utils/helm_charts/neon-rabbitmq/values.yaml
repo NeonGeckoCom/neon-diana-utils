@@ -5,9 +5,11 @@
 replicaCount: 1
 
 rabbitmq:
+  nameOverride: neon-rabbitmq
+  fullnameOverride: neon-rabbitmq
   commonLabels:
     neon.project.name: diana
-    neon.diana.service: rabbitmq
+    neon.diana.service: neon-rabbitmq
     neon.service.class: communication
   auth:
     username: neon
@@ -18,6 +20,5 @@ rabbitmq:
 
 ingress:
   enabled: True
-  hostname: mqadmin.diana.local
+  hostname: mqadmin.diana.k8s
   ingressClassName: nginx
-  tlsSecretName: tls-letsencrypt-prod
