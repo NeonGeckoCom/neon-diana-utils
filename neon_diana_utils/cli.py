@@ -26,10 +26,11 @@
 
 import logging
 import click
+import yaml
 
 from ovos_utils.log import LOG
 from os import getenv, makedirs
-from os.path import isdir, join, expanduser, isfile
+from os.path import isdir, join, expanduser, isfile, dirname, abspath
 from pprint import pformat
 from click_default_group import DefaultGroup
 from ovos_utils.xdg_utils import xdg_config_home
@@ -180,11 +181,12 @@ def stop_backend(config_path, orchestrator):
 @click.option("--username", "-u", help="RabbitMQ username")
 @click.option("--password", "-p", help="RabbitMQ password")
 @click.option("--url", help="RabbitMQ Management URL")
-@click.option("--output_path", default=None)
+@click.argument("output_path", default=None, required=False)
 def configure_mq_backend(username, password, url, output_path):
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
     if isfile(output_path):
         click.echo(f"Expected dir and got file: {output_path}")
+        return
     elif not isdir(output_path):
         makedirs(output_path)
 
@@ -196,24 +198,48 @@ def configure_mq_backend(username, password, url, output_path):
     LOG.level = logging.ERROR
     from neon_diana_utils.utils.backend import configure_mq_backend
     try:
-        config = configure_mq_backend(username, password, url=url)
-        click.echo(pformat(config))
-        # TODO: Get other config params and write .yaml
+        mq_config_path = join(output_path, "MQ")
+        makedirs(mq_config_path, exist_ok=True)
+        mq_auth_config = configure_mq_backend(username, password,
+                                              config_path=mq_config_path,
+                                              url=url)
+        click.echo(pformat(mq_auth_config))
+
+        if click.confirm("Configure GitHub token for private services?"):
+            gh_username = click.prompt("GitHub username", type=str)
+            gh_token = click.prompt("GitHub Token with `read_packages` "
+                                    "permission", type=str)
+            make_github_secret(gh_username, gh_token, output_path)
+
+        keys_config = _make_keys_config(True)
+
+        confirmed = False
+        mq_url = None
+        mq_port = None
+        while not confirmed:
+            mq_url = click.prompt("MQ Service Name or URL", type=str,
+                                  default="neon-rabbitmq")
+            mq_port = click.prompt("MQ Client Port", type=int, default=5672)
+            click.echo(f"{mq_url}:{mq_port}")
+            confirmed = click.confirm("Is this MQ Address Correct?")
+        config = {**{"MQ": {"users": mq_auth_config,
+                            "server": mq_url,
+                            "port": mq_port}},
+                  **keys_config}
+        output_file = join(output_path, "diana.yaml")
+        click.echo(f"Writing configuration to {output_file}")
+        with open(output_file, 'w+') as f:
+            yaml.dump(config, f)
     except Exception as e:
         click.echo(e)
 
 
-@neon_diana_cli.command(help="Generate Kubernetes Secrets for ngi_auth_vars.yml")
-@click.option("--path", "-p",
-              help="Path to config files to populate")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def make_api_secrets(path, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_make_api_secret
-    try:
-        output_path = cli_make_api_secret(path, output_path)
-        click.echo(f"Generated outputs in {output_path}")
-    except Exception as e:
-        click.echo(e)
+@neon_diana_cli.command(help="Generate a configuration file with access keys")
+@click.option("--skip-write", "-s", help="Skip writing config to file",
+              is_flag=True)
+@click.argument("output_file", default=None, required=False)
+def make_keys_config(skip_write, output_file):
+    _make_keys_config(skip_write, output_file)
 
 
 @neon_diana_cli.command(help="Generate Kubernetes secret for Github images")
@@ -229,3 +255,77 @@ def make_github_secret(username, token, output_path):
         click.echo(f"Generated outputs in {output_path}")
     except Exception as e:
         click.echo(e)
+
+
+def _make_keys_config(skip_write, output_file=None):
+    if not skip_write:
+        output_file = expanduser(abspath((output_file or join(xdg_config_home(),
+                                                              "diana",
+                                                              "diana.yaml"))))
+        if isfile(output_file):
+            click.echo(f"File already exists: {output_file}")
+            return
+        elif not isdir(dirname(output_file)):
+            makedirs(dirname(output_file))
+
+    api_services = dict()
+    if click.confirm("Configure API Proxy Services?"):
+        keys_confirmed = False
+        while not keys_confirmed:
+            wolfram_key = click.prompt("Wolfram|Alpha API Key", type=str)
+            alphavantage_key = click.prompt("AlphaVantage API Key",
+                                            type=str)
+            owm_key = click.prompt("OpenWeatherMap API Key", type=str)
+            api_services = {
+                "wolfram_alpha": {"api_key": wolfram_key},
+                "alpha_vantage": {"api_key": alphavantage_key},
+                "open_weather_map": {"api_key": owm_key}
+            }
+            click.echo(pformat(api_services))
+            keys_confirmed = click.confirm("Are these keys correct?")
+
+    email_config = dict()
+    if click.confirm("Configure Email Service?"):
+        config_confirmed = False
+        while not config_confirmed:
+            email_addr = click.prompt("Email Address", type=str)
+            email_password = click.prompt("Password", type=str)
+            smtp_host = click.prompt("SMTP URL", type=str,
+                                     default="smtp.gmail.com")
+            smtp_port = click.prompt("SMTP Port", type=str,
+                                     default="465")
+            email_config = {"mail": email_addr,
+                            "pass": email_password,
+                            "host": smtp_host,
+                            "port": smtp_port}
+            click.echo(pformat(email_config))
+            config_confirmed = \
+                click.confirm("Is this configuration correct?")
+
+    brands_config = dict()
+    if click.confirm("Configure Brands/Coupons Service?"):
+        config_confirmed = False
+        while not config_confirmed:
+            server_host = click.prompt("SQL Host Address", type=str,
+                                       default="trackmybrands.com")
+            sql_database = click.prompt("SQL Database", type=str,
+                                        default="admintr1_drup1")
+            sql_username = click.prompt("SQL Username", type=str)
+            sql_password = click.prompt("SQL Password", type=str)
+            brands_config = {"host": server_host,
+                             "database": sql_database,
+                             "user": sql_username,
+                             "password": sql_password}
+            click.echo(pformat(brands_config))
+            config_confirmed = \
+                click.confirm("Is this configuration correct?")
+
+    config = {"keys": {"api_services": api_services,
+                       "emails": email_config,
+                       "track_my_brands": brands_config}
+              }
+    if not skip_write:
+        click.echo(f"Writing configuration to {output_file}")
+        with open(output_file, 'w+') as f:
+            yaml.dump(config, f)
+    return config
