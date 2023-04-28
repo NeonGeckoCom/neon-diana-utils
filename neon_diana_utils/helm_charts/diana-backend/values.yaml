@@ -1,8 +1,12 @@
+# This Chart will deploy Diana backend services, including RabbitMQ,
+# HTTP Services with associated ingress and certificates, MQ Services,
+# and configuration including secrets with keys and passwords.
+
 # TODO: Update `domain`
-domain: diana.k8s
+domain: &domain 2023.us
 # TODO: Update tag to `dev` or `latest`
 mqServiceTag: &mq_tag dev
-# TODO: Update secrets to applied Secrets
+
 imagePullSecret: &pull_secret github-auth
 configSecret: &config_secret diana-config
 rmqSecret: &rmq_secret rmq-config
@@ -12,6 +16,7 @@ letsencrypt:
   server: https://acme-staging-v02.api.letsencrypt.org/directory
   email: developers@neon.ai
   # TODO: Update server and email to valid options
+  # https://acme-v02.api.letsencrypt.org/directory
 
 # Deploys RabbitMQ with specified auth credentials
 rabbitmq:
@@ -31,6 +36,7 @@ rabbitmq:
 
 # Deploys HTTP Services
 diana-http:
+  domain: *domain
   ingress:
     tlsSecretName: *ssl_secret
     extraRules:

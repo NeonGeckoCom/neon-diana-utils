@@ -24,6 +24,7 @@ Validate the configuration in `<output_path>/diana-backend/values.yaml`; at mini
 the following parameters MUST be updated:
 - `domain`
 - `letsencrypt.email`
+- `letsencrypt.server` (default is test endpoint)
 
 After updating or overriding these values, deploy the backend via:
 
