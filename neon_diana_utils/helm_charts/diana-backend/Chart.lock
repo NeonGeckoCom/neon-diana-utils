@@ -5,5 +5,8 @@ dependencies:
 - name: diana-http
   repository: file://../http-services
   version: 0.0.1
-digest: sha256:deef065960238341191b0f3b8e6ff8db2dc05432a6f343ea032d39f5cde2f675
-generated: "2023-04-26T14:07:09.469735559-07:00"
+- name: diana-mq
+  repository: file://../mq-services
+  version: 0.0.1
+digest: sha256:246fcb90c8edf911cc4ea345dc86c3a512f6d58c4ad3f0a5feab660fd0b536cb
+generated: "2023-04-27T19:15:55.567925592-07:00"

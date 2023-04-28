@@ -1,0 +1,6 @@
+dependencies:
+- name: base-mq
+  repository: file://../base-mq
+  version: 0.0.1
+digest: sha256:f1f313e103170f5fa236ec3c79e3c5e5aaf94f21a42bb4a1e5703e29608db6c5
+generated: "2023-04-27T15:46:49.439638553-07:00"
