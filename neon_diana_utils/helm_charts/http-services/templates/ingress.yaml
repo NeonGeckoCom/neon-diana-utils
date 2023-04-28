@@ -15,7 +15,6 @@ metadata:
     kubernetes.io/ingress.class: {{ .Values.ingress.ingressClassName }}
     cert-manager.io/issuer: {{ .Values.ingress.tlsSecretName }}
 spec:
-  ingressClassName: nginx
   tls:
     - secretName: {{ .Values.ingress.tlsSecretName }}
       hosts:

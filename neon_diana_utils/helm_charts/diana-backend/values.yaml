@@ -5,6 +5,7 @@ mqServiceTag: &mq_tag dev
 # TODO: Update secrets to applied Secrets
 imagePullSecret: &pull_secret github-auth
 configSecret: &config_secret diana-config
+rmqSecret: &rmq_secret rmq-config
 
 letsencrypt:
   sslSecret: &ssl_secret letsencrypt-staging
@@ -20,10 +21,11 @@ rabbitmq:
     neon.project.name: diana
     neon.diana.service: *name_rmq
     neon.service.class: communication
-  auth:
-    username: neon
-    password: neon
-    # TODO: Update the default account credentials that are stored on first run
+  loadDefinition:
+    enabled: true
+    existingSecret: *rmq_secret
+  extraConfiguration: |
+    load_definitions = /app/load_definition.json
 
 # Deploys HTTP Services
 diana-http:

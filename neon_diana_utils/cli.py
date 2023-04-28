@@ -23,14 +23,15 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import json
 import logging
+import shutil
 import click
 import yaml
 
 from ovos_utils.log import LOG
 from os import getenv, makedirs
-from os.path import isdir, join, expanduser, isfile, dirname, abspath
+from os.path import isdir, join, expanduser, isfile, dirname, abspath, basename, exists
 from pprint import pformat
 from click_default_group import DefaultGroup
 from ovos_utils.xdg_utils import xdg_config_home
@@ -180,36 +181,47 @@ def stop_backend(config_path, orchestrator):
 @neon_diana_cli.command(help="Configure RabbitMQ and export user credentials")
 @click.option("--username", "-u", help="RabbitMQ username")
 @click.option("--password", "-p", help="RabbitMQ password")
-@click.option("--url", help="RabbitMQ Management URL")
 @click.argument("output_path", default=None, required=False)
-def configure_mq_backend(username, password, url, output_path):
+def configure_mq_backend(username, password, output_path):
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
-    if isfile(output_path):
-        click.echo(f"Expected dir and got file: {output_path}")
+    if exists(output_path):
+        click.echo(f"Path exists: {output_path}")
         return
-    elif not isdir(output_path):
-        makedirs(output_path)
+    elif not isdir(dirname(output_path)):
+        makedirs(dirname(output_path))
 
-    username = username or click.prompt("RabbitMQ Admin Username", type=str)
-    password = password or click.prompt("RabbitMQ Admin Password", type=str,
-                                        hide_input=True)
-    url = url or click.prompt("RabbitMQ Management URL", type=str)
-    click.confirm(f"Configure users on: {url}?", abort=True)
-    LOG.level = logging.ERROR
-    from neon_diana_utils.utils.backend import configure_mq_backend
+    shutil.copytree(join(dirname(__file__), "helm_charts"),
+                    join(output_path))
+    chart_path = join(output_path, "diana-backend")
+
     try:
-        mq_config_path = join(output_path, "MQ")
-        makedirs(mq_config_path, exist_ok=True)
-        mq_auth_config = configure_mq_backend(username, password,
-                                              config_path=mq_config_path,
-                                              url=url)
-        click.echo(pformat(mq_auth_config))
+        from neon_diana_utils.utils.kubernetes_utils import \
+            cli_make_github_secret
+        from neon_diana_utils.utils.backend import generate_rmq_config, \
+            generate_mq_auth_config
+        rmq_config = generate_rmq_config()
+        username = username or click.prompt("RabbitMQ Admin Username", type=str)
+        password = password or click.prompt("RabbitMQ Admin Password", type=str,
+                                            hide_input=True)
 
+        rmq_config['users'].append({'name': username,
+                                    'password': password,
+                                    'tags': ['administrator']})
+        with open(join(chart_path, "rabbitmq.json"), 'w+') as f:
+            json.dump(rmq_config, f, indent=2)
+        click.echo(f"Generated RabbitMQ config at {chart_path}/rabbitmq.json")
+        mq_auth_config = generate_mq_auth_config(rmq_config)
+        click.echo(f"Generated Auth for services: {mq_auth_config.keys()}")
         if click.confirm("Configure GitHub token for private services?"):
             gh_username = click.prompt("GitHub username", type=str)
-            gh_token = click.prompt("GitHub Token with `read_packages` "
+            gh_token = click.prompt("GitHub Token with `read:packages` "
                                     "permission", type=str)
-            make_github_secret(gh_username, gh_token, output_path)
+            cli_make_github_secret(gh_username, gh_token, output_path)
+            gh_secret_path = join(chart_path, "templates",
+                                  "secret_gh_token.yaml")
+            shutil.move(join(output_path, "k8s_secret_github.yml"),
+                        gh_secret_path)
+            click.echo(f"Generated GH secret at {gh_secret_path}")
 
         keys_config = _make_keys_config(True)
 
@@ -226,12 +238,24 @@ def configure_mq_backend(username, password, url, output_path):
                             "server": mq_url,
                             "port": mq_port}},
                   **keys_config}
-        output_file = join(output_path, "diana.yaml")
+        output_file = join(chart_path, "diana.yaml")
         click.echo(f"Writing configuration to {output_file}")
         with open(output_file, 'w+') as f:
             yaml.dump(config, f)
+        click.echo(f"Helm charts generated in {output_path}")
     except Exception as e:
         click.echo(e)
+
+
+@neon_diana_cli.command(help="Generate RabbitMQ definitions")
+@click.argument("output_file", default=None, required=False)
+def make_rmq_config(output_file):
+    if isfile(output_file):
+        click.echo(f"{output_file} already exists")
+        return
+    if not isdir(dirname(output_file)):
+        makedirs(dirname(output_file))
+    # TODO: Generate random passwords
 
 
 @neon_diana_cli.command(help="Generate a configuration file with access keys")

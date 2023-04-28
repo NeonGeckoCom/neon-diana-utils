@@ -40,6 +40,8 @@ def cli_make_rmq_config_map(input_path: str, output_path: str) -> str:
     :param output_path: file or dir to write Kubernetes spec file to
     :returns: path to output config file
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     file_path = expanduser(input_path)
     if not isdir(file_path):
         raise FileNotFoundError(f"Could not find requested directory: "
@@ -68,6 +70,8 @@ def cli_make_api_secret(input_path: str, output_path: str) -> str:
     :param output_path: file or dir to write Kubernetes spec file to
     :returns: path to output config file
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     file_path = expanduser(input_path)
     if not isdir(file_path):
         raise FileNotFoundError(f"Could not find requested directory: {input_path}")
@@ -104,6 +108,8 @@ def write_kubernetes_spec(k8s_config: list, output_path: Optional[str] = None,
     :param output_path: path to write spec files to
     :param namespaces: dict of placeholders to namespaces
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     namespaces = namespaces or dict()
     output_dir = expanduser(output_path) if output_path else \
         expanduser(getenv("NEON_CONFIG_PATH", "~/.config/neon"))
@@ -151,6 +157,8 @@ def generate_config_map(name: str, config_data: dict, output_path: str):
     :param config_data: Dict data to store
     :param output_path: output file to write
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     output_path = output_path or join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), f"k8s_config_{name}.yml")
     output_path = expanduser(output_path)
     if not isdir(dirname(output_path)):
@@ -175,6 +183,8 @@ def generate_secret(name: str, secret_data: dict,
     :param secret_data: Dict data to store
     :param output_path: output file to write
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     output_path = output_path or join(getenv("NEON_CONFIG_PATH",
                                              "~/.config/neon"),
                                       f"k8s_secret_{name}.yml")
@@ -196,9 +206,9 @@ def generate_secret(name: str, secret_data: dict,
 def _create_github_secret(username: str, token: str,
                           output_path: Optional[str] = None) -> str:
     """
-    Generate a Kubernetes Secret to authenticate to github for image pulls
-    :param username: Github username
-    :param token: Github token with read_packages permission
+    Generate a Kubernetes Secret to authenticate to GitHub for image pulls
+    :param username: GitHub username
+    :param token: GitHub token with read_packages permission
     :param output_path: output file to write
     :returns: path to written Kubernetes config file
     """
@@ -236,6 +246,8 @@ def _update_tcp_config(port_config: dict,
     :param output_path: output file to write
     :returns: path to `tcp-services` k8s config map spec to be applied
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     output_file = output_path or join(getenv("NEON_CONFIG_PATH",
                                              "~/.config/neon"), "ingress",
                                       f"k8s_config_tcp_services.yml")
@@ -271,7 +283,8 @@ def _patch_ingress_nginx_controller_service(name: str, port: int,
     :param protocol: transport protocol (default TCP)
     :param output_path: path to output file to write
     """
-
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     output_file = output_path or join(getenv("NEON_CONFIG_PATH",
                                              "~/.config/neon"), "ingress",
                                       f"k8s_patch_nginx_service.yml")
@@ -308,6 +321,8 @@ def _update_ingress_config(address: str, service: str, port: int,
     :param cert_issuer: Name of k8s Issuer to provide TLS certificates
     :param output_path: path to output file to write
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     output_file = output_path or join(getenv("NEON_CONFIG_PATH",
                                              "~/.config/neon"), "ingress",
                                       f"k8s_config_ingress.yml")
@@ -369,6 +384,8 @@ def _create_cert_issuer(name: str, email: str,
     :param email: email to use for ACME registration
     :param output_path: spec file to write
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     output_file = output_path or join(getenv("NEON_CONFIG_PATH",
                                              "~/.config/neon"), "ingress",
                                       f"k8s_config_cert_issuer.yml")
