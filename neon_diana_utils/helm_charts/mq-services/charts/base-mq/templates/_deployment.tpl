@@ -31,6 +31,11 @@ spec:
             sources:
               - secret:
                   name: {{ .Values.configSecret }}
+        {{- if .Values.persistentVolumeClaim }}
+        - name: {{ .Values.persistentVolumeClaim.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistentVolumeClaim.claimName }}
+        {{- end -}}
       {{- if .Values.image.pullSecret }}
       imagePullSecrets:
         - name: {{ .Values.image.pullSecret }}

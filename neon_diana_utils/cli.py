@@ -211,7 +211,7 @@ def configure_mq_backend(username, password, output_path):
             json.dump(rmq_config, f, indent=2)
         click.echo(f"Generated RabbitMQ config at {chart_path}/rabbitmq.json")
         mq_auth_config = generate_mq_auth_config(rmq_config)
-        click.echo(f"Generated Auth for services: {mq_auth_config.keys()}")
+        click.echo(f"Generated auth for services: {set(mq_auth_config.keys())}")
         if click.confirm("Configure GitHub token for private services?"):
             gh_username = click.prompt("GitHub username", type=str)
             gh_token = click.prompt("GitHub Token with `read:packages` "

@@ -49,58 +49,6 @@ neon-api-proxy:
       kompose.service.type: headless
     volumes:
       - config:/config
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_api_proxy
-        name: *name_api_proxy
-      spec:
-        clusterIP: None
-        ports:
-          - name: headless
-            port: 55555
-            targetPort: 0
-        selector:
-          neon.diana.service: *name_api_proxy
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        namespace: ${MQ_NAMESPACE}
-        labels:
-          neon.diana.service: *name_api_proxy
-        name: *name_api_proxy
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_api_proxy
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              docker.network: mq-backend
-              neon.diana.service: *name_api_proxy
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_api_proxy
-                name: *name_api_proxy
-                resources: {}
-                volumeMounts:
-                  - mountPath: /config
-                    name: config
-            restartPolicy: Always
-            volumes:
-              - name: config
-                projected:
-                  sources:
-                    - secret:
-                        name: ngi-auth
-                    - secret:
-                        name: mq-config
 neon-brands-service:
   container_image: &image_brands_service ghcr.io/neongeckocom/neon_brands_service:dev
   container_name: &name_brands_service neon-brands-service
@@ -131,60 +79,6 @@ neon-brands-service:
       kompose.service.type: headless
     volumes:
       - config:/config
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_brands_service
-        name: *name_brands_service
-      spec:
-        clusterIP: None
-        ports:
-          - name: headless
-            port: 55555
-            targetPort: 0
-        selector:
-          neon.diana.service: *name_brands_service
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        namespace: ${MQ_NAMESPACE}
-        labels:
-          neon.diana.service: *name_brands_service
-        name: *name_brands_service
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_brands_service
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              docker.network: mq-backend
-              neon.diana.service: *name_brands_service
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_brands_service
-                name: *name_brands_service
-                resources: {}
-                volumeMounts:
-                  - mountPath: /config
-                    name: config
-            imagePullSecrets:
-              - name: github-auth
-            restartPolicy: Always
-            volumes:
-              - name: config
-                projected:
-                  sources:
-                    - secret:
-                        name: ngi-auth
-                    - secret:
-                        name: mq-config
 neon-email-proxy:
   container_image: &image_email_proxy ghcr.io/neongeckocom/neon_email_proxy:dev
   container_name: &name_email_proxy neon-email-proxy
@@ -215,58 +109,6 @@ neon-email-proxy:
       kompose.service.type: headless
     volumes:
       - config:/config
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_email_proxy
-        name: *name_email_proxy
-      spec:
-        clusterIP: None
-        ports:
-          - name: headless
-            port: 55555
-            targetPort: 0
-        selector:
-          neon.diana.service: *name_email_proxy
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        namespace: ${MQ_NAMESPACE}
-        labels:
-          neon.diana.service: *name_email_proxy
-        name: *name_email_proxy
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_email_proxy
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              docker.network: mq-backend
-              neon.diana.service: *name_email_proxy
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_email_proxy
-                name: *name_email_proxy
-                resources: {}
-                volumeMounts:
-                  - mountPath: /config
-                    name: config
-            restartPolicy: Always
-            volumes:
-              - name: config
-                projected:
-                  sources:
-                    - secret:
-                        name: ngi-auth
-                    - secret:
-                        name: mq-config
 neon-script-parser:
   container_image: &image_script_parser ghcr.io/neongeckocom/neon-script-parser:dev
   container_name: &name_script_parser neon-script-parser
@@ -297,58 +139,6 @@ neon-script-parser:
       kompose.service.type: headless
     volumes:
       - config:/config
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_script_parser
-        name: *name_script_parser
-      spec:
-        clusterIP: None
-        ports:
-          - name: headless
-            port: 55555
-            targetPort: 0
-        selector:
-          neon.diana.service: *name_script_parser
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        namespace: ${MQ_NAMESPACE}
-        labels:
-          neon.diana.service: *name_script_parser
-        name: *name_script_parser
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_script_parser
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              docker.network: mq-backend
-              neon.diana.service: *name_script_parser
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_script_parser
-                name: *name_script_parser
-                resources: {}
-                volumeMounts:
-                  - mountPath: /config
-                    name: config
-            imagePullSecrets:
-              - name: github-auth
-            restartPolicy: Always
-            volumes:
-              - name: config
-                projected:
-                  sources:
-                    - secret:
-                        name: mq-config
 neon-metrics-service:
   container_image: &image_metrics_service ghcr.io/neongeckocom/neon_metrics_service:dev
   container_name: &name_metrics_service neon-metrics-service
@@ -380,69 +170,6 @@ neon-metrics-service:
     volumes:
       - config:/config
       - metrics:/metrics
-  kubernetes:
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        labels:
-          neon.diana.service: *name_metrics_service
-        name: *name_metrics_service
-      spec:
-        clusterIP: None
-        ports:
-          - name: headless
-            port: 55555
-            targetPort: 0
-        selector:
-          neon.diana.service: *name_metrics_service
-    - apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        namespace: ${MQ_NAMESPACE}
-        labels:
-          neon.diana.service: *name_metrics_service
-        name: *name_metrics_service
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            neon.diana.service: *name_metrics_service
-        strategy:
-          type: Recreate
-        template:
-          metadata:
-            labels:
-              docker.network: mq-backend
-              neon.diana.service: *name_metrics_service
-              neon.project.name: diana
-          spec:
-            containers:
-              - image: *image_metrics_service
-                name: *name_metrics_service
-                resources: {}
-                volumeMounts:
-                  - mountPath: /config
-                    name: config
-            restartPolicy: Always
-            volumes:
-              - name: config
-                projected:
-                  sources:
-                    - secret:
-                        name: mq-config
-              - name: metrics
-                persistentVolumeClaim:
-                  claimName: metrics
-    - apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        name: metrics
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
 
 # HTTP Services
 tts-larynx:
@@ -490,7 +217,7 @@ tts-mimic2-ljspeech:
   container_name: &name_mimic2_ljspeech_tts tts-mimic2-ljspeech
   service_class: http-backend
   docker_compose:
-    container_name: *image_mimic2_ljspeech_tts
+    container_name: *name_mimic2_ljspeech_tts
     image: *image_mimic2_ljspeech_tts
     restart: always
     ports:

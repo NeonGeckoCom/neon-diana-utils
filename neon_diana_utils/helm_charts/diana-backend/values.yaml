@@ -17,6 +17,8 @@ letsencrypt:
 rabbitmq:
   nameOverride: &name_rmq neon-rabbitmq
   fullnameOverride: *name_rmq
+  persistence:
+    enabled: false
   commonLabels:
     neon.project.name: diana
     neon.diana.service: *name_rmq
