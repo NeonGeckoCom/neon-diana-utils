@@ -1,0 +1,7 @@
+replicaCount: 1
+configSecret: diana-config
+image:
+  pullSecret: github-auth
+  repository: ghcr.io/neongeckocom/neon_brands_service
+  pullPolicy: Always
+  tag: dev
