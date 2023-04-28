@@ -2,6 +2,6 @@ replicaCount: 1
 configSecret: diana-config
 image:
   pullSecret: github-auth
-  repository: ghcr.io/neongeckocom/neon_api_proxy
+  repository: ghcr.io/neongeckocom/neon-script-parser
   pullPolicy: Always
   tag: dev

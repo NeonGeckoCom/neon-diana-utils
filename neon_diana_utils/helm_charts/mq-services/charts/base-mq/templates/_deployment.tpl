@@ -25,14 +25,14 @@ spec:
           volumeMounts:
             - mountPath: /config/neon
               name: config
-      {{ if .Values.image.pullSecret }}
-      imagePullSecrets:
-        - name: {{ .Values.image.pullSecret }}
-      {{- end -}}
       volumes:
         - name: config
           projected:
             sources:
               - secret:
                   name: {{ .Values.configSecret }}
+      {{- if .Values.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecret }}
+      {{- end -}}
 {{- end -}}
