@@ -7,12 +7,15 @@ domain: &domain 2023.us
 # TODO: Update tag to `dev` or `latest`
 mqServiceTag: &mq_tag dev
 
-imagePullSecret: &pull_secret github-auth
-configSecret: &config_secret diana-config
-rmqSecret: &rmq_secret rmq-config
+rmqAmqpPort: &rmq_port 5672
+# Note: Ensure port matches diana.yaml
+
+configSecret: diana-config
+# Note: Changes here need to be reflected in all MQ containers
 
 letsencrypt:
-  sslSecret: &ssl_secret letsencrypt-staging
+  sslSecret: letsencrypt-ssl
+  # Note: This should match `diana-http.ingress.tlsSecretName
   server: https://acme-staging-v02.api.letsencrypt.org/directory
   email: developers@neon.ai
   # TODO: Update server and email to valid options
@@ -22,6 +25,11 @@ letsencrypt:
 rabbitmq:
   nameOverride: &name_rmq neon-rabbitmq
   fullnameOverride: *name_rmq
+  containerPorts:
+    amqp: *rmq_port
+  service:
+    ports:
+      amqp: *rmq_port
   persistence:
     enabled: false
   commonLabels:
@@ -30,7 +38,7 @@ rabbitmq:
     neon.service.class: communication
   loadDefinition:
     enabled: true
-    existingSecret: *rmq_secret
+    existingSecret: rmq-config
   extraConfiguration: |
     load_definitions = /app/load_definition.json
 
@@ -38,7 +46,7 @@ rabbitmq:
 diana-http:
   domain: *domain
   ingress:
-    tlsSecretName: *ssl_secret
+    tlsSecretName: letsencrypt-ssl
     extraRules:
       - host: mqadmin
         serviceName: *name_rmq
@@ -47,24 +55,19 @@ diana-http:
 # Deploys MQ Services
 diana-mq:
   neon-api-proxy:
-    configSecret: *config_secret
     image:
       tag: *mq_tag
   neon-brands-service:
-    configSecret: *config_secret
     image:
       tag: *mq_tag
-      pullSecret: *pull_secret
+      pullSecret: github-auth
   neon-email-proxy:
-    configSecret: *config_secret
     image:
       tag: *mq_tag
   neon-metrics-service:
-    configSecret: *config_secret
     image:
       tag: *mq_tag
   neon-script-parser:
-    configSecret: *config_secret
     image:
       tag: *mq_tag
-      pullSecret: *pull_secret
+      pullSecret: github-auth

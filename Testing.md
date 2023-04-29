@@ -8,12 +8,15 @@ sudo snap install microk8s --classic
 sudo usermod -aG microk8s $USER
 newgrp microk8s
 ```
-3. Ebable services for persistent storage, DNS, Dashboard, and MetalLB
+3. Enable services for persistent storage, DNS, Dashboard, and MetalLB
 ```shell
 microk8s enable hostpath-storage
 microk8s enable dns
 microk8s enable dashboard
 microk8s enable metallb
+# When prompted, choose a subnet that is different than anything your router uses,
+# i.e. 10.10.10.10-10.10.10.10
+# Unless you plan on adding multiple nodes, this range only needs one address.
 ```
 3. Forward the Kubernetes Dashboard port. You will need to run this in a separate terminal, or
    fork the process to the background to continue after starting the dashboard.
@@ -23,21 +26,8 @@ microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 1443:4
 # Dashboard is now available at: https://localhost:1443 using the token generated earlier
 ```
 
-## Configure Ingress (NGINX)
-Next, NGINX ingress is installed via Helm Chart:
-```shell
-# When prompted, choose a subnet that is different than anything your router uses, 
-# i.e. 10.10.10.10-10.10.10.20
-microk8s helm upgrade --install ingress-nginx ingress-nginx \
-  --repo https://kubernetes.github.io/ingress-nginx \
-  --namespace ingress-nginx --create-namespace
-```
-You can monitor progress in the Dashboard, and when everything is finished the
-`ingress-nginx-controller` Service should show endpoints attached to one of the
-addresses provided to MetalLB.
-
 ## DNS Resolution
-NGINX configuration will expect URLs to map to services, for local testing you may
+Ingress configuration will expect URLs to map to services, for local testing you may
 either configure subdomains for a domain you own to forward to your ingress controller
 (in our example this is `10.10.10.10`), or you can modify the hosts file 
 (`/etc/hosts` for Ubuntu) on a computer you use for testing to forward to a fake

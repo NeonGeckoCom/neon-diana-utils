@@ -193,7 +193,7 @@ def configure_mq_backend(username, password, output_path):
     shutil.copytree(join(dirname(__file__), "helm_charts"),
                     join(output_path))
     chart_path = join(output_path, "diana-backend")
-
+    # TODO: cleanup .lock and .tgz files
     try:
         from neon_diana_utils.utils.kubernetes_utils import \
             cli_make_github_secret
