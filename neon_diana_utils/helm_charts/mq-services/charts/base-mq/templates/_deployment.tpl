@@ -21,6 +21,7 @@ spec:
       restartPolicy: Always
       containers:
         - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}
           volumeMounts:
             - mountPath: /config/neon
