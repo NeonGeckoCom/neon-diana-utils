@@ -29,7 +29,7 @@ import subprocess
 import unittest
 import pytest
 from time import time
-from neon_utils.mq_utils import send_mq_request
+from neon_mq_connector.utils.client_utils import send_mq_request
 from neon_mq_connector.utils import wait_for_mq_startup
 
 

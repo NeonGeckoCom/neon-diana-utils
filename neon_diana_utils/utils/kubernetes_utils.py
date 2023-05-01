@@ -30,7 +30,7 @@ import yaml
 from typing import Optional
 from os import getenv
 from os.path import dirname, join, expanduser, isdir, isfile
-from neon_utils.logger import LOG
+from ovos_utils.log import LOG
 
 
 def cli_make_rmq_config_map(input_path: str, output_path: str) -> str:

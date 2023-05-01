@@ -33,7 +33,7 @@ from typing import Optional
 
 from docker.errors import APIError
 from docker.models.containers import Container
-from neon_utils import LOG
+from ovos_utils.log import LOG
 
 
 def run_clean_rabbit_mq_docker(bind_existing: bool = False) -> Container:

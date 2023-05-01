@@ -36,14 +36,13 @@ from os.path import expanduser, isdir, join, dirname, basename, exists, isfile
 from typing import Optional, Set
 from ovos_utils.log import LOG
 from ovos_utils.xdg_utils import xdg_config_home
-
-from neon_utils.configuration_utils import dict_merge
+from ovos_utils.json_helper import merge_dict
 
 from neon_diana_utils.constants import valid_http_services, Orchestrator
 from neon_diana_utils.rabbitmq_api import RabbitMQAPI
-from neon_diana_utils.utils.docker_utils import cleanup_docker_container, \
-    write_docker_compose
-from neon_diana_utils.utils.kubernetes_utils import write_kubernetes_spec, generate_secret
+from neon_diana_utils.utils.docker_utils import write_docker_compose
+from neon_diana_utils.utils.kubernetes_utils import write_kubernetes_spec, \
+    generate_secret
 
 
 def cli_configure_backend(config_path: str, mq_services: Set[str],
@@ -273,7 +272,7 @@ def _parse_configuration(services_to_configure: dict) -> tuple:
     for name, service in services_to_configure.items():
         # Get service MQ Config
         if service.get("mq"):
-            dict_merge(user_permissions,
+            merge_dict(user_permissions,
                        service.get("mq", service).get("mq_user_permissions",
                                                       dict()))
             if service["mq"].get("mq_username"):
