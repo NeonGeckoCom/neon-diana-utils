@@ -3,12 +3,9 @@
 # and configuration including secrets with keys and passwords.
 
 # TODO: Update `domain`
-domain: &domain 2023.us
+domain: &domain diana.k8s
 # TODO: Update tag to `dev` or `latest`
 mqServiceTag: &mq_tag dev
-
-rmqAmqpPort: &rmq_port 5672
-# Note: Ensure port matches diana.yaml
 
 configSecret: diana-config
 # Note: Changes here need to be reflected in all MQ containers
@@ -25,11 +22,6 @@ letsencrypt:
 rabbitmq:
   nameOverride: &name_rmq neon-rabbitmq
   fullnameOverride: *name_rmq
-  containerPorts:
-    amqp: *rmq_port
-  service:
-    ports:
-      amqp: *rmq_port
   persistence:
     enabled: false
   commonLabels:

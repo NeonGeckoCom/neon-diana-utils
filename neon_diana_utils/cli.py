@@ -23,19 +23,19 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import json
-import logging
 import shutil
 import click
 import yaml
 
-from ovos_utils.log import LOG
 from os import getenv, makedirs
-from os.path import isdir, join, expanduser, isfile, dirname, abspath, basename, exists
+from os.path import isdir, join, expanduser, isfile, dirname, abspath, exists
 from pprint import pformat
 from click_default_group import DefaultGroup
 from ovos_utils.xdg_utils import xdg_config_home
-from neon_diana_utils.constants import valid_mq_services, default_mq_services, Orchestrator
+from neon_diana_utils.constants import valid_mq_services, default_mq_services, \
+    Orchestrator
 from neon_diana_utils.version import __version__
 
 
@@ -225,15 +225,19 @@ def configure_mq_backend(username, password, output_path):
 
         keys_config = _make_keys_config(True)
 
-        confirmed = False
-        mq_url = None
-        mq_port = None
-        while not confirmed:
-            mq_url = click.prompt("MQ Service Name or URL", type=str,
-                                  default="neon-rabbitmq")
-            mq_port = click.prompt("MQ Client Port", type=int, default=5672)
-            click.echo(f"{mq_url}:{mq_port}")
-            confirmed = click.confirm("Is this MQ Address Correct?")
+        mq_url = "neon-rabbitmq"
+        mq_port = 5672
+
+        # Assume ingress is configured as recommended
+        # confirmed = False
+        # mq_url = None
+        # mq_port = None
+        # while not confirmed:
+        #     mq_url = click.prompt("MQ Service Name or URL", type=str,
+        #                           default="neon-rabbitmq")
+        #     mq_port = click.prompt("MQ Client Port", type=int, default=5672)
+        #     click.echo(f"{mq_url}:{mq_port}")
+        #     confirmed = click.confirm("Is this MQ Address Correct?")
         config = {**{"MQ": {"users": mq_auth_config,
                             "server": mq_url,
                             "port": mq_port}},
