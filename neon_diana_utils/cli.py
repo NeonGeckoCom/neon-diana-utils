@@ -29,7 +29,7 @@ import shutil
 import click
 import yaml
 
-from os import getenv, makedirs
+from os import getenv, makedirs, walk, remove
 from os.path import isdir, join, expanduser, isfile, dirname, abspath, exists
 from pprint import pformat
 from click_default_group import DefaultGroup
@@ -190,10 +190,15 @@ def configure_mq_backend(username, password, output_path):
     elif not isdir(dirname(output_path)):
         makedirs(dirname(output_path))
 
+    # Get Helm charts in output directory for deployment
     shutil.copytree(join(dirname(__file__), "helm_charts"),
                     join(output_path))
     chart_path = join(output_path, "diana-backend")
-    # TODO: cleanup .lock and .tgz files
+    # Cleanup any leftover build files
+    for root, _, files in walk(output_path):
+        for file in files:
+            if any((file.endswith(x) for x in (".lock", ".tgz"))):
+                remove(join(root, file))
     try:
         from neon_diana_utils.utils.kubernetes_utils import \
             cli_make_github_secret
@@ -223,7 +228,7 @@ def configure_mq_backend(username, password, output_path):
                         gh_secret_path)
             click.echo(f"Generated GH secret at {gh_secret_path}")
 
-        keys_config = _make_keys_config(True)
+        keys_config = _make_keys_config(False)
 
         mq_url = "neon-rabbitmq"
         mq_port = 5672
@@ -267,7 +272,7 @@ def make_rmq_config(output_file):
               is_flag=True)
 @click.argument("output_file", default=None, required=False)
 def make_keys_config(skip_write, output_file):
-    _make_keys_config(skip_write, output_file)
+    _make_keys_config(not skip_write, output_file)
 
 
 @neon_diana_cli.command(help="Generate Kubernetes secret for Github images")
@@ -285,8 +290,14 @@ def make_github_secret(username, token, output_path):
         click.echo(e)
 
 
-def _make_keys_config(skip_write, output_file=None):
-    if not skip_write:
+def _make_keys_config(write_config: bool, output_file: str = None):
+    """
+    Interactive configuration tool to prompt user for expected API keys and
+    service accounts to be included in Configuration.
+    :param write_config: If true, write config to `output_file`
+    :param output_file: Configuration file to write keys to
+    """
+    if write_config:
         output_file = expanduser(abspath((output_file or join(xdg_config_home(),
                                                               "diana",
                                                               "diana.yaml"))))
@@ -352,7 +363,7 @@ def _make_keys_config(skip_write, output_file=None):
                        "emails": email_config,
                        "track_my_brands": brands_config}
               }
-    if not skip_write:
+    if write_config:
         click.echo(f"Writing configuration to {output_file}")
         with open(output_file, 'w+') as f:
             yaml.dump(config, f)
