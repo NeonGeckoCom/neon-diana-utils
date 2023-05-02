@@ -6,6 +6,7 @@ replicaCount: 1
 subdomain: libretranslate
 domain: diana.local
 servicePort: "5000"
+configSecret: diana-config
 
 image:
   repository: ghcr.io/neongeckocom/libretranslate

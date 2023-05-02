@@ -26,5 +26,16 @@ spec:
             - name: {{ .Chart.Name }}
               containerPort: {{ .Values.servicePort }}
               protocol: TCP
+          {{- if .Values.configSecret }}
+          volumeMounts:
+            - mountPath: /config/neon
+              name: config
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - secret:
+                  name: {{ .Values.configSecret }}
+      {{- end -}}
       restartPolicy: Always
 {{- end -}}
