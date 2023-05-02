@@ -17,6 +17,9 @@ users:
   - name: "neon_api"
     password:
     tags: [ ]
+  - name: "neon_libretranslate"
+    password:
+    tags: [ ]
 vhosts:
   - name: "/neon_emails"
   - name: "/neon_api"
@@ -24,7 +27,13 @@ vhosts:
   - name: "/neon_metrics"
   - name: "/neon_coupons"
   - name: "/neon_testing"
+  - name: "/translation"
 permissions:
+  - user: "neon_libretranslate"
+    vhost: "/translation"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
   - user: "neon_api_utils"
     vhost: "/neon_coupons"
     configure: ".*"
