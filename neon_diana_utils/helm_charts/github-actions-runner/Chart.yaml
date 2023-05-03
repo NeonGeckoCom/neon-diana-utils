@@ -1,0 +1,12 @@
+apiVersion: v2
+name: github-actions-runner
+description: Installs GitHub Actions Runners
+
+type: application
+version: 0.0.1
+appVersion: "0.1.0"
+
+dependencies:
+  - name: actions-runner-controller
+    version: 0.23.2
+    repository: https://actions-runner-controller.github.io/actions-runner-controller

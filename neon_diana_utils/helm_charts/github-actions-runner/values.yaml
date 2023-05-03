@@ -1,0 +1,30 @@
+runnerName: "github-actions-runner"
+orgName: "NeonGeckoCom"
+
+autoScaler:
+  minReplicas: 1
+  maxReplicas: 10
+  scaleUpThreshold: '0.75'
+  shaleDownThreshold: '0.25'
+
+actions-runner-controller:
+  authSecret:
+    create: true
+    github_token: "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"
+    # TODO: Define GH Token
+  githubWebhookServer:
+    enabled: true
+#    ports:
+#      - nodePort: 33080
+#  service:
+#    type: NodePort
+ingress:
+  domain: "ghactions.2022.us"
+  tlsSecret: letsencrypt-ssl
+letsencrypt:
+  issuerSecret: letsencrypt-issuer
+  # Note: This should match `ingress.tlsSecret`
+  server: https://acme-staging-v02.api.letsencrypt.org/directory
+  email: developers@neon.ai
+  # TODO: Update server and email to valid options
+  # https://acme-v02.api.letsencrypt.org/directory

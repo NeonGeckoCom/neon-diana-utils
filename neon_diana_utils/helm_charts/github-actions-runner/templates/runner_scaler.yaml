@@ -1,0 +1,14 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: {{ .Values.runnerName }}-autoscaler
+spec:
+  scaleTargetRef:
+    kind: RunnerDeployment
+    name: {{ .Values.runnerName }}
+  minReplicas: {{ .Values.autoScaler.minReplicas }}
+  maxReplicas: {{ .Values.autoScaler.maxReplicas }}
+  scaleUpTriggers:
+    - githubEvent:
+        workflowJob: {}
+      duration: "20m"

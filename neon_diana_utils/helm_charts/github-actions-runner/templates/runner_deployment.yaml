@@ -1,0 +1,8 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: {{ .Values.runnerName }}
+spec:
+  template:
+    spec:
+      organization: {{ .Values.orgName }}
