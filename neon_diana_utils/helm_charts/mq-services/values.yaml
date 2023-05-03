@@ -1,0 +1,17 @@
+imageTag: &tag dev
+
+neon-api-proxy:
+  image:
+    tag: *tag
+neon-brands-service:
+  image:
+    tag: *tag
+neon-email-proxy:
+  image:
+    tag: *tag
+neon-metrics-service:
+  image:
+    tag: *tag
+neon-script-parser:
+  image:
+    tag: *tag

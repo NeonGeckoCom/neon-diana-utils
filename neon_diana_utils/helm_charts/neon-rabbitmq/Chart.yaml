@@ -1,0 +1,12 @@
+apiVersion: v2
+name: neon-rabbitmq
+description: A Helm chart for deploying RabbitMQ for the Diana Backend
+
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+dependencies:
+  - name: rabbitmq
+    version: 11.13.0
+    repository: https://charts.bitnami.com/bitnami

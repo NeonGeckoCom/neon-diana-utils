@@ -35,10 +35,24 @@ import yaml
 
 from docker.errors import APIError
 from mock import Mock
-from ruamel.yaml import YAML
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from neon_diana_utils.constants import Orchestrator
+
+MOCK_RMQ_USERS = {"users": [
+    {"name": "neon_api_utils",
+     "password": "Klatchat2021"},
+    {"name": "neon_metrics",
+     "password": "neon_metrics_password"},
+    {"name": "neon_coupons",
+     "password": "neon_coupons_password"},
+    {"name": "neon_email",
+     "password": "neon_email_password"},
+    {"name": "neon_script_parser",
+     "password": "neon_scripts_password"},
+    {"name": "neon_api",
+     "password": "neon_api_password"}
+]}
 
 
 class TestBackendUtils(unittest.TestCase):
@@ -271,6 +285,35 @@ class TestBackendUtils(unittest.TestCase):
     def test_configure_mq_backend(self):
         pass
 
+    def test_generate_rmq_config(self):
+        from neon_diana_utils.utils.backend import generate_rmq_config
+        config = generate_rmq_config()
+        self.assertIsInstance(config['users'], list)
+        for user in config['users']:
+            self.assertIsInstance(user['name'], str)
+            self.assertIsInstance(user['password'], str)
+            self.assertNotEqual(user['password'], '')
+            self.assertIsInstance(user['tags'], list)
+            if user['name'] == "neon_api_utils":
+                self.assertEqual(user['password'], "Klatchat2021")
+        for vhost in config['vhosts']:
+            self.assertTrue(vhost['name'].startswith('/'))
+        for perm in config['permissions']:
+            self.assertIsInstance(perm['user'], str)
+            self.assertIsInstance(perm['vhost'], str)
+            self.assertIsInstance(perm['configure'], str)
+            self.assertIsInstance(perm['write'], str)
+            self.assertIsInstance(perm['read'], str)
+
+    def test_generate_mq_auth_config(self):
+        from neon_diana_utils.utils.backend import generate_mq_auth_config
+        config = generate_mq_auth_config(MOCK_RMQ_USERS)
+        self.assertIsNotNone(config)
+        for key, value in config.items():
+            self.assertEqual(set(value.keys()), {'user', 'password'})
+            self.assertIsInstance(value['user'], str)
+            self.assertIsInstance(value['password'], str)
+
 
 class TestDockerUtils(unittest.TestCase):
     @classmethod
@@ -311,7 +354,7 @@ class TestDockerUtils(unittest.TestCase):
         docker_compose_file = os.path.join(os.environ["NEON_CONFIG_PATH"], "docker-compose.yml")
         self.assertTrue(os.path.isfile(docker_compose_file))
         with open(docker_compose_file) as f:
-            docker_compose = YAML().load(f)
+            docker_compose = yaml.safe_load(f)
         self.assertIn("version", docker_compose)
         self.assertEqual(docker_compose["services"], sample_config)
         os.remove(docker_compose_file)
@@ -415,11 +458,11 @@ class TestKubernetesUtils(unittest.TestCase):
 
         self.assertTrue(os.path.isfile(k8s_diana))
         with open(k8s_diana) as f:
-            kubernetes_spec = YAML().load(f)
+            kubernetes_spec = yaml.safe_load(f)
         _validate_k8s_spec(kubernetes_spec)
 
         with open(k8s_ingress) as f:
-            nginx_ingress = YAML().load(f)
+            nginx_ingress = yaml.safe_load(f)
             f.seek(0)
             string_contents = f.read()
         self.assertIsInstance(nginx_ingress['spec']['ports'][0], dict)
@@ -442,7 +485,7 @@ class TestKubernetesUtils(unittest.TestCase):
         self.assertTrue(os.path.isfile(output_file))
 
         with open(output_file) as f:
-            contents = YAML().load(f)
+            contents = yaml.safe_load(f)
 
         self.assertEqual(contents["metadata"]["name"], config_name)
         self.assertEqual(contents["data"], config_data)
@@ -463,7 +506,7 @@ class TestKubernetesUtils(unittest.TestCase):
         self.assertTrue(os.path.isfile(output_file))
 
         with open(output_file) as f:
-            contents = YAML().load(f)
+            contents = yaml.safe_load(f)
 
         self.assertEqual(contents["metadata"]["name"], secret_name)
         self.assertEqual(contents["stringData"], config_data)
@@ -481,7 +524,7 @@ class TestKubernetesUtils(unittest.TestCase):
                                              output_path)
         self.assertTrue(os.path.isfile(output_file))
         with open(output_file) as f:
-            contents = yaml.load(f)
+            contents = yaml.safe_load(f)
         self.assertEqual(contents['kind'], "Secret")
         self.assertEqual(contents['type'], "kubernetes.io/dockerconfigjson")
         self.assertEqual(contents['metadata']['name'], 'github-auth')
@@ -501,7 +544,7 @@ class TestKubernetesUtils(unittest.TestCase):
         out_file = _update_tcp_config({'80': 'default/test:80'}, output_file)
         self.assertTrue(os.path.isfile(out_file))
         with open(out_file) as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
         self.assertEqual(config['apiVersion'], 'v1')
         self.assertEqual(config['kind'], 'ConfigMap')
         self.assertEqual(config['metadata'], {'name': 'tcp-services',
@@ -511,14 +554,14 @@ class TestKubernetesUtils(unittest.TestCase):
         file = _update_tcp_config({'80': 'default/test:80'}, output_file)
         self.assertEqual(file, out_file)
         with open(file) as f:
-            config_2 = yaml.load(f)
+            config_2 = yaml.safe_load(f)
 
         self.assertEqual(config, config_2)
 
         file = _update_tcp_config({'443': 'test/test:443'}, output_file)
         self.assertEqual(file, out_file)
         with open(file) as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
         self.assertEqual(config['data'], {'80': 'default/test:80',
                                           '443': 'test/test:443'})
 
@@ -534,7 +577,7 @@ class TestKubernetesUtils(unittest.TestCase):
                                           output_path=output_file)
         self.assertTrue(os.path.isfile(out_file))
         with open(out_file) as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
         self.assertEqual(config['apiVersion'], 'networking.k8s.io/v1')
         self.assertEqual(config['kind'], "Ingress")
         self.assertIsInstance(
@@ -557,13 +600,13 @@ class TestKubernetesUtils(unittest.TestCase):
                                             output_path=output_file)
         self.assertEqual(out_file, out_file_2)
         with open(out_file_2) as f:
-            config_2 = yaml.load(f)
+            config_2 = yaml.safe_load(f)
         self.assertEqual(config, config_2)
 
         out_file = _update_ingress_config("valid.neon.ai", "valid_service",
                                           8080, output_path=output_file)
         with open(out_file) as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
 
         self.assertIn("test.neon.ai", config['spec']['tls'][0]['hosts'])
         self.assertIn("valid.neon.ai", config['spec']['tls'][0]['hosts'])
@@ -594,7 +637,7 @@ class TestKubernetesUtils(unittest.TestCase):
                                    output_file)
         self.assertEqual(file, output_file)
         with open(file) as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
 
         self.assertEqual(config['kind'], 'Issuer')
         self.assertEqual(config['metadata']['name'], 'letsencrypt-prod')
@@ -604,7 +647,7 @@ class TestKubernetesUtils(unittest.TestCase):
                                    output_file)
         self.assertEqual(file, output_file)
         with open(file) as f:
-            config = yaml.load(f)
+            config = yaml.safe_load(f)
 
         self.assertEqual(config['kind'], 'Issuer')
         self.assertEqual(config['metadata']['name'], 'letsencrypt-test')

@@ -1,0 +1,39 @@
+{{ if .Values.ingress.enabled }}
+{{- $domain := .Values.domain -}}
+{{- $rules := concat .Values.ingress.rules .Values.ingress.extraRules }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: ingress-diana-http
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.ingressClassName }}
+    cert-manager.io/issuer: {{ .Values.ingress.tlsSecretName }}
+spec:
+  tls:
+    - secretName: {{ .Values.ingress.tlsSecretName }}
+      hosts:
+        {{- range $rules }}
+        - {{ printf "%s.%s " .host $domain }}
+        {{- end }}
+
+  rules:
+    {{- range $rules }}
+    - host: {{ printf "%s.%s " .host $domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .serviceName }}
+                port:
+                  number: {{ .servicePort}}
+    {{- end }}
+
+  {{- end }}

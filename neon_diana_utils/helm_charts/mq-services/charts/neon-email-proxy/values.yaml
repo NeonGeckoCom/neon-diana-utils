@@ -1,0 +1,6 @@
+replicaCount: 1
+configSecret: diana-config
+image:
+  repository: ghcr.io/neongeckocom/neon_email_proxy
+  pullPolicy: Always
+  tag: dev

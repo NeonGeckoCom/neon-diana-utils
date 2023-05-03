@@ -1,0 +1,13 @@
+ingress-nginx:
+  nameOverride: &name ingress-nginx
+  fullnameOverride: *name
+
+  serviceAccount:
+    create: true
+    name: ingress-nginx
+  tcp:
+    5672: "default/neon-rabbitmq:5672"
+# Note that all RabbitMQ services will use AMQP port 5672 internally
+cert-manager:
+  namespace: cert-manager
+  installCRDs: True

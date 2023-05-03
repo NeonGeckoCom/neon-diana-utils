@@ -24,6 +24,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import yaml
 import docker
 
 from os import getenv, makedirs
@@ -32,8 +33,7 @@ from typing import Optional
 
 from docker.errors import APIError
 from docker.models.containers import Container
-from ruamel.yaml import YAML
-from neon_utils import LOG
+from ovos_utils.log import LOG
 
 
 def run_clean_rabbit_mq_docker(bind_existing: bool = False) -> Container:
@@ -86,7 +86,7 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
     compose_file = expanduser(compose_file)
 
     with open(join(dirname(dirname(__file__)), "templates", "docker-compose.yml")) as f:
-        compose_boilerplate = YAML().load(f)
+        compose_boilerplate = yaml.safe_load(f)
     compose_contents = {**compose_boilerplate, **{"services": services_config}}
 
     volumes = volumes or list()
@@ -112,4 +112,4 @@ def write_docker_compose(services_config: dict, compose_file: Optional[str] = No
         }
 
     with open(compose_file, "w+") as f:
-        YAML().dump(compose_contents, f)
+        yaml.dump(compose_contents, f)

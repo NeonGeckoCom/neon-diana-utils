@@ -1,0 +1,28 @@
+apiVersion: v2
+name: diana-mq
+description: Deploy DIANA MQ Services
+
+type: application
+version: &chart_version 0.0.1
+appVersion: "0.0.1"
+dependencies:
+  - name: neon-api-proxy
+    alias: neon-api-proxy
+    version: *chart_version
+    repository: file://charts/neon-api-proxy
+  - name: neon-brands-service
+    alias: neon-brands-service
+    version: *chart_version
+    repository: file://charts/neon-brands-service
+  - name: neon-email-proxy
+    alias: neon-email-proxy
+    version: *chart_version
+    repository: file://charts/neon-email-proxy
+  - name: neon-metrics-service
+    alias: neon-metrics-service
+    version: *chart_version
+    repository: file://charts/neon-metrics-service
+  - name: neon-script-parser
+    alias: neon-script-parser
+    version: *chart_version
+    repository: file://charts/neon-script-parser

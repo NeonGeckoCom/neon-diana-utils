@@ -1,0 +1,24 @@
+# Default values for rabbitmq.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+rabbitmq:
+  nameOverride: neon-rabbitmq
+  fullnameOverride: neon-rabbitmq
+  commonLabels:
+    neon.project.name: diana
+    neon.diana.service: neon-rabbitmq
+    neon.service.class: communication
+  auth:
+    username: neon
+    password: neon
+
+  image:
+    debug: true
+
+ingress:
+  enabled: True
+  hostname: mqadmin.diana.k8s
+  ingressClassName: nginx

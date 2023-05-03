@@ -24,23 +24,25 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import yaml
 import json
 import os
 import itertools
 import subprocess
+import secrets
 
 from os import makedirs, getenv
 from os.path import expanduser, isdir, join, dirname, basename, exists, isfile
 from typing import Optional, Set
-from neon_utils import LOG
-from ruamel.yaml import YAML
-from neon_utils.configuration_utils import dict_merge
+from ovos_utils.log import LOG
+from ovos_utils.xdg_utils import xdg_config_home
+from ovos_utils.json_helper import merge_dict
 
 from neon_diana_utils.constants import valid_http_services, Orchestrator
 from neon_diana_utils.rabbitmq_api import RabbitMQAPI
-from neon_diana_utils.utils.docker_utils import run_clean_rabbit_mq_docker, cleanup_docker_container, \
-    write_docker_compose
-from neon_diana_utils.utils.kubernetes_utils import write_kubernetes_spec, generate_secret, generate_config_map
+from neon_diana_utils.utils.docker_utils import write_docker_compose
+from neon_diana_utils.utils.kubernetes_utils import write_kubernetes_spec, \
+    generate_secret
 
 
 def cli_configure_backend(config_path: str, mq_services: Set[str],
@@ -96,7 +98,6 @@ def cli_configure_backend(config_path: str, mq_services: Set[str],
 
     if not skip_config:
         configure_mq_backend(admin_user=admin_user, admin_pass=admin_pass,
-                             config_path=config_path,
                              services=mq_services_config,
                              users_config=users_to_configure,
                              neon_mq_user_auth=neon_mq_user_auth)
@@ -117,7 +118,6 @@ def cli_start_backend(config_path: str, attach: bool,
     :param attach: attach the calling thread to the command output
     :param orchestrator: orchestrator to use to start backend services
     """
-
     # TODO: Validate the requested file is for a backend
     if not config_path:
         raise ValueError("Null config_path")
@@ -143,7 +143,6 @@ def cli_stop_backend(config_path: str, orchestrator: Orchestrator):
     :param config_path: path to backend spec files
     :param orchestrator: orchestrator to use to start backend services
     """
-
     # TODO: Validate the requested file is for a backend
     config_path = expanduser(config_path)
     if not config_path:
@@ -164,6 +163,8 @@ def write_neon_mq_config(credentials: dict, config_file: Optional[str] = None):
     :param credentials: MQ User credentials
     :param config_file: `mq_config.json` file to write
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     config_file = config_file if config_file else \
         join(getenv("NEON_CONFIG_PATH", "~/.config/neon"), "mq_config.json")
     config_file = expanduser(config_file)
@@ -188,6 +189,8 @@ def write_rabbit_config(api: RabbitMQAPI, config_file: Optional[str] = None):
     :param api: Configured RabbitMQAPI object
     :param config_file: Path to `rabbit_mq_config.json` file to write
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     config_file = config_file if config_file else \
         join(getenv("NEON_CONFIG_PATH", "~/.config/neon"),
              "rabbit_mq_config.json")
@@ -206,11 +209,6 @@ def write_rabbit_config(api: RabbitMQAPI, config_file: Optional[str] = None):
     with open(join(config_path, "rabbitmq.conf"), 'w+') as rabbit:
         rabbit.write(rmq_conf_contents)
 
-    # Generate k8s config
-    generate_config_map("rabbitmq", {"rabbit_mq_config.json": json.dumps(config),
-                                     "rabbitmq.conf": rmq_conf_contents},
-                        join(config_path, "config", "k8s_config_rabbitmq.yml"))
-
 
 def _parse_services(requested_services: set,
                     service_class: str = "mq-backend") -> dict:
@@ -221,11 +219,13 @@ def _parse_services(requested_services: set,
     :param service_class: string class of services to parse (http, mq)
     :returns: mapping of service name to parameters required for configuration
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     # Read configuration from templates
     template_file = join(dirname(dirname(__file__)), "templates",
                          "service_mappings.yml")
     with open(template_file) as f:
-        template_data = YAML().load(f)
+        template_data = yaml.safe_load(f)
     if not requested_services:
         return {}
     services_to_configure = {name: dict(template_data[name])
@@ -248,6 +248,8 @@ def _parse_vhosts(services_to_configure: dict) -> set:
     :param services_to_configure: service mapping parsed from service_mappings.yml
     :returns: set of vhosts to be created
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     default_vhosts = ["/neon_testing"]
     vhosts = [service.get("mq", service).get("mq_vhosts", [])
               for service in services_to_configure.values()]
@@ -256,6 +258,8 @@ def _parse_vhosts(services_to_configure: dict) -> set:
 
 
 def _parse_configuration(services_to_configure: dict) -> tuple:
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     # Parse user and orchestrator configuration
     user_permissions = {
         "neon_api_utils": {"/neon_testing": {"read": "./*",
@@ -268,7 +272,7 @@ def _parse_configuration(services_to_configure: dict) -> tuple:
     for name, service in services_to_configure.items():
         # Get service MQ Config
         if service.get("mq"):
-            dict_merge(user_permissions,
+            merge_dict(user_permissions,
                        service.get("mq", service).get("mq_user_permissions",
                                                       dict()))
             if service["mq"].get("mq_username"):
@@ -283,40 +287,36 @@ def _parse_configuration(services_to_configure: dict) -> tuple:
 
 def configure_mq_backend(admin_user: str, admin_pass: str,
                          config_path: str = None,
-                         run_rabbit_mq: bool = True,
-                         allow_bind_existing: bool = False,
                          url: str = "http://0.0.0.0:15672",
                          services: dict = None,
                          users_config: dict = None,
-                         neon_mq_user_auth: dict = None):
+                         neon_mq_user_auth: dict = None) -> dict:
     """
     Configure a new Diana RabbitMQ backend
     :param url: URL of admin portal (default=http://0.0.0.0:15672)
     :param admin_user: username to configure for RabbitMQ configuration
     :param admin_pass: password associated with admin_user
-    :param run_rabbit_mq: start RabbitMQ Docker container to configure
-    :param allow_bind_existing: allow configuring an existing rabbitMQ server
     :param config_path: local path to write configuration files
-           (default=NEON_CONFIG_PATH)
     :param services: dict of services to configure on this backend
     :param users_config: dict of user permissions to configure
     :param neon_mq_user_auth: dict of MQ service names to credentials
+    :returns: dict MQ user configuration
     """
-    # Start container for local configuration
-    if run_rabbit_mq:
-        container = run_clean_rabbit_mq_docker(allow_bind_existing)
-        container_logs = container.logs(stream=True)
-        for log in container_logs:
-            if b"Server startup complete" in log:
-                break
-    else:
-        container = None
-
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     api = RabbitMQAPI(url)
 
+    services = services or _parse_services({"neon-api-proxy",
+                                            "neon-brands-service",
+                                            "neon-email-proxy",
+                                            "neon-script-parser",
+                                            "neon-metrics-service"})
+    if not (users_config and neon_mq_user_auth):
+        users_config, neon_mq_user_auth, _, _ = \
+            _parse_configuration(services)
+
     # Configure Administrator
-    api.login("guest", "guest")
-    api.configure_admin_account(admin_user, admin_pass)
+    api.login(admin_user, admin_pass)
 
     # Configure vhosts
     vhosts_to_configure = _parse_vhosts(services)
@@ -333,30 +333,19 @@ def configure_mq_backend(admin_user: str, admin_pass: str,
     for user, vhost_config in users_config.items():
         for vhost, permissions in vhost_config.items():
             if not api.configure_vhost_user_permissions(vhost, user, **permissions):
-                LOG.error(f"Error setting Permission! {user} {vhost}")
-                raise
+                raise RuntimeError(f"Error setting Permission! {user} {vhost}")
 
     # Export and save rabbitMQ Config
-    rabbit_mq_config_file = join(expanduser(config_path), "rabbit_mq_config.json") if config_path else None
+    config_path = expanduser(config_path or join(xdg_config_home(), "diana"))
+    rabbit_mq_config_file = join(config_path, "rabbit_mq_config.json")
     write_rabbit_config(api, rabbit_mq_config_file)
-    # TODO: Generate config map DM
-
-    if container:
-        cleanup_docker_container(container)
 
     # Write out MQ Connector config file
     for service in neon_mq_user_auth.values():
         service["password"] = credentials[service["user"]]
-    neon_mq_config_file = join(expanduser(config_path), "mq_config.json") if config_path else None
+    neon_mq_config_file = join(config_path, "mq_config.json")
     write_neon_mq_config(neon_mq_user_auth, neon_mq_config_file)
-
-    # # Generate docker-compose file
-    # docker_compose_file = join(expanduser(config_path), "docker-compose.yml") if config_path else None
-    # write_docker_compose(docker_compose_configuration, docker_compose_file,
-    #                      volume_driver, volumes)
-    #
-    # # Generate Kubernetes spec file
-    # write_kubernetes_spec(kubernetes_configuration, config_path, namespace)
+    return neon_mq_user_auth
 
 
 def generate_backend_config(docker_compose_config: dict,
@@ -377,6 +366,8 @@ def generate_backend_config(docker_compose_config: dict,
            (including hostnames for nfs volumes)
     :param namespaces: k8s namespaces to configure
     """
+    # TODO: Deprecate Method
+    LOG.warning("This function is deprecated")
     # Generate docker-compose file
     docker_compose_file = join(expanduser(config_path), "docker-compose.yml") if config_path else None
     write_docker_compose(docker_compose_config, docker_compose_file,
@@ -384,3 +375,40 @@ def generate_backend_config(docker_compose_config: dict,
 
     # Generate Kubernetes spec file
     write_kubernetes_spec(kubernetes_config, config_path, namespaces)
+
+
+def generate_rmq_config() -> dict:
+    """
+    Generate a default configuration for RabbitMQ backend services
+    """
+    base_config_file = join(dirname(dirname(__file__)), "templates",
+                            "rmq_backend_config.yml")
+    with open(base_config_file) as f:
+        base_config = yaml.safe_load(f)
+    for user in base_config['users']:
+        if user["password"]:
+            # Skip users with defined passwords
+            continue
+        user['password'] = secrets.token_urlsafe(32)
+    return base_config
+
+
+def generate_mq_auth_config(rmq_config: dict) -> dict:
+    """
+    Generate an MQ auth config from RabbitMQ config
+    :param rmq_config: RabbitMQ definitions, i.d. from `generate_rmq_config
+    :returns: Configuration for Neon MQ-Connector
+    """
+    mq_user_mapping_file = join(dirname(dirname(__file__)), "templates",
+                                "mq_user_mapping.yml")
+    with open(mq_user_mapping_file) as f:
+        mq_user_mapping = yaml.safe_load(f)
+
+    mq_config = dict()
+    LOG.debug(rmq_config.keys())
+    for user in rmq_config['users']:
+        username = user['name']
+        for service in mq_user_mapping.get(username, []):
+            mq_config[service] = {"user": username,
+                                  "password": user['password']}
+    return mq_config

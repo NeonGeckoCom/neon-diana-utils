@@ -24,12 +24,18 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
+import shutil
 import click
+import yaml
 
-from os import getenv
+from os import getenv, makedirs, walk, remove
+from os.path import isdir, join, expanduser, isfile, dirname, abspath, exists
+from pprint import pformat
 from click_default_group import DefaultGroup
-
-from neon_diana_utils.constants import valid_mq_services, default_mq_services, Orchestrator
+from ovos_utils.xdg_utils import xdg_config_home
+from neon_diana_utils.constants import valid_mq_services, default_mq_services, \
+    Orchestrator
 from neon_diana_utils.version import __version__
 
 
@@ -171,53 +177,102 @@ def stop_backend(config_path, orchestrator):
         click.echo(e)
 
 
-# @neon_diana_cli.command(help="Generate a volume config for NFS-based shares")
-# @click.option("--hostname",
-#               help="Hostname or IP address of NFS Server")
-# @click.option("--config_path", "-c",
-#               help="Host path to configuration share")
-# @click.option("--metric_path", "-m",
-#               help="Host path to metrics share")
-# @click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-# def make_nfs_config(hostname, config_path, metric_path, output_path):
-#     try:
-#         output_path = expanduser(output_path)
-#         if isdir(output_path):
-#             output_file = join(output_path, "k8s_nfs_volumes.yml")
-#         elif isfile(output_path):
-#             output_file = output_path
-#         else:
-#             raise ValueError(f"Invalid output_path: {output_path}")
-#         generate_nfs_volume_config(hostname, config_path, metric_path, output_file)
-#         click.echo(f"Generated {output_file}")
-#     except Exception as e:
-#         click.echo(e)
-
 # Kubernetes
-@neon_diana_cli.command(help="Generate a Kubernetes ConfigMap for RabbitMQ")
-@click.option("--path", "-p",
-              help="Path to config files to populate")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def make_config_map(path, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_make_rmq_config_map
+@neon_diana_cli.command(help="Configure RabbitMQ and export user credentials")
+@click.option("--username", "-u", help="RabbitMQ username")
+@click.option("--password", "-p", help="RabbitMQ password")
+@click.argument("output_path", default=None, required=False)
+def configure_mq_backend(username, password, output_path):
+    output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
+    if exists(output_path):
+        click.echo(f"Path exists: {output_path}")
+        return
+    elif not isdir(dirname(output_path)):
+        makedirs(dirname(output_path))
+
+    # Get Helm charts in output directory for deployment
+    shutil.copytree(join(dirname(__file__), "helm_charts"),
+                    join(output_path))
+    chart_path = join(output_path, "diana-backend")
+    # Cleanup any leftover build files
+    for root, _, files in walk(output_path):
+        for file in files:
+            if any((file.endswith(x) for x in (".lock", ".tgz"))):
+                remove(join(root, file))
     try:
-        output_file = cli_make_rmq_config_map(path, output_path)
-        click.echo(f"Generated {output_file}")
+        from neon_diana_utils.utils.kubernetes_utils import \
+            cli_make_github_secret
+        from neon_diana_utils.utils.backend import generate_rmq_config, \
+            generate_mq_auth_config
+        rmq_config = generate_rmq_config()
+        username = username or click.prompt("RabbitMQ Admin Username", type=str)
+        password = password or click.prompt("RabbitMQ Admin Password", type=str,
+                                            hide_input=True)
+
+        rmq_config['users'].append({'name': username,
+                                    'password': password,
+                                    'tags': ['administrator']})
+        with open(join(chart_path, "rabbitmq.json"), 'w+') as f:
+            json.dump(rmq_config, f, indent=2)
+        click.echo(f"Generated RabbitMQ config at {chart_path}/rabbitmq.json")
+        mq_auth_config = generate_mq_auth_config(rmq_config)
+        click.echo(f"Generated auth for services: {set(mq_auth_config.keys())}")
+        if click.confirm("Configure GitHub token for private services?"):
+            gh_username = click.prompt("GitHub username", type=str)
+            gh_token = click.prompt("GitHub Token with `read:packages` "
+                                    "permission", type=str)
+            cli_make_github_secret(gh_username, gh_token, output_path)
+            gh_secret_path = join(chart_path, "templates",
+                                  "secret_gh_token.yaml")
+            shutil.move(join(output_path, "k8s_secret_github.yml"),
+                        gh_secret_path)
+            click.echo(f"Generated GH secret at {gh_secret_path}")
+
+        keys_config = _make_keys_config(False)
+
+        mq_url = "neon-rabbitmq"
+        mq_port = 5672
+
+        # Assume ingress is configured as recommended
+        # confirmed = False
+        # mq_url = None
+        # mq_port = None
+        # while not confirmed:
+        #     mq_url = click.prompt("MQ Service Name or URL", type=str,
+        #                           default="neon-rabbitmq")
+        #     mq_port = click.prompt("MQ Client Port", type=int, default=5672)
+        #     click.echo(f"{mq_url}:{mq_port}")
+        #     confirmed = click.confirm("Is this MQ Address Correct?")
+        config = {**{"MQ": {"users": mq_auth_config,
+                            "server": mq_url,
+                            "port": mq_port}},
+                  **keys_config}
+        output_file = join(chart_path, "diana.yaml")
+        click.echo(f"Writing configuration to {output_file}")
+        with open(output_file, 'w+') as f:
+            yaml.dump(config, f)
+        click.echo(f"Helm charts generated in {output_path}")
     except Exception as e:
         click.echo(e)
 
 
-@neon_diana_cli.command(help="Generate Kubernetes Secrets for ngi_auth_vars.yml")
-@click.option("--path", "-p",
-              help="Path to config files to populate")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def make_api_secrets(path, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_make_api_secret
-    try:
-        output_path = cli_make_api_secret(path, output_path)
-        click.echo(f"Generated outputs in {output_path}")
-    except Exception as e:
-        click.echo(e)
+@neon_diana_cli.command(help="Generate RabbitMQ definitions")
+@click.argument("output_file", default=None, required=False)
+def make_rmq_config(output_file):
+    if isfile(output_file):
+        click.echo(f"{output_file} already exists")
+        return
+    if not isdir(dirname(output_file)):
+        makedirs(dirname(output_file))
+    # TODO: Generate random passwords
+
+
+@neon_diana_cli.command(help="Generate a configuration file with access keys")
+@click.option("--skip-write", "-s", help="Skip writing config to file",
+              is_flag=True)
+@click.argument("output_file", default=None, required=False)
+def make_keys_config(skip_write, output_file):
+    _make_keys_config(not skip_write, output_file)
 
 
 @neon_diana_cli.command(help="Generate Kubernetes secret for Github images")
@@ -235,58 +290,81 @@ def make_github_secret(username, token, output_path):
         click.echo(e)
 
 
-@neon_diana_cli.command(help="Add routing for TCP service to ingress")
-@click.option("--service", "-s",
-              help="Service Name")
-@click.option("--port", "-p",
-              help="TCP port to forward")
-@click.option("--namespace", "-n", default="default",
-              help="Namespace service is running in")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR", "~/.config/neon/"))
-def add_tcp_service(service, port, namespace, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_update_tcp_config
-    try:
-        files = cli_update_tcp_config(service, port, namespace, output_path)
-        click.echo(f"Wrote: {', '.join(files)}")
-    except Exception as e:
-        click.echo(e)
-
-
-@neon_diana_cli.command(help="Add ingress definition")
-@click.option("--service", "-s",
-              help="Service name")
-@click.option("--port", "-p",
-              help="Service port")
-@click.option("--host", "-h",
-              help="host (URL) to bind")
-@click.option("--namespace", "-n", default="default",
-              help="Namespace service is running in")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR",
-                                              "~/.config/neon/"))
-def add_ingress(service, port, host, namespace, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_update_ingress_config
-    try:
-        file = cli_update_ingress_config(service, int(port), host,
-                                         namespace, output_path)
-        click.echo(f"Wrote: {file}")
-    except Exception as e:
-        click.echo(e)
-
-
-@neon_diana_cli.command(help="Add issuer definition")
-@click.option("--name", "-n", default="letsencrypt-prod",
-              help="Issuer name")
-@click.option("--email", "-e",
-              help="Registered email address")
-@click.argument('output_path', default=getenv("NEON_CONFIG_DIR",
-                                              "~/.config/neon/"))
-def make_cert_issuer(name, email, output_path):
-    from neon_diana_utils.utils.kubernetes_utils import cli_make_cert_issuer
-    try:
-        if not email:
-            click.echo("Email address is required")
+def _make_keys_config(write_config: bool, output_file: str = None):
+    """
+    Interactive configuration tool to prompt user for expected API keys and
+    service accounts to be included in Configuration.
+    :param write_config: If true, write config to `output_file`
+    :param output_file: Configuration file to write keys to
+    """
+    if write_config:
+        output_file = expanduser(abspath((output_file or join(xdg_config_home(),
+                                                              "diana",
+                                                              "diana.yaml"))))
+        if isfile(output_file):
+            click.echo(f"File already exists: {output_file}")
             return
-        file = cli_make_cert_issuer(name, email, output_path)
-        click.echo(f"Wrote: {file}")
-    except Exception as e:
-        click.echo(e)
+        elif not isdir(dirname(output_file)):
+            makedirs(dirname(output_file))
+
+    api_services = dict()
+    if click.confirm("Configure API Proxy Services?"):
+        keys_confirmed = False
+        while not keys_confirmed:
+            wolfram_key = click.prompt("Wolfram|Alpha API Key", type=str)
+            alphavantage_key = click.prompt("AlphaVantage API Key",
+                                            type=str)
+            owm_key = click.prompt("OpenWeatherMap API Key", type=str)
+            api_services = {
+                "wolfram_alpha": {"api_key": wolfram_key},
+                "alpha_vantage": {"api_key": alphavantage_key},
+                "open_weather_map": {"api_key": owm_key}
+            }
+            click.echo(pformat(api_services))
+            keys_confirmed = click.confirm("Are these keys correct?")
+
+    email_config = dict()
+    if click.confirm("Configure Email Service?"):
+        config_confirmed = False
+        while not config_confirmed:
+            email_addr = click.prompt("Email Address", type=str)
+            email_password = click.prompt("Password", type=str)
+            smtp_host = click.prompt("SMTP URL", type=str,
+                                     default="smtp.gmail.com")
+            smtp_port = click.prompt("SMTP Port", type=str,
+                                     default="465")
+            email_config = {"mail": email_addr,
+                            "pass": email_password,
+                            "host": smtp_host,
+                            "port": smtp_port}
+            click.echo(pformat(email_config))
+            config_confirmed = \
+                click.confirm("Is this configuration correct?")
+
+    brands_config = dict()
+    if click.confirm("Configure Brands/Coupons Service?"):
+        config_confirmed = False
+        while not config_confirmed:
+            server_host = click.prompt("SQL Host Address", type=str,
+                                       default="trackmybrands.com")
+            sql_database = click.prompt("SQL Database", type=str,
+                                        default="admintr1_drup1")
+            sql_username = click.prompt("SQL Username", type=str)
+            sql_password = click.prompt("SQL Password", type=str)
+            brands_config = {"host": server_host,
+                             "database": sql_database,
+                             "user": sql_username,
+                             "password": sql_password}
+            click.echo(pformat(brands_config))
+            config_confirmed = \
+                click.confirm("Is this configuration correct?")
+
+    config = {"keys": {"api_services": api_services,
+                       "emails": email_config,
+                       "track_my_brands": brands_config}
+              }
+    if write_config:
+        click.echo(f"Writing configuration to {output_file}")
+        with open(output_file, 'w+') as f:
+            yaml.dump(config, f)
+    return config

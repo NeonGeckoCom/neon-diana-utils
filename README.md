@@ -11,104 +11,26 @@ The Neon Backend is a collection of services that are provided to client applica
 Some backend services connect via a RabbitMQ server, while others are served via HTTP.
 
 ### Prerequisites
-- `docker` should be installed and executable by the user running `diana`
-- If installing to a Kubernetes cluster, `kubectl` is needed to apply the generated configurations
-- For any Neon services that require authentication, [`ngi_auth_vars.yml`](#ngi_auth_varsyml) is required.
-- If configuring private containers (which is not default), `docker` and/or `kubectl` should have credentials configured
+- `python3` is required to install `neon-diana-utils`
+- `kubectl` and `helm` are needed to apply the generated configurations
 
-#### ngi_auth_vars.yml
-Below is an example `ngi_auth_vars.yml` file (passwords redacted)
-```yaml
-track_my_brands:
-  user: admintr1_drup1
-  password: 
-  host: trackmybrands.com
-  database: admintr1_drup1
-emails:
-  mail: neon@neon.ai
-  pass: 
-  host: smtp.gmail.com
-  port: '465'
-api_services:
-  wolfram_alpha:
-    api_key: ""
-  alpha_vantage:
-    api_key: ""
-  open_weather_map:
-    api_key: ""
-```
-* The `emails` config should reference a smtp email account used in `neon-email-proxy`
-* The `api_services` config should reference services used in `neon-api-proxy`
-* The `track_my_brands` config provides credentials for the `neon-brands-service`
-
-### RabbitMQ Configuration
-All containers containing an MQ module will expect `mq_config.json` to specify credentials.
-`neon-rabbitmq` will expect `/config/rabbitmq.conf` to specify a path to the configuration `.json` file to load.
-An example configuration directory structure is [included below](#example-configuration-file-structure); these config
-files may be generated automatically using `diana`.
-
-#### Generate Config with `diana`
+### Configure Backend with `diana`
 A Diana backend can be configured automatically with `diana configure-backend`. A standard example is included here, but 
 a description of config options is available via: `diana configure-backend --help`.
 
 ```shell
-diana configure-backend -d -u administrator -p password ~/neon_diana
+diana configure-mq-backend ~/neon_diana
 ```
-* `-d` specifies that default backend services will be configured
-* `-u` specifies the MQ user `administrator` for admin portal access
-* `-p` specifies the password `password` for the `administrator` user
 * `~/neon_diana` specifies the output path for configuration files
 
-The above command will generate RabbitMQ users with randomized passwords and generate 
-`mq_config.json`, `rabbitmq.conf`, and `rabbit_mq_config.json` files for all users required
-for the specified backend services.
+The above command will generate Helm charts and configuraiton files in 
+`~/neon_diana/diana-backend`. For Docker deployment, the `diana.yaml` and
+`rabbitmq.json` files from this directory can be used.
 
-#### Example configuration file structure
-```
-$NEON_CONFIG_DIR
-├── mq_config.json
-├── ngi_auth_vars.yml
-├── rabbitmq.conf
-└── rabbit_mq_config.json
-```
-
-`mq_config.json` (passwords redacted)
-```json
-{
-  "server": "neon-rabbitmq",
-  "users": {
-    "test": {
-      "user": "test_user",
-      "password": ""
-    },
-    "neon_api_connector": {
-      "user": "neon_api",
-      "password": ""
-    },
-    "neon_coupon_connector": {
-      "user": "neon_coupons",
-      "password": ""
-    },
-    "neon_email_proxy": {
-      "user": "neon_email",
-      "password": ""
-    },
-    "neon_metrics_connector": {
-      "user": "neon_metrics",
-      "password": ""
-    },
-    "neon_script_parser_service": {
-      "user": "neon_script_parser",
-      "password": ""
-    }
-  }
-}
-```
-
-`rabbitmq.conf`
-```
-load_definitions = /config/rabbit_mq_config.json
-```
+## Legacy Documentation
+The below documentation is mostly applicable to Docker deployment of the Diana
+backend and is no longer fully-supported. Documentation is retained here for
+reference.
 
 ### Orchestrator Configuration
 The following sections describe how to initialize a standard backend with 
