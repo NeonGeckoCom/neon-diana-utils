@@ -20,6 +20,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ .Values.runnerName }}-actions-runner-controller-github-webhook
+                name: {{ .Values.ingress.webhook_service }}
                 port:
                   number: 80

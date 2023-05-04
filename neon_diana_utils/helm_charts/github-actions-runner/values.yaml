@@ -1,29 +1,31 @@
-runnerName: "github-actions-runner"
-orgName: "NeonGeckoCom"
+runnerName: "gh-runner"
+orgName: ""
+# TODO: Update orgName
 
 autoScaler:
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 10
-  scaleUpThreshold: '0.75'
-  shaleDownThreshold: '0.25'
 
 actions-runner-controller:
+  nameOverride: actions-runner-controller
+  fullnameOverride: actions-runner-controller
   authSecret:
     create: true
-    github_token: "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"
+    github_token: ""
     # TODO: Define GH Token
   githubWebhookServer:
     enabled: true
-#    ports:
-#      - nodePort: 33080
-#  service:
-#    type: NodePort
+    nameOverride: actions-runner-controller-github-webhook
+    fullnameOverride: actions-runner-controller-github-webhook
 ingress:
   domain: "ghactions.2022.us"
+  # TODO: Specify Domain
   tlsSecret: letsencrypt-ssl
+  webhook_service: actions-runner-controller-github-webhook
+  # Note: This MUST match githubWebhookServer.fullnameOverride
 letsencrypt:
   issuerSecret: letsencrypt-issuer
-  # Note: This should match `ingress.tlsSecret`
+  # Note: This should NOT match `ingress.tlsSecret`
   server: https://acme-staging-v02.api.letsencrypt.org/directory
   email: developers@neon.ai
   # TODO: Update server and email to valid options
