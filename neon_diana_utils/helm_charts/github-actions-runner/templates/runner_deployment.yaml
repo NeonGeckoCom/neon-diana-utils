@@ -6,3 +6,7 @@ spec:
   template:
     spec:
       organization: {{ .Values.orgName }}
+      labels:
+        - linux
+        - X64
+        - diana

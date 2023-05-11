@@ -178,7 +178,7 @@ def stop_backend(config_path, orchestrator):
 
 
 # Kubernetes
-@neon_diana_cli.command(help="Configure RabbitMQ and export user credentials")
+@neon_diana_cli.command(help="Generate Diana Backend Config and Helm Charts")
 @click.option("--username", "-u", help="RabbitMQ username")
 @click.option("--password", "-p", help="RabbitMQ password")
 @click.argument("output_path", default=None, required=False)
@@ -232,17 +232,6 @@ def configure_mq_backend(username, password, output_path):
 
         mq_url = "neon-rabbitmq"
         mq_port = 5672
-
-        # Assume ingress is configured as recommended
-        # confirmed = False
-        # mq_url = None
-        # mq_port = None
-        # while not confirmed:
-        #     mq_url = click.prompt("MQ Service Name or URL", type=str,
-        #                           default="neon-rabbitmq")
-        #     mq_port = click.prompt("MQ Client Port", type=int, default=5672)
-        #     click.echo(f"{mq_url}:{mq_port}")
-        #     confirmed = click.confirm("Is this MQ Address Correct?")
         config = {**{"MQ": {"users": mq_auth_config,
                             "server": mq_url,
                             "port": mq_port}},
@@ -252,8 +241,18 @@ def configure_mq_backend(username, password, output_path):
         with open(output_file, 'w+') as f:
             yaml.dump(config, f)
         click.echo(f"Helm charts generated in {output_path}")
+        # TODO: Interactive update `values.yaml`
     except Exception as e:
         click.echo(e)
+
+
+@neon_diana_cli.command(help="Generate GitHub Actions Runner Helm Charts")
+@click.option("--token", "-t",
+              help="GitHub token with `repo` and `admin:org` permissions")
+@click.option("--organization", "-o", help="GitHub Organization to run actions")
+@click.argument("output_path", default=None, required=False)
+def configure_actions_runner(token, org, output_path):
+    pass
 
 
 @neon_diana_cli.command(help="Generate RabbitMQ definitions")

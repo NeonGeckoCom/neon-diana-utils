@@ -18,7 +18,7 @@ actions-runner-controller:
     nameOverride: actions-runner-controller-github-webhook
     fullnameOverride: actions-runner-controller-github-webhook
 ingress:
-  domain: "ghactions.2022.us"
+  domain: ""
   # TODO: Specify Domain
   tlsSecret: letsencrypt-ssl
   webhook_service: actions-runner-controller-github-webhook
