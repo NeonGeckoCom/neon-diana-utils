@@ -20,6 +20,9 @@ users:
   - name: "neon_libretranslate"
     password:
     tags: [ ]
+  - name: "neon_llm_chatgpt"
+    password:
+    tags: [ ]
 vhosts:
   - name: "/neon_emails"
   - name: "/neon_api"
@@ -28,7 +31,18 @@ vhosts:
   - name: "/neon_coupons"
   - name: "/neon_testing"
   - name: "/translation"
+  - name: "/llm"
 permissions:
+  - user: "neon_llm_chatgpt"
+    vhost: "/llm"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_api_utils"
+    vhost: "/llm"
+    configure: ".*"
+    write: ".*"
+    read: "^(?!chat_gpt_input).*"
   - user: "neon_libretranslate"
     vhost: "/translation"
     configure: ".*"
