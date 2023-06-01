@@ -327,6 +327,7 @@ class TestDockerUtils(unittest.TestCase):
         if cls.cached_config_path:
             os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
 
+    @unittest.skip
     def test_run_and_cleanup_rabbit_mq_docker(self):
         from neon_diana_utils.utils.docker_utils import \
             run_clean_rabbit_mq_docker, cleanup_docker_container

@@ -36,6 +36,6 @@ spec:
             sources:
               - secret:
                   name: {{ .Values.configSecret }}
-      {{- end -}}
+      {{- end }}
       restartPolicy: Always
 {{- end -}}
