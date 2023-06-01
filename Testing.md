@@ -25,6 +25,7 @@ microk8s kubectl create token default  # Copy this token
 microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 1443:443
 # Dashboard is now available at: https://localhost:1443 using the token generated earlier
 ```
+> Note: Add `--address="0.0.0.0` to expose the dashboard to your local network
 
 ## DNS Resolution
 Ingress configuration will expect URLs to map to services, for local testing you may
