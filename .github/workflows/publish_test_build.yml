@@ -18,4 +18,4 @@ jobs:
       publish_prerelease: true
       publish_pypi: false
       # TODO: Enable PyPI
-      on_version_change: "scripts/sync_chart_app_version.py"
+#      on_version_change: "scripts/sync_chart_app_version.py"
