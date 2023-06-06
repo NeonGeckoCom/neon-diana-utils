@@ -33,7 +33,8 @@ def sync_app_version(version: str):
     """
     Synchronize current Diana package version with bundled Helm charts
     """
-    chart_dir = join(dirname(dirname(__file__)), "helm_charts")
+    chart_dir = join(dirname(dirname(__file__)),
+                     "neon_diana_utils", "helm_charts")
     for root, _, files in walk(chart_dir):
         for file in files:
             if file == "Chart.yaml":
