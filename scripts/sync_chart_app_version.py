@@ -27,7 +27,6 @@
 from sys import argv
 from os import walk
 from os.path import join, dirname
-from ovos_utils.log import LOG
 
 
 def sync_app_version(version: str):
@@ -39,7 +38,7 @@ def sync_app_version(version: str):
         for file in files:
             if file == "Chart.yaml":
                 file_path = join(root, file)
-                LOG.info(f"Updating {file_path}")
+                print(f"Updating {file_path}")
                 with open(file_path, 'r') as f:
                     lines = f.readlines()
                 for idx, line in enumerate(lines):
