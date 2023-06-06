@@ -7,12 +7,15 @@ on:
       - dev
     paths-ignore:
       - 'neon_diana_utils/version.py'
+      - '**/Chart.yaml'
 
 jobs:
   publish_alpha_release:
-    uses: neongeckocom/.github/.github/workflows/publish_alpha_release.yml@master
+    uses: neongeckocom/.github/.github/workflows/publish_alpha_release.yml@FEAT_ExtraReleaseScripts
     secrets: inherit
     with:
       version_file: "neon_diana_utils/version.py"
       publish_prerelease: true
       publish_pypi: false
+      # TODO: Enable PyPI
+      on_version_change: "scripts/sync_chart_app_versions.py"

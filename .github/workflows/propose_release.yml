@@ -17,6 +17,7 @@ jobs:
       release_type: ${{ inputs.release_type }}
       update_changelog: True
       version_file: "neon_diana_utils/version.py"
+      on_version_change: "scripts/sync_chart_app_versions.py"
   pull_changes:
     uses: neongeckocom/.github/.github/workflows/pull_master.yml@master
     needs: update_version
