@@ -359,9 +359,35 @@ def _make_keys_config(write_config: bool, output_file: str = None):
             config_confirmed = \
                 click.confirm("Is this configuration correct?")
 
+    chatgpt_config = dict()
+    if click.confirm("Configure ChatGPT Service?"):
+        config_confirmed = False
+        while not config_confirmed:
+            gpt_key = click.prompt("ChatGPT API Key", type=str)
+            gpt_model = click.prompt("ChatGPT Model", type=str,
+                                     default="gpt-3.5-turbo")
+            gpt_role = click.prompt("ChatGPT Role", type=str,
+                                    default="You are trying to give a short "
+                                            "answer in less than 40 words.")
+            gpt_context = click.prompt("ChatGPT Context depth", type=int,
+                                       default=3)
+            max_tokens = click.prompt("Maximum tokens in responses", type=int,
+                                      default=100)
+            chatgpt_config = {
+                "key": gpt_key,
+                "model": gpt_model,
+                "role": gpt_role,
+                "context_depth": gpt_context,
+                "max_tokens": max_tokens
+            }
+            click.echo(pformat(chatgpt_config))
+            config_confirmed = \
+                click.confirm("Is this configuration correct?")
+
     config = {"keys": {"api_services": api_services,
                        "emails": email_config,
-                       "track_my_brands": brands_config}
+                       "track_my_brands": brands_config},
+              "ChatGPT": chatgpt_config
               }
     if write_config:
         click.echo(f"Writing configuration to {output_file}")
