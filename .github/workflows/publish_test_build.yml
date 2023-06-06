@@ -7,6 +7,7 @@ on:
       - dev
     paths-ignore:
       - 'neon_diana_utils/version.py'
+      - '**/Chart.yaml'
 
 jobs:
   publish_alpha_release:
@@ -15,4 +16,4 @@ jobs:
     with:
       version_file: "neon_diana_utils/version.py"
       publish_prerelease: true
-      publish_pypi: false
+      on_version_change: "scripts/sync_chart_app_version.py"
