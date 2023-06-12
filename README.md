@@ -8,10 +8,15 @@ For more information about using NeonAI, see [the NeonAI documentation site](htt
 
 ## Prerequisites
 
+To install Diana:
+
 * [Ubuntu](https://ubuntu.com/) 20.04 or later. 
   * Diana will most likely work on other flavors of Linux, but we have not yet verified this.
 * [Python](https://www.python.org/getit/) 3.8 or later.
 * [Pip](https://pypi.org/project/pip/) Python package installer.
+
+To deploy Diana: 
+
 * [Kubectl](https://kubernetes.io/docs/reference/kubectl/) Kubernetes command-line tool.
 * [Helm](https://helm.sh/) package manager for Kubernetes.
 * A [Kubernetes](https://kubernetes.io/) installation.
@@ -50,18 +55,19 @@ pip install --pre neon-diana-utils
 
 This command installs the newest pre-release version, which is described in this tutorial. 
 
-**Warning:** You can use `pip install neon-diana-utils` to install the current stable version. However, that version does not include Helm chart support. For information on installing and running the current stable version, see [the archived documentation in the README file](https://github.com/NeonGeckoCom/neon-diana-utils/blob/dev/README.md).
+**Warning:** You can use `pip install neon-diana-utils` to install the current stable version. Version 0.1.0 includes Helm chart support. For information on installing and running older versions, see [the archived documentation in the README file](https://github.com/NeonGeckoCom/neon-diana-utils/blob/dev/README.md).
 
 For more information on the available versions of Diana, see [the Python Package Index repo for Neon Diana](https://pypi.org/project/neon-diana-utils/).
 
 4. Verify Diana is installed:
 
 ```
-diana --help
+diana --version
 ```
 
 **Tip:** If your computer does not recognize this command, you may need to add `~/.local/bin` to your $PATH with a command like `export PATH=$PATH:/home/${USER}/.local/bin`.
 
+Use `diana --help` for detailed information about Diana and its commands.
 
 The output of `diana --help` looks like:
 
