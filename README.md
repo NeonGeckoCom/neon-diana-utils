@@ -22,10 +22,6 @@ To deploy Diana:
 * A [Kubernetes](https://kubernetes.io/) installation.
   * The following instructions assume a local installation using [Microk8s](https://microk8s.io/) version 1.26/stable or later.
   * You can likely deploy Diana on a Kubernetes cluster in the cloud, but we have not yet verified this.
-* [Neon Skill Utilities](https://github.com/NeonGeckoCom/neon-utils) 1.0 or later.
-  * Use `pip show neon-utils` to check the version installed on your system.
-  * Use `pip install neon-utils --upgrade` to upgrade Neon Skill Utilities to the most recent version.
-
 
 ## Use a Python virtual environment
 
