@@ -13,3 +13,5 @@ neon_libretranslate:
   - mq-libre-translate
 neon_llm_chatgpt:
   - neon_llm_chatgpt
+neon_llm_fastchat:
+  - neon_llm_fastchat

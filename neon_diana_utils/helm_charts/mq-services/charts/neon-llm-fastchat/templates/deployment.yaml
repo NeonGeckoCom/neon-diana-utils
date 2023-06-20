@@ -1,0 +1,2 @@
+{{- include "base-mq.deployment" .}}
+{{/*TODO: Implement minimum requirements*/}}

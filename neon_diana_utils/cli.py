@@ -381,13 +381,31 @@ def _make_keys_config(write_config: bool, output_file: str = None):
                 "max_tokens": max_tokens
             }
             click.echo(pformat(chatgpt_config))
-            config_confirmed = \
-                click.confirm("Is this configuration correct?")
+            config_confirmed = click.confirm("Is this configuration correct?")
+
+    fastchat_config = dict()
+    if click.confirm("Configure FastChat Service?"):
+        config_confirmed = False
+        while not config_confirmed:
+            model = click.prompt("FastChat Model", type=str,
+                                 default="fastchat")
+            context = click.prompt("FastChat context depth", type=int,
+                                   default=3)
+            max_tokens = click.prompt("Max number of tokens in responses",
+                                      type=int, default=128)
+            fastchat_config = {
+                "model": model,
+                "context_depth": context,
+                "max_tokens": max_tokens
+            }
+            click.echo(pformat(fastchat_config))
+            config_confirmed = click.confirm("Is this configuration correct?")
 
     config = {"keys": {"api_services": api_services,
                        "emails": email_config,
                        "track_my_brands": brands_config},
-              "ChatGPT": chatgpt_config
+              "ChatGPT": chatgpt_config,
+              "FastChat": fastchat_config
               }
     if write_config:
         click.echo(f"Writing configuration to {output_file}")
