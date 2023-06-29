@@ -50,8 +50,7 @@ permissions:
     vhost: "/llm"
     configure: ".*"
     write: ".*"
-    read: "^(?!chat_gpt_input).*"
-    # TODO: read should exclude anything with `input`
+    read: ".*(?!_input).*"
   - user: "neon_libretranslate"
     vhost: "/translation"
     configure: ".*"
