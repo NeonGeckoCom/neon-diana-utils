@@ -393,10 +393,17 @@ def _make_keys_config(write_config: bool, output_file: str = None):
                                    default=3)
             max_tokens = click.prompt("Max number of tokens in responses",
                                       type=int, default=128)
+            num_processes = click.prompt(
+                "Number of queries to handle in parallel",
+                type=int, default=1)
+            num_threads = click.prompt("Number of threads to use per query",
+                                       type=int, default=2)
             fastchat_config = {
                 "model": model,
                 "context_depth": context,
-                "max_tokens": max_tokens
+                "max_tokens": max_tokens,
+                "num_parallel_processes": num_processes,
+                "num_threads_per_process": num_threads
             }
             click.echo(pformat(fastchat_config))
             config_confirmed = click.confirm("Is this configuration correct?")
