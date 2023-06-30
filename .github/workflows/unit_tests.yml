@@ -19,29 +19,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements/requirements.txt
+          pip install -e .
           pip install -r requirements/test_requirements.txt
-      - name: Run Utils Tests
+      - name: Run Tests
         run: |
-          pytest tests/test_diana_utils.py --doctest-modules --junitxml=tests/utils-test-results.xml
-      - name: Upload Utils test results
+          pytest tests --doctest-modules --junitxml=tests/diana-test-results.xml
+      - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
           name: utils-test-results
-          path: tests/utils-test-results.xml
-      - name: Run Constants Tests
-        run: |
-          pytest tests/test_constants.py --doctest-modules --junitxml=tests/constants-test-results.xml
-      - name: Upload Constants test results
-        uses: actions/upload-artifact@v2
-        with:
-          name: constants-test-results
-          path: tests/constants-test-results.xml
-      - name: Run Service Tests
-        run: |
-          pytest tests/test_diana_services.py --doctest-modules --junitxml=tests/services-test-results.xml
-      - name: Upload Services test results
-        uses: actions/upload-artifact@v2
-        with:
-          name: services-test-results
-          path: tests/services-test-results.xml
+          path: tests/diana-test-results.xml
