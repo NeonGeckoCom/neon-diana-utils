@@ -4,7 +4,7 @@ description: Deploy an LLM proxy for Chat GPT
 
 type: application
 version: 0.0.1
-appVersion: "0.0.6a10"
+appVersion: "0.0.6a11"
 
 dependencies:
   - name: base-mq
