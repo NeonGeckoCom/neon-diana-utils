@@ -8,5 +8,5 @@ appVersion: "0.0.6a11"
 
 dependencies:
   - name: base-http
-    version: 0.0.1
+    version: 0.0.2
     repository: file://../base-http
