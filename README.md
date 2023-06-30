@@ -205,7 +205,7 @@ helm install diana-backend OUTPUT_PATH/test/diana-backend --namespace backend --
 This creates the `backend` namespace and launches Diana into that namespace. You can change this to any namespace name you prefer. You may want to use separate namespaces for test versus production deployments, to separate the Diana backend from other deployments, or both.
 
 
-## Legacy Documentation
+# Legacy Documentation
 The below documentation is mostly applicable to Docker deployment of the Diana
 backend and is no longer fully-supported. Documentation is retained here for
 reference.
