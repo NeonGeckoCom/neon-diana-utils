@@ -57,6 +57,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertIsInstance(config, dict)
         self.assertIsInstance(config['keys'], dict)
         self.assertIsInstance(config['ChatGPT'], dict)
+        self.assertIsInstance(config['FastChat'], dict)
 
         # Test with file write
         config2 = make_keys_config(True, test_output_file)
