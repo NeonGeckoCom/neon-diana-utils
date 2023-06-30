@@ -13,6 +13,8 @@ spec:
     type: Recreate
   template:
     metadata:
+      annotations:
+        releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC"| quote }}
       labels:
         neon.diana.service: {{ .Chart.Name }}
         neon.project.name: diana

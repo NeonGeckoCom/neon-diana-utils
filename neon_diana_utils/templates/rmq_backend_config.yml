@@ -1,31 +1,49 @@
 users:
   - name: "neon_api_utils"
     password: "Klatchat2021"
-    tags: [ ]
+    tags:
+      - backend
+      - user
   - name: "neon_metrics"
     password:
-    tags: [ ]
+    tags:
+      - backend
+      - service
   - name: "neon_coupons"
     password:
-    tags: [ ]
+    tags:
+      - backend
+      - service
   - name: "neon_email"
     password:
-    tags: [ ]
+    tags:
+      - backend
+      - service
   - name: "neon_script_parser"
     password:
-    tags: [ ]
+    tags:
+      - backend
+      - service
   - name: "neon_api"
     password:
-    tags: [ ]
+    tags:
+      - backend
+      - service
   - name: "neon_libretranslate"
     password:
-    tags: [ ]
+    tags:
+      - backend
+      - service
   - name: "neon_llm_chatgpt"
     password:
-    tags: [ ]
+    tags:
+      - backend
+      - llm
   - name: "neon_llm_fastchat"
     password:
-    tags: [ ]
+    tags:
+      - backend
+      - llm
 vhosts:
   - name: "/neon_emails"
   - name: "/neon_api"
