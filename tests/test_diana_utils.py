@@ -35,6 +35,13 @@ from os.path import join, dirname, isdir, isfile
 
 
 class TestConfiguration(unittest.TestCase):
+    def test_orchestrator(self):
+        from neon_diana_utils.configuration import Orchestrator
+        self.assertEqual(Orchestrator("kubernetes"), Orchestrator.KUBERNETES)
+        self.assertEqual(Orchestrator("docker-compose"), Orchestrator.COMPOSE)
+        with self.assertRaises(ValueError):
+            Orchestrator("invalid")
+
     def test_validate_output_file(self):
         from neon_diana_utils.configuration import validate_output_path
         valid_output_path = join(dirname(__file__), 'test_output')
