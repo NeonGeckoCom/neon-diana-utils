@@ -4,7 +4,7 @@ description: Deploy a Nancy TTS Server
 
 type: application
 version: 0.0.1
-appVersion: "0.0.6a11"
+appVersion: "0.0.6a12"
 
 dependencies:
   - name: base-http
