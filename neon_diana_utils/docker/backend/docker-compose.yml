@@ -21,23 +21,10 @@ services:
     volumes:
       - xdg:/xdg:rw
       - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+  # MQ Services
   neon-api-proxy:
     container_name: neon-api-proxy
     image: ghcr.io/neongeckocom/neon_api_proxy:${MQ_IMAGE_TAG}
-    depends_on:
-      - neon-rabbitmq
-    networks:
-      - diana-backend
-    volumes:
-      - xdg:/xdg:rw
-    environment:
-      - XDG_CONFIG_HOME=/xdg/config
-      - XDG_DATA_HOME=/xdg/data
-      - XDG_CACHE_HOME=/xdg/cache
-      - XDG_STATE_HOME=/xdg/state
-  neon-brands-service:
-    container_name: neon-brands-service
-    image: ghcr.io/neongeckocom/neon_brands_service:${MQ_IMAGE_TAG}
     depends_on:
       - neon-rabbitmq
     networks:
@@ -105,21 +92,38 @@ services:
       - XDG_DATA_HOME=/xdg/data
       - XDG_CACHE_HOME=/xdg/cache
       - XDG_STATE_HOME=/xdg/state
-  neon-script-parser:
-    container_name: neon-script-parser
-    image: ghcr.io/neongeckocom/neon-script-parser:${MQ_IMAGE_TAG}
-    depends_on:
-      - neon-rabbitmq
-    networks:
-      - diana-backend
-    volumes:
-      - xdg:/xdg:rw
-    environment:
-      - XDG_CONFIG_HOME=/xdg/config
-      - XDG_DATA_HOME=/xdg/data
-      - XDG_CACHE_HOME=/xdg/cache
-      - XDG_STATE_HOME=/xdg/state
 
+# These Containers require authentication to pull and are disabled by default
+#  neon-script-parser:
+#    container_name: neon-script-parser
+#    image: ghcr.io/neongeckocom/neon-script-parser:${MQ_IMAGE_TAG}
+#    depends_on:
+#      - neon-rabbitmq
+#    networks:
+#      - diana-backend
+#    volumes:
+#      - xdg:/xdg:rw
+#    environment:
+#      - XDG_CONFIG_HOME=/xdg/config
+#      - XDG_DATA_HOME=/xdg/data
+#      - XDG_CACHE_HOME=/xdg/cache
+#      - XDG_STATE_HOME=/xdg/state
+#  neon-brands-service:
+#    container_name: neon-brands-service
+#    image: ghcr.io/neongeckocom/neon_brands_service:${MQ_IMAGE_TAG}
+#    depends_on:
+#      - neon-rabbitmq
+#    networks:
+#      - diana-backend
+#    volumes:
+#      - xdg:/xdg:rw
+#    environment:
+#      - XDG_CONFIG_HOME=/xdg/config
+#      - XDG_DATA_HOME=/xdg/data
+#      - XDG_CACHE_HOME=/xdg/cache
+#      - XDG_STATE_HOME=/xdg/state
+
+  # HTTP Services
   neon-libretranslate:
     container_name: neon-libretranslate
     image: ghcr.io/neongeckocom/libretranslate:latest

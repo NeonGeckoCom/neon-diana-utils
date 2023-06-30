@@ -13,3 +13,7 @@ To run the output configured containers:
 cd ~/diana
 docker-compose up -d
 ```
+
+> Note that default backend services will be included in the output 
+> `docker-compose.yml`. You may wish to remove some services that you didn't
+> configure or add others to run with the backend.
