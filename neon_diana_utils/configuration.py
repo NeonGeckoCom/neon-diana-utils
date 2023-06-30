@@ -30,12 +30,21 @@ import json
 import secrets
 import shutil
 
+from enum import Enum
 from pprint import pformat
 from typing import Optional
 from os import makedirs, listdir, walk, remove
 from os.path import expanduser, join, abspath, isfile, isdir, dirname
 from ovos_utils.xdg_utils import xdg_config_home
 from ovos_utils.log import LOG
+
+
+class Orchestrator(Enum):
+    """
+    Enum represending container orchestrators that may be configured
+    """
+    KUBERNETES = "kubernetes"
+    COMPOSE = "docker-compose"
 
 
 def validate_output_path(output_path: str) -> bool:
@@ -239,14 +248,15 @@ def generate_mq_auth_config(rmq_config: dict) -> dict:
 
 def configure_backend(username: str = None,
                       password: str = None,
-                      output_path: str = None):
+                      output_path: str = None,
+                      orchestrator: Orchestrator = Orchestrator.KUBERNETES):
     """
     Generate DIANA backend definitions
     @param username: RabbitMQ Admin username to configure
     @param password: RabbitMQ Admin password to configure
     @param output_path: directory to write output definitions to
+    @param orchestrator: Container orchestrator to generate configuration for
     """
-    from neon_diana_utils.kubernetes_utils import create_github_secret
 
     # Validate output paths
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
@@ -255,36 +265,48 @@ def configure_backend(username: str = None,
         return
 
     # Get Helm charts in output directory for deployment
-    shutil.copytree(join(dirname(__file__), "helm_charts"),
-                    join(output_path))
     chart_path = join(output_path, "diana-backend")
-    # Cleanup any leftover build files
-    for root, _, files in walk(output_path):
-        for file in files:
-            if any((file.endswith(x) for x in (".lock", ".tgz"))):
-                remove(join(root, file))
+    if orchestrator == Orchestrator.KUBERNETES:
+        shutil.copytree(join(dirname(__file__), "helm_charts"), output_path)
+        # Cleanup any leftover build files
+        for root, _, files in walk(output_path):
+            for file in files:
+                if any((file.endswith(x) for x in (".lock", ".tgz"))):
+                    remove(join(root, file))
+        rmq_file = join(chart_path, "rabbitmq.json")
+        diana_config = join(chart_path, "diana.yaml")
+
+    elif orchestrator == Orchestrator.COMPOSE:
+        shutil.copytree(join(dirname(__file__), "docker", "backend"),
+                        output_path)
+        rmq_file = join(output_path, "xdg", "config", "rabbitmq",
+                        "rabbitmq.json")
+        diana_config = join(output_path, "xdg", "config", "neon", "diana.yaml")
+    else:
+        raise RuntimeError(f"{orchestrator} is not yet supported")
     try:
         # Generate RabbitMQ config
         username = username or click.prompt("RabbitMQ Admin Username", type=str)
         password = password or click.prompt("RabbitMQ Admin Password", type=str,
                                             hide_input=True)
-        rmq_file = join(chart_path, "rabbitmq.json")
         rmq_config = generate_rmq_config(username, password, rmq_file)
-        click.echo(f"Generated RabbitMQ config at {chart_path}/rabbitmq.json")
+        click.echo(f"Generated RabbitMQ config at {rmq_file}")
 
         # Generate MQ Auth config
         mq_auth_config = generate_mq_auth_config(rmq_config)
         click.echo(f"Generated auth for services: {set(mq_auth_config.keys())}")
 
         # Generate GH Auth config secret
-        if click.confirm("Configure GitHub token for private services?"):
-            gh_username = click.prompt("GitHub username", type=str)
-            gh_token = click.prompt("GitHub Token with `read:packages` "
-                                    "permission", type=str)
-            gh_secret_path = join(chart_path, "templates",
-                                  "secret_gh_token.yaml")
-            create_github_secret(gh_username, gh_token, gh_secret_path)
-            click.echo(f"Generated GH secret at {gh_secret_path}")
+        if orchestrator == Orchestrator.KUBERNETES:
+            from neon_diana_utils.kubernetes_utils import create_github_secret
+            if click.confirm("Configure GitHub token for private services?"):
+                gh_username = click.prompt("GitHub username", type=str)
+                gh_token = click.prompt("GitHub Token with `read:packages` "
+                                        "permission", type=str)
+                gh_secret_path = join(chart_path, "templates",
+                                      "secret_gh_token.yaml")
+                create_github_secret(gh_username, gh_token, gh_secret_path)
+                click.echo(f"Generated GH secret at {gh_secret_path}")
 
         # Generate `diana.yaml` output
         keys_config = make_keys_config(False)
@@ -292,10 +314,9 @@ def configure_backend(username: str = None,
                             "server": "neon-rabbitmq",
                             "port": 5672}},
                   **keys_config}
-        output_file = join(chart_path, "diana.yaml")
-        click.echo(f"Writing configuration to {output_file}")
-        with open(output_file, 'w+') as f:
+        click.echo(f"Writing configuration to {diana_config}")
+        with open(diana_config, 'w+') as f:
             yaml.dump(config, f)
-        click.echo(f"Helm charts generated in {output_path}")
+        click.echo(f"Outputs generated in {output_path}")
     except Exception as e:
         click.echo(e)

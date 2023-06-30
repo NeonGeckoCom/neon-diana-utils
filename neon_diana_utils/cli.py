@@ -45,10 +45,17 @@ def neon_diana_cli(version: bool = False):
 @neon_diana_cli.command(help="Configure RabbitMQ and export user credentials")
 @click.option("--username", "-u", help="RabbitMQ username")
 @click.option("--password", "-p", help="RabbitMQ password")
+@click.option("--orchestrator", "-o", default="kubernetes",
+              help="Container orchestrator (`kubernetes` or `docker-compose`")
 @click.argument("output_path", default=None, required=False)
-def configure_backend(username, password, output_path):
-    from neon_diana_utils.configuration import configure_backend
-    configure_backend(username, password, output_path)
+def configure_backend(username, password, orchestrator, output_path):
+    from neon_diana_utils.configuration import configure_backend, Orchestrator
+    try:
+        orchestrator = Orchestrator(orchestrator)
+    except ValueError:
+        click.echo(f"{orchestrator} is not a valid orchestrator")
+        return
+    configure_backend(username, password, output_path, orchestrator)
 
 
 @neon_diana_cli.command(help="Configure backend services for deployment")

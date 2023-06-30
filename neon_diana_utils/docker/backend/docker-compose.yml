@@ -1,0 +1,155 @@
+version: '3.1'
+networks:
+  diana-backend:
+volumes:
+  xdg:
+    driver_opts:
+      type: xdg
+      o: bind
+      device: ${DIANA_XDG_PATH}
+services:
+  neon-rabbitmq:
+    container_name: neon-rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      diana-backend:
+        aliases:
+          - neon-rabbitmq
+    volumes:
+      - xdg:/xdg:rw
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+  # MQ Services
+  neon-api-proxy:
+    container_name: neon-api-proxy
+    image: ghcr.io/neongeckocom/neon_api_proxy:${MQ_IMAGE_TAG}
+    depends_on:
+      - neon-rabbitmq
+    networks:
+      - diana-backend
+    volumes:
+      - xdg:/xdg:rw
+    environment:
+      - XDG_CONFIG_HOME=/xdg/config
+      - XDG_DATA_HOME=/xdg/data
+      - XDG_CACHE_HOME=/xdg/cache
+      - XDG_STATE_HOME=/xdg/state
+  neon-email-proxy:
+    container_name: neon-email-proxy
+    image: ghcr.io/neongeckocom/neon_email_proxy:${MQ_IMAGE_TAG}
+    depends_on:
+      - neon-rabbitmq
+    networks:
+      - diana-backend
+    volumes:
+      - xdg:/xdg:rw
+    environment:
+      - XDG_CONFIG_HOME=/xdg/config
+      - XDG_DATA_HOME=/xdg/data
+      - XDG_CACHE_HOME=/xdg/cache
+      - XDG_STATE_HOME=/xdg/state
+  neon-llm-chatgpt:
+    container_name: neon-llm-chatgpt
+    image: ghcr.io/neongeckocom/neon-llm-chatgpt:${MQ_IMAGE_TAG}
+    depends_on:
+      - neon-rabbitmq
+    networks:
+      - diana-backend
+    volumes:
+      - xdg:/xdg:rw
+    environment:
+      - XDG_CONFIG_HOME=/xdg/config
+      - XDG_DATA_HOME=/xdg/data
+      - XDG_CACHE_HOME=/xdg/cache
+      - XDG_STATE_HOME=/xdg/state
+  neon-llm-fastchat:
+    container_name: neon-llm-fastchat
+    image: ghcr.io/neongeckocom/neon-llm-fastchat:${MQ_IMAGE_TAG}
+    depends_on:
+      - neon-rabbitmq
+    networks:
+      - diana-backend
+    volumes:
+      - xdg:/xdg:rw
+    environment:
+      - XDG_CONFIG_HOME=/xdg/config
+      - XDG_DATA_HOME=/xdg/data
+      - XDG_CACHE_HOME=/xdg/cache
+      - XDG_STATE_HOME=/xdg/state
+  neon-metrics-service:
+    container_name: neon-metrics-service
+    image: ghcr.io/neongeckocom/neon_metrics_service:${MQ_IMAGE_TAG}
+    depends_on:
+      - neon-rabbitmq
+    networks:
+      - diana-backend
+    volumes:
+      - xdg:/xdg:rw
+    environment:
+      - XDG_CONFIG_HOME=/xdg/config
+      - XDG_DATA_HOME=/xdg/data
+      - XDG_CACHE_HOME=/xdg/cache
+      - XDG_STATE_HOME=/xdg/state
+
+# These Containers require authentication to pull and are disabled by default
+#  neon-script-parser:
+#    container_name: neon-script-parser
+#    image: ghcr.io/neongeckocom/neon-script-parser:${MQ_IMAGE_TAG}
+#    depends_on:
+#      - neon-rabbitmq
+#    networks:
+#      - diana-backend
+#    volumes:
+#      - xdg:/xdg:rw
+#    environment:
+#      - XDG_CONFIG_HOME=/xdg/config
+#      - XDG_DATA_HOME=/xdg/data
+#      - XDG_CACHE_HOME=/xdg/cache
+#      - XDG_STATE_HOME=/xdg/state
+#  neon-brands-service:
+#    container_name: neon-brands-service
+#    image: ghcr.io/neongeckocom/neon_brands_service:${MQ_IMAGE_TAG}
+#    depends_on:
+#      - neon-rabbitmq
+#    networks:
+#      - diana-backend
+#    volumes:
+#      - xdg:/xdg:rw
+#    environment:
+#      - XDG_CONFIG_HOME=/xdg/config
+#      - XDG_DATA_HOME=/xdg/data
+#      - XDG_CACHE_HOME=/xdg/cache
+#      - XDG_STATE_HOME=/xdg/state
+
+  # HTTP Services
+  neon-libretranslate:
+    container_name: neon-libretranslate
+    image: ghcr.io/neongeckocom/libretranslate:latest
+    networks:
+      - diana-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - xdg:/xdg:rw
+    environment:
+      - XDG_CONFIG_HOME=/xdg/config
+      - XDG_DATA_HOME=/xdg/data
+      - XDG_CACHE_HOME=/xdg/cache
+      - XDG_STATE_HOME=/xdg/state
+  neon-tts-coqui:
+    container_name: neon-tts-coqui
+    image: ghcr.io/neongeckocom/neon-tts-plugin-coqui:${HTTP_IMAGE_TAG}
+    networks:
+      - diana-backend
+    ports:
+      - "9666:9666"
+    volumes:
+      - xdg:/xdg:rw
+    environment:
+      - XDG_CONFIG_HOME=/xdg/config
+      - XDG_DATA_HOME=/xdg/data
+      - XDG_CACHE_HOME=/xdg/cache
+      - XDG_STATE_HOME=/xdg/state
+  # TODO: stt-nemo
