@@ -51,7 +51,7 @@ pip install --pre neon-diana-utils
 
 This command installs the newest pre-release version, which is described in this tutorial. 
 
-**Warning:** You can use `pip install neon-diana-utils` to install the current stable version. Version 0.1.0 includes Helm chart support. For information on installing and running older versions, see [the archived documentation in the README file](https://github.com/NeonGeckoCom/neon-diana-utils/blob/dev/README.md).
+**Warning:** You can use `pip install neon-diana-utils` to install the current stable version. Version 1.0.0 includes Helm chart support. For information on installing and running older versions, see [the archived documentation in the README file](https://github.com/NeonGeckoCom/neon-diana-utils/blob/dev/README.md).
 
 For more information on the available versions of Diana, see [the Python Package Index repo for Neon Diana](https://pypi.org/project/neon-diana-utils/).
 
