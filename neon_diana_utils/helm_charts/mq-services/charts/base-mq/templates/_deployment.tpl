@@ -28,6 +28,10 @@ spec:
           volumeMounts:
             - mountPath: /config/neon
               name: config
+            {{- if .Values.persistentVolumeClaim }}
+            - mountPath: {{ .Values.persistentVolumeClaim.containerPath }}
+              name: {{ .Values.persistentVolumeClaim.name }}
+            {{- end -}}
           {{- if .Values.resources }}
           resources:
           {{- toYaml $.Values.resources | nindent 12 -}}

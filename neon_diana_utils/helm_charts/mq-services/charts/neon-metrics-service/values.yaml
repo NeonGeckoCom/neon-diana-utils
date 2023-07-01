@@ -7,3 +7,4 @@ image:
 persistentVolumeClaim:
   name: metrics
   claimName: metrics
+  containerPath: /data
