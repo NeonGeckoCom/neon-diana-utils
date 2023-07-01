@@ -3,7 +3,7 @@ name: diana-mq
 description: Deploy DIANA MQ Services
 
 type: application
-version: 0.0.3
+version: 0.0.4
 appVersion: "0.0.6a14"
 dependencies:
   - name: neon-api-proxy
@@ -20,7 +20,7 @@ dependencies:
     repository: file://charts/neon-email-proxy
   - name: neon-metrics-service
     alias: neon-metrics-service
-    version: 0.0.1
+    version: 0.0.2
     repository: file://charts/neon-metrics-service
   - name: neon-script-parser
     alias: neon-script-parser
