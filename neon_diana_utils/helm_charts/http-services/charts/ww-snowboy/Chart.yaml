@@ -4,7 +4,7 @@ description: Deploy Snowboy Wake Word Trainer
 
 type: application
 version: 0.0.1
-appVersion: "0.0.6a15"
+appVersion: "0.0.6a16"
 
 dependencies:
   - name: base-http
