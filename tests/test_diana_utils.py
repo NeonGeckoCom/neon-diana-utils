@@ -26,112 +26,152 @@
 
 import json
 import os
-import sys
+import shutil
 import unittest
-import docker
-import docker.models.containers
+import yaml
 
-from docker.errors import APIError
-from mock import Mock
-from ruamel.yaml import YAML
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from neon_diana_utils.utils import _run_clean_rabbit_mq, cleanup_docker_container, create_diana_configurations, \
-    write_neon_mq_config, write_rabbit_config, write_docker_compose
+from unittest.mock import patch
+from os.path import join, dirname, isdir, isfile
 
 
-class TestDianaUtils(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.cached_config_path = os.environ.get("NEON_CONFIG_PATH")
-        os.environ["NEON_CONFIG_PATH"] = os.path.join(os.path.dirname(__file__), "config")
+class TestConfiguration(unittest.TestCase):
+    def test_orchestrator(self):
+        from neon_diana_utils.configuration import Orchestrator
+        self.assertEqual(Orchestrator("kubernetes"), Orchestrator.KUBERNETES)
+        self.assertEqual(Orchestrator("docker-compose"), Orchestrator.COMPOSE)
+        with self.assertRaises(ValueError):
+            Orchestrator("invalid")
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        os.environ.pop("NEON_CONFIG_PATH")
-        if cls.cached_config_path:
-            os.environ["NEON_CONFIG_PATH"] = cls.cached_config_path
+    def test_validate_output_file(self):
+        from neon_diana_utils.configuration import validate_output_path
+        valid_output_path = join(dirname(__file__), 'test_output')
+        self.assertFalse(isdir(valid_output_path))
+        self.assertTrue(validate_output_path(valid_output_path))
+        self.assertTrue(validate_output_path(valid_output_path))
+        self.assertFalse(validate_output_path(dirname(valid_output_path)))
+        self.assertTrue(validate_output_path(join(valid_output_path,
+                                                  'test.txt')))
+        shutil.rmtree(valid_output_path)
 
-    def test_run_clean_rmq_docker(self):
-        container = _run_clean_rabbit_mq()
-        self.assertIsInstance(container, docker.models.containers.Container)
-        self.assertIn(container, docker.from_env().containers.list())
-        cleanup_docker_container(container)
-        self.assertNotIn(container, docker.from_env().containers.list(all=True))
+    @patch("click.confirm")
+    def test_make_keys_config(self, confirm):
+        from neon_diana_utils.configuration import make_keys_config
+        confirm.return_value = False
+        test_output_file = join(dirname(__file__), "test_keys.yaml")
+        # Test without file write
+        config = make_keys_config(False, test_output_file)
+        self.assertFalse(isfile(test_output_file))
+        self.assertIsInstance(config, dict)
+        self.assertIsInstance(config['keys'], dict)
+        self.assertIsInstance(config['ChatGPT'], dict)
+        self.assertIsInstance(config['FastChat'], dict)
 
-        _run_clean_rabbit_mq()
-        with self.assertRaises(APIError):
-            _run_clean_rabbit_mq()
-        container = _run_clean_rabbit_mq(True)
-        self.assertIsInstance(container, docker.models.containers.Container)
-        self.assertIn(container, docker.from_env().containers.list())
-        cleanup_docker_container(container)
-        self.assertNotIn(container, docker.from_env().containers.list(all=True))
+        # Test with file write
+        config2 = make_keys_config(True, test_output_file)
+        self.assertTrue(isfile(test_output_file))
+        self.assertEqual(config, config2)
+        with open(test_output_file, 'r') as f:
+            from_disk = yaml.safe_load(f)
+        self.assertEqual(from_disk, config2)
 
-    def test_create_diana_configurations(self):
-        create_diana_configurations("admin", "admin", {"neon_rabbitmq",
-                                                       "neon_api_proxy",
-                                                       "neon_metrics_service",
-                                                       "neon_unknown"})
-        valid_files = {"docker-compose.yml", "mq_config.json", "rabbitmq.conf", "rabbit_mq_config.json"}
-        for file in valid_files:
-            file_path = os.path.join(os.environ["NEON_CONFIG_PATH"], file)
-            self.assertTrue(os.path.isfile(file_path))
-            os.remove(file_path)
+        os.remove(test_output_file)
 
-    def test_write_neon_mq_config(self):
-        sample_creds = {
-            'neon_metrics_connector':
-                {'user': 'neon_metrics',
-                 'password': 'jWAPqP4a2oL8mOq2T5Lj8cxMo72KwXv6keh1WItNWSk'},
-            'neon_api_connector':
-                {'user': 'neon_api',
-                 'password': 'N3h-w4I561l20gZ_cSRvuMHdseYVYA-wHlw-6aJh0VQ'}}
-        write_neon_mq_config(sample_creds)
-        config_file = os.path.join(os.environ["NEON_CONFIG_PATH"], "mq_config.json")
-        self.assertTrue(os.path.isfile(config_file))
-        with open(config_file) as f:
-            config = json.load(f)
-        self.assertEqual(config["users"], sample_creds)
-        self.assertIsInstance(config["server"], str)
-        os.remove(config_file)
+    def test_generate_rmq_config(self):
+        from neon_diana_utils.configuration import generate_rmq_config
+        test_output_file = join(dirname(__file__), "test_rmq.json")
+        # Test without write
+        config = generate_rmq_config("test_admin1", "test_password1")
+        self.assertFalse(isfile(test_output_file))
+        self.assertIsInstance(config, dict)
+        self.assertEqual(config['users'][0], {'name': 'neon_api_utils',
+                                              'password': 'Klatchat2021',
+                                              'tags': ['backend', 'user']})
+        self.assertEqual(config['users'][-1], {'name': 'test_admin1',
+                                               'password': 'test_password1',
+                                               'tags': ['administrator']})
+        self.assertEqual(set(config.keys()), {'users', 'vhosts', 'permissions'})
+        for user in config['users']:
+            self.assertEqual(set(user.keys()), {'name', 'password', 'tags'})
+        for vhost in config['vhosts']:
+            self.assertEqual(set(vhost.keys()), {'name'})
+            self.assertTrue(vhost['name'].startswith('/'))
+        for permission in config['permissions']:
+            self.assertEqual(set(permission.keys()),
+                             {'user', 'vhost', 'configure', 'write', 'read'})
 
-    def test_write_neon_rabbit_config(self):
-        with open(os.path.join(os.path.dirname(__file__), "config", "valid_rabbitmq.json")) as f:
-            sample_config = json.load(f)
-        api = Mock()
+        # Test with valid write
+        config2 = generate_rmq_config("test_admin2", "test_password2",
+                                      test_output_file)
+        self.assertTrue(isfile(test_output_file))
+        self.assertNotEqual(config, config2)
+        self.assertEqual(config2['users'][-1], {'name': 'test_admin2',
+                                                'password': 'test_password2',
+                                                'tags': ['administrator']})
+        with open(test_output_file, 'r') as f:
+            from_disk = json.load(f)
+        self.assertEqual(config2, from_disk)
 
-        def get_definitions():
-            return sample_config
-        api.get_definitions = get_definitions
+        # Test invalid write
+        config3 = generate_rmq_config("test_admin3", "test_password3",
+                                      test_output_file)
+        self.assertTrue(isfile(test_output_file))
+        self.assertNotEqual(config2, config3)
+        self.assertEqual(config3['users'][-1], {'name': 'test_admin3',
+                                                'password': 'test_password3',
+                                                'tags': ['administrator']})
+        with open(test_output_file, 'r') as f:
+            from_disk = json.load(f)
+        self.assertEqual(config2, from_disk)
 
-        write_rabbit_config(api)
+        os.remove(test_output_file)
 
-        config_file = os.path.join(os.environ["NEON_CONFIG_PATH"], "rabbit_mq_config.json")
-        self.assertTrue(os.path.isfile(config_file))
-        with open(config_file) as f:
-            config = json.load(f)
-        self.assertEqual(config, sample_config)
-        os.remove(config_file)
+    def test_generate_mq_auth_config(self):
+        from neon_diana_utils.configuration import generate_mq_auth_config, \
+            generate_rmq_config
+        mq_config = generate_rmq_config("test", "test")
+        auth = generate_mq_auth_config(mq_config)
+        self.assertIsInstance(auth, dict)
+        for service_auth in auth.values():
+            rmq_users = [user for user in mq_config['users']
+                         if user['name'] == service_auth['user']]
+            self.assertEqual(len(rmq_users), 1)
+            user = rmq_users[0]
+            self.assertEqual(user['name'], service_auth['user'])
+            self.assertEqual(user['password'], service_auth['password'])
 
-        rabbitmq_conf = os.path.join(os.environ["NEON_CONFIG_PATH"], "rabbitmq.conf")
-        self.assertTrue(os.path.isfile(rabbitmq_conf))
-        with open(rabbitmq_conf) as f:
-            self.assertIn("load_definitions = /config/rabbit_mq_config.json", f.read())
-        os.remove(rabbitmq_conf)
+    def test_configure_backend(self):
+        from neon_diana_utils.configuration import configure_backend
+        # TODO
 
-    def test_write_docker_compose(self):
-        with open(os.path.join(os.path.dirname(__file__), "config", "valid_docker-compose-services.json")) as f:
-            sample_config = json.load(f)
-        write_docker_compose(sample_config)
 
-        docker_compose_file = os.path.join(os.environ["NEON_CONFIG_PATH"], "docker-compose.yml")
-        self.assertTrue(os.path.isfile(docker_compose_file))
-        with open(docker_compose_file) as f:
-            docker_compose = YAML().load(f)
-        self.assertIn("version", docker_compose)
-        self.assertEqual(docker_compose["services"], sample_config)
-        os.remove(docker_compose_file)
+class TestKubernetesUtils(unittest.TestCase):
+    def test_generate_github_secret(self):
+        from neon_diana_utils.kubernetes_utils import create_github_secret
+        output_path = os.path.join(os.path.dirname(__file__), "test_gh.yaml")
+        output_file = create_github_secret("username",
+                                           "123123adsfasdf123123",
+                                           output_path)
+        self.assertTrue(os.path.isfile(output_file))
+        self.assertEqual(output_file, output_path)
+        with open(output_file) as f:
+            contents = yaml.safe_load(f)
+        self.assertEqual(contents['kind'], "Secret")
+        self.assertEqual(contents['type'], "kubernetes.io/dockerconfigjson")
+        self.assertEqual(contents['metadata']['name'], 'github-auth')
+        self.assertEqual(contents['data']['.dockerconfigjson'],
+                         "eyJhdXRocyI6IHsiZ2hjci5pbyI6IHsiYXV0aCI6ICJkWE5sY201"
+                         "aGJXVTZNVEl6TVRJellXUnpabUZ6WkdZeE1qTXhNak09In19fQ=="
+                         )
+
+        with self.assertRaises(FileExistsError):
+            create_github_secret("test", "test", output_path)
+
+        os.remove(output_path)
+
+
+class TestRabbitMQAPI(unittest.TestCase):
+    from neon_diana_utils.rabbitmq_api import RabbitMQAPI
+    # TODO
 
 
 if __name__ == '__main__':

@@ -29,9 +29,11 @@
 from setuptools import setup, find_packages
 from os import getenv, path
 
+BASE_PATH = path.abspath(path.dirname(__file__))
+
 
 def get_requirements(requirements_filename: str):
-    requirements_file = path.join(path.abspath(path.dirname(__file__)), "requirements", requirements_filename)
+    requirements_file = path.join(BASE_PATH, "requirements", requirements_filename)
     with open(requirements_file, 'r', encoding='utf-8') as r:
         requirements = r.readlines()
     requirements = [r.strip() for r in requirements if r.strip() and not r.strip().startswith("#")]
@@ -41,17 +43,17 @@ def get_requirements(requirements_filename: str):
         if "@" in r:
             parts = [p.lower() if p.strip().startswith("git+http") else p for p in r.split('@')]
             r = "@".join(parts)
-            if getenv("GITHUB_TOKEN"):
-                if "github.com" in r:
-                    r = r.replace("github.com", f"{getenv('GITHUB_TOKEN')}@github.com")
-            requirements[i] = r
+        if getenv("GITHUB_TOKEN"):
+            if "github.com" in r:
+                requirements[i] = r.replace("github.com", f"{getenv('GITHUB_TOKEN')}@github.com")
     return requirements
 
 
-with open("README.md", "r") as f:
+with open(path.join(BASE_PATH, "README.md"), "r") as f:
     long_description = f.read()
 
-with open("./neon_diana_utils/version.py", "r", encoding="utf-8") as v:
+with open(path.join(BASE_PATH, "neon_diana_utils",
+                    "version.py"), "r", encoding="utf-8") as v:
     for line in v.readlines():
         if line.startswith("__version__"):
             if '"' in line:
@@ -70,7 +72,7 @@ setup(
     author_email='developers@neon.ai',
     license='BSD-3-Clause',
     packages=find_packages(),
-    package_data={'neon_diana_utils': ['templates/*']
+    package_data={'neon_diana_utils': ['templates/*', 'helm_charts/**']
                   },
     include_package_data=True,
     install_requires=get_requirements("requirements.txt"),

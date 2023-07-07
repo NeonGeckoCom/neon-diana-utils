@@ -1,0 +1,10 @@
+replicaCount: 1
+configSecret: diana-config
+image:
+  repository: ghcr.io/neongeckocom/neon_metrics_service
+  pullPolicy: Always
+  tag: dev
+persistentVolumeClaim:
+  name: metrics
+  claimName: metrics
+  containerPath: /data

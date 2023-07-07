@@ -32,11 +32,12 @@ from requests.auth import HTTPBasicAuth
 
 
 class RabbitMQAPI:
-    def __init__(self, url: str):
+    def __init__(self, url: str, verify_ssl: bool = False):
         """
         Creates an object used to interface with a RabbitMQ server
         :param url: Management URL (usually IP:port)
         """
+        self._verify_ssl = verify_ssl
         self.console_url = url
         self._username = None
         self._password = None
@@ -64,7 +65,9 @@ class RabbitMQAPI:
         :param vhost: vhost to add
         :return: True if request was successful
         """
-        status = requests.put(f"{self.console_url}/api/vhosts/{quote_plus(vhost)}", auth=self.auth)
+        status = requests.put(
+            f"{self.console_url}/api/vhosts/{quote_plus(vhost)}",
+            auth=self.auth, verify=self._verify_ssl)
         return status.ok
 
     def add_user(self, user: str, password: str, tags: str = "") -> bool:
@@ -77,7 +80,9 @@ class RabbitMQAPI:
         """
         tags = tags or ""
         body = {"password": password, "tags": tags}
-        status = requests.put(f"{self.console_url}/api/users/{quote_plus(user)}", data=json.dumps(body), auth=self.auth)
+        status = requests.put(
+            f"{self.console_url}/api/users/{quote_plus(user)}",
+            data=json.dumps(body), auth=self.auth, verify=self._verify_ssl)
         return status.ok
 
     def delete_user(self, user: str) -> bool:
@@ -85,13 +90,18 @@ class RabbitMQAPI:
         Delete a user from the server
         :param user: username to remove
         """
-        status = requests.delete(f"{self.console_url}/api/users/{quote_plus(user)}", auth=self.auth)
+        status = requests.delete(
+            f"{self.console_url}/api/users/{quote_plus(user)}",
+            auth=self.auth, verify=self._verify_ssl)
         return status.ok
 
-    def configure_vhost_user_permissions(self, vhost: str, user: str, configure: str = ".*", write: str = ".*",
+    def configure_vhost_user_permissions(self, vhost: str, user: str,
+                                         configure: str = ".*",
+                                         write: str = ".*",
                                          read: str = ".*") -> bool:
         """
-        Configure user's access to vhost. See RabbitMQ docs: https://www.rabbitmq.com/access-control.html#authorisation
+        Configure user's access to vhost. See RabbitMQ docs:
+        https://www.rabbitmq.com/access-control.html#authorisation
         :param vhost: vhost to set/modify permissions for
         :param user: user to set/modify permissions of
         :param configure: regex configure permissions
@@ -99,24 +109,29 @@ class RabbitMQAPI:
         :param read: regex read permissions
         :return: True if request was successful
         """
-        url = f"{self.console_url}/api/permissions/{quote_plus(vhost)}/{quote_plus(user)}"
+        url = f"{self.console_url}/api/permissions/{quote_plus(vhost)}/" \
+              f"{quote_plus(user)}"
         body = {"configure": configure,
                 "write": write,
                 "read": read}
-        status = requests.put(url, data=json.dumps(body), auth=self.auth)
+        status = requests.put(url, data=json.dumps(body), auth=self.auth,
+                              verify=self._verify_ssl)
         return status.ok
 
     def get_definitions(self):
         """
-        Get the server definitions for RabbitMQ; these are used to persist configuration between container restarts
+        Get the server definitions for RabbitMQ; these are used to persist
+        configuration between container restarts
         """
-        resp = requests.get(f"{self.console_url}/api/definitions", auth=self.auth)
+        resp = requests.get(f"{self.console_url}/api/definitions",
+                            auth=self.auth, verify=self._verify_ssl)
         data = json.loads(resp.content)
         return data
 
     def create_default_users(self, users: list) -> dict:
         """
-        Creates the passed list of users with random passwords and returns a dict of users to passwords
+        Creates the passed list of users with random passwords and returns a
+        dict of users to passwords
         :param users: list of usernames to create
         :return: Dict of created usernames and associated passwords
         """
@@ -130,7 +145,8 @@ class RabbitMQAPI:
 
     def configure_admin_account(self, username: str, password: str) -> bool:
         """
-        Configures an administrator with the passed credentials and removes the default account
+        Configures an administrator with the passed credentials and removes
+        the default account
         :param username: New administrator's username
         :param password: New administrator's password
         :return: True if action was successful

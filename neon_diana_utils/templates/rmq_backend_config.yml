@@ -1,0 +1,131 @@
+users:
+  - name: "neon_api_utils"
+    password: "Klatchat2021"
+    tags:
+      - backend
+      - user
+  - name: "neon_metrics"
+    password:
+    tags:
+      - backend
+      - service
+  - name: "neon_coupons"
+    password:
+    tags:
+      - backend
+      - service
+  - name: "neon_email"
+    password:
+    tags:
+      - backend
+      - service
+  - name: "neon_script_parser"
+    password:
+    tags:
+      - backend
+      - service
+  - name: "neon_api"
+    password:
+    tags:
+      - backend
+      - service
+  - name: "neon_libretranslate"
+    password:
+    tags:
+      - backend
+      - service
+  - name: "neon_llm_chatgpt"
+    password:
+    tags:
+      - backend
+      - llm
+  - name: "neon_llm_fastchat"
+    password:
+    tags:
+      - backend
+      - llm
+vhosts:
+  - name: "/neon_emails"
+  - name: "/neon_api"
+  - name: "/neon_script_parser"
+  - name: "/neon_metrics"
+  - name: "/neon_coupons"
+  - name: "/neon_testing"
+  - name: "/translation"
+  - name: "/llm"
+permissions:
+  - user: "neon_llm_chatgpt"
+    vhost: "/llm"
+    configure: ".*"
+    write: ".*"
+    read: "chat_gpt_input"
+  - user: "neon_llm_fastchat"
+    vhost: "/llm"
+    configure: ".*"
+    write: ".*"
+    read: "fastchat_input"
+  - user: "neon_api_utils"
+    vhost: "/llm"
+    configure: ".*"
+    write: ".*"
+    read: ".*(?!_input).*"
+  - user: "neon_libretranslate"
+    vhost: "/translation"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_api_utils"
+    vhost: "/neon_coupons"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_email"
+    vhost: "/neon_emails"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_api_utils"
+    vhost: "/neon_emails"
+    configure: ".*"
+    write: ".*"
+    read: "^(?!neon_emails_input).*"
+  - user: "neon_api"
+    vhost: "/neon_api"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_api_utils"
+    vhost: "/neon_metrics"
+    configure: ".*"
+    write: ".*"
+    read: ""
+  - user: "neon_api_utils"
+    vhost: "/neon_api"
+    configure: "./*"
+    write: "./*"
+    read: "./*"
+  - user: "neon_api_utils"
+    vhost: "/neon_script_parser"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_script_parser"
+    vhost: "/neon_script_parser"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_metrics"
+    vhost: "/neon_metrics"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_api_utils"
+    vhost: "/neon_testing"
+    configure: "./*"
+    write: "./*"
+    read: "./*"
+  - user: "neon_coupons"
+    vhost: "/neon_coupons"
+    configure: ".*"
+    write: ".*"
+    read: ".*"

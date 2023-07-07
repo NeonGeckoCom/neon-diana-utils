@@ -1,0 +1,65 @@
+# This Chart will deploy Diana backend services, including RabbitMQ,
+# HTTP Services with associated ingress and certificates, MQ Services,
+# and configuration including secrets with keys and passwords.
+
+# TODO: Update `domain`
+domain: &domain diana.k8s
+# TODO: Update tag to `dev` or `latest`
+mqServiceTag: &mq_tag dev
+
+configSecret: diana-config
+# Note: Changes here need to be reflected in all MQ containers
+
+letsencrypt:
+  sslSecret: letsencrypt-ssl
+  # Note: This should match `diana-http.ingress.tlsSecretName
+  server: https://acme-staging-v02.api.letsencrypt.org/directory
+  email: developers@neon.ai
+  # TODO: Update server and email to valid options
+  # https://acme-v02.api.letsencrypt.org/directory
+
+# Deploys RabbitMQ with specified auth credentials
+rabbitmq:
+  nameOverride: &name_rmq neon-rabbitmq
+  fullnameOverride: *name_rmq
+  persistence:
+    enabled: false
+  commonLabels:
+    neon.project.name: diana
+    neon.diana.service: *name_rmq
+    neon.service.class: communication
+  loadDefinition:
+    enabled: true
+    existingSecret: rmq-config
+  extraConfiguration: |
+    load_definitions = /app/load_definition.json
+
+# Deploys HTTP Services
+diana-http:
+  domain: *domain
+  ingress:
+    tlsSecretName: letsencrypt-ssl
+    extraRules:
+      - host: mqadmin
+        serviceName: *name_rmq
+        servicePort: 15672
+
+# Deploys MQ Services
+diana-mq:
+  neon-api-proxy:
+    image:
+      tag: *mq_tag
+  neon-brands-service:
+    image:
+      tag: *mq_tag
+      pullSecret: github-auth
+  neon-email-proxy:
+    image:
+      tag: *mq_tag
+  neon-metrics-service:
+    image:
+      tag: *mq_tag
+  neon-script-parser:
+    image:
+      tag: *mq_tag
+      pullSecret: github-auth

@@ -1,0 +1,17 @@
+# Mapping of MQ users to MQ service names for service authentication
+neon_api:
+  - neon_api_connector
+neon_coupons:
+  - neon_coupon_connector
+neon_email:
+  - neon_email_proxy
+neon_metrics:
+  - neon_metrics_connector
+neon_script_parser:
+  - neon_script_parser_service
+neon_libretranslate:
+  - mq-libre-translate
+neon_llm_chatgpt:
+  - neon_llm_chatgpt
+neon_llm_fastchat:
+  - neon_llm_fastchat

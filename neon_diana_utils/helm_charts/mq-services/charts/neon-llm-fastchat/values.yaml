@@ -1,0 +1,10 @@
+replicaCount: 1
+configSecret: diana-config
+image:
+  repository: ghcr.io/neongeckocom/neon-llm-fastchat
+  pullPolicy: Always
+  tag: dev
+resources:
+  requests:
+    memory: "4Gi"
+    cpu: "2.0"

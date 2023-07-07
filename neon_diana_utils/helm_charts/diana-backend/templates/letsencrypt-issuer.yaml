@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ .Values.letsencrypt.sslSecret }}
+spec:
+  acme:
+    server: {{ .Values.letsencrypt.server }}
+    email: {{ .Values.letsencrypt.email }}
+    privateKeySecretRef:
+      name: {{ .Values.letsencrypt.sslSecret }}
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
