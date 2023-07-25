@@ -3,5 +3,5 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.configMap }}
 data:
-  "neon.yaml": |-
-    {{ .Files.Get "neon.yaml" | b64enc }}
+  "neon.yaml": |
+    {{ .Files.Get "neon.yaml" | nindent 4}}

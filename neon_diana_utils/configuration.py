@@ -41,7 +41,7 @@ from ovos_utils.log import LOG
 
 class Orchestrator(Enum):
     """
-    Enum represending container orchestrators that may be configured
+    Enum representing container orchestrators that may be configured
     """
     KUBERNETES = "kubernetes"
     COMPOSE = "docker-compose"
@@ -282,7 +282,7 @@ def _get_neon_mq_user_config(mq_user: Optional[str], mq_pass: Optional[str],
     # Interactively configure MQ authentication
     user_config = {"user": mq_user, "password": mq_pass}
     if not all((mq_user, mq_pass)):
-        if click.prompt("Configure MQ Connection?"):
+        if click.confirm("Configure MQ Connection?"):
             confirmed = False
             while not confirmed:
                 mq_user = click.prompt("MQ Username", type=str,
@@ -314,20 +314,22 @@ def configure_backend(username: str = None,
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
 
     # Output to `backend` subdirectory
-    output_path = join(output_path, "diana-backend")
-    if not validate_output_path(output_path):
+    if not validate_output_path(join(output_path, "diana-backend")):
         click.echo(f"Path exists: {output_path}")
         return
 
     if orchestrator == Orchestrator.KUBERNETES:
-        shutil.copytree(join(dirname(__file__), "helm_charts"), output_path)
+        for path in ("diana-backend", "http-services", "ingress-common",
+                     "mq-services", "neon-rabbitmq"):
+            shutil.copytree(join(dirname(__file__), "helm_charts", path),
+                            join(output_path, path))
         # Cleanup any leftover build files
         for root, _, files in walk(dirname(output_path)):
             for file in files:
                 if any((file.endswith(x) for x in (".lock", ".tgz"))):
                     remove(join(root, file))
-        rmq_file = join(output_path, "rabbitmq.json")
-        diana_config = join(output_path, "diana.yaml")
+        rmq_file = join(output_path, "diana-backend", "rabbitmq.json")
+        diana_config = join(output_path, "diana-backend", "diana.yaml")
 
     elif orchestrator == Orchestrator.COMPOSE:
         shutil.copytree(join(dirname(__file__), "docker", "backend"),
@@ -372,6 +374,13 @@ def configure_backend(username: str = None,
         with open(diana_config, 'w+') as f:
             yaml.dump(config, f)
         click.echo(f"Outputs generated in {output_path}")
+
+        # Prompt to continue to Neon Core config
+        if click.confirm("Configure Neon Core?"):
+            user = mq_auth_config.get("chat_api_proxy")
+            configure_neon_core(user.get('user'), user.get('password'),
+                                output_path, orchestrator)
+
     except Exception as e:
         click.echo(e)
 
@@ -392,20 +401,19 @@ def configure_neon_core(mq_user: str = None,
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
     backend_config = join(output_path, "diana-backend", "diana.yaml")
     # Output to `core` subdirectory
-    output_path = join(output_path, "diana-neon_core")
-    if not validate_output_path(output_path):
+    if not validate_output_path(join(output_path, "neon-core")):
         click.echo(f"Path exists: {output_path}")
         return
 
     if orchestrator == Orchestrator.KUBERNETES:
-        shutil.copytree(join(dirname(__file__), "helm_charts", "neon-services"),
-                        join(output_path, "neon-services"))
+        shutil.copytree(join(dirname(__file__), "helm_charts", "neon-core"),
+                        join(output_path, "neon-core"))
         # Cleanup any leftover build files
-        for root, _, files in walk(dirname(output_path)):
+        for root, _, files in walk(join(output_path, "neon-core")):
             for file in files:
                 if any((file.endswith(x) for x in (".lock", ".tgz"))):
                     remove(join(root, file))
-        neon_config_file = join(output_path, "neon.yaml")
+        neon_config_file = join(output_path, "neon-core", "neon.yaml")
 
     elif orchestrator == Orchestrator.COMPOSE:
         shutil.copytree(join(dirname(__file__), "docker", "neon_core"),

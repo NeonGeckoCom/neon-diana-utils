@@ -1,6 +1,6 @@
 apiVersion: v2
-name: neon-speech
-description: Deploy Neon Core Audio Service
+name: neon-enclosure
+description: Deploy Neon Core Enclosure Service
 
 type: application
 version: 0.0.1

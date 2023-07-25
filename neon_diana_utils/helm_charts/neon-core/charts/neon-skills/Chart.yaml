@@ -1,5 +1,5 @@
 apiVersion: v2
-name: neon-speech
+name: neon-skills
 description: Deploy Neon Core Skills Service
 
 type: application

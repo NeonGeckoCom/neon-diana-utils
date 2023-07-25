@@ -17,8 +17,8 @@ spec:
         releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC"| quote }}
       labels:
         neon.diana.service: {{ .Chart.Name }}
-        neon.project.name: diana
-        neon.service.class: mq-backend
+        neon.project.name: neon
+        neon.service.class: neon-core
     spec:
       restartPolicy: Always
       containers:

@@ -1,14 +1,16 @@
-{{- define "base-mq.service" -}}
+{{- define "base-neon.service" -}}
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    neon.project.name: diana
+    neon.project.name: neon
     neon.diana.service: {{ .Chart.Name }}
-    neon.service.class: mq-backend
+    neon.service.class: neon-core
   name: {{ .Chart.Name }}
 spec:
   clusterIP: None
+  selector:
+    neon.diana.service: {{ .Chart.Name }}
   ports:
     - name: headless
       port: 55555
@@ -19,6 +21,4 @@ spec:
       targetPort: {{ .Values.port.targetPort }}
       protocol: TCP
     {{- end -}}
-  selector:
-    neon.diana.service: {{ .Chart.Name }}
 {{- end -}}
