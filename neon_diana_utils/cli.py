@@ -41,8 +41,25 @@ def neon_diana_cli(version: bool = False):
         click.echo(f"Diana version {__version__}")
 
 
+# Core
+@neon_diana_cli.command(help="Configure Neon Core")
+@click.option("--username", "-u", help="RabbitMQ username for Neon AI")
+@click.option("--password", "-p", help="RabbitMQ password for Neon AI")
+@click.option("--orchestrator", "-o", default="kubernetes",
+              help="Container orchestrator (`kubernetes` or `docker-compose`")
+@click.argument("output_path", default=None, required=False)
+def configure_neon_core(username, password, orchestrator, output_path):
+    from neon_diana_utils.configuration import configure_neon_core, Orchestrator
+    try:
+        orchestrator = Orchestrator(orchestrator)
+    except ValueError:
+        click.echo(f"{orchestrator} is not a valid orchestrator")
+        return
+    configure_neon_core(username, password, output_path, orchestrator)
+
+
 # Backend
-@neon_diana_cli.command(help="Configure RabbitMQ and export user credentials")
+@neon_diana_cli.command(help="Configure DIANA Backend")
 @click.option("--username", "-u", help="RabbitMQ username")
 @click.option("--password", "-p", help="RabbitMQ password")
 @click.option("--orchestrator", "-o", default="kubernetes",

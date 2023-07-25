@@ -1,0 +1,10 @@
+replicaCount: 1
+configMap: neon-config
+port:
+  name: messagebus
+  number: 8181
+  targetPort: 8181
+image:
+  repository: ghcr.io/neongeckocom/neon_messagebus
+  pullPolicy: Always
+  tag: dev

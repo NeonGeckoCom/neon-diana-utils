@@ -1,0 +1,6 @@
+replicaCount: 1
+configMap: neon-config
+image:
+  repository: ghcr.io/neongeckocom/neon_skills-default_skills
+  pullPolicy: Always
+  tag: dev

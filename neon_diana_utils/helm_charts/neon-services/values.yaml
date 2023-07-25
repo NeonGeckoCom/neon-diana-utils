@@ -1,0 +1,20 @@
+imageTag: &tag dev
+configMap: neon-config
+neon-messagebus:
+  image:
+    tag: *tag
+neon-speech:
+  image:
+    tag: *tag
+neon-skills:
+  image:
+    tag: *tag
+neon-audio:
+  image:
+    tag: *tag
+neon-enclosure:
+  image:
+    tag: *tag
+neon-gui:
+  image:
+    tag: *tag

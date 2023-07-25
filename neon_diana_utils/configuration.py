@@ -246,6 +246,58 @@ def generate_mq_auth_config(rmq_config: dict) -> dict:
     return mq_config
 
 
+def update_env_file(env_file: str):
+    """
+    Update a .env file with absolute paths for `docker compose` compat.
+    :param env_file: path to `.env` file to modify
+    """
+    if not isfile(env_file):
+        raise FileNotFoundError(env_file)
+    with open(env_file, 'r') as f:
+        contents = f.read()
+    contents = contents.replace('./', f"{dirname(env_file)}/")
+    with open(env_file, 'w') as f:
+        f.write(contents)
+
+
+def _get_neon_mq_user_config(mq_user: Optional[str], mq_pass: Optional[str],
+                             backend_config: str) -> dict:
+    """
+    Get MQ config for neon core.
+    @param mq_user: RabbitMQ Neon username
+    @param mq_pass: RabbitMQ Neon password
+    @param backend_config: Path to Diana Backend configuration file to import
+    @returns dict user config to connect Neon Core to an MQ instance
+    """
+    # Check for passed or previously configured MQ user
+    if not all((mq_user, mq_pass)) and isfile(backend_config):
+        if click.confirm(f"Import Neon MQ user from {backend_config}?"):
+            with open(backend_config) as f:
+                config = yaml.safe_load(f)
+            user_config = config.get('MQ', {}).get('users',
+                                                   {}).get('chat_api_proxy', {})
+            mq_user = user_config.get('user')
+            mq_pass = user_config.get('password')
+
+    # Interactively configure MQ authentication
+    user_config = {"user": mq_user, "password": mq_pass}
+    if not all((mq_user, mq_pass)):
+        if click.prompt("Configure MQ Connection?"):
+            confirmed = False
+            while not confirmed:
+                mq_user = click.prompt("MQ Username", type=str,
+                                       default="neon_core")
+                mq_pass = click.prompt("MQ Password", type=str)
+                user_config = {
+                    "user": mq_user,
+                    "password": mq_pass
+                }
+                click.echo(pformat(user_config))
+                confirmed = click.confirm("Is this configuration correct?")
+
+    return user_config
+
+
 def configure_backend(username: str = None,
                       password: str = None,
                       output_path: str = None,
@@ -260,25 +312,27 @@ def configure_backend(username: str = None,
 
     # Validate output paths
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
+
+    # Output to `backend` subdirectory
+    output_path = join(output_path, "diana-backend")
     if not validate_output_path(output_path):
         click.echo(f"Path exists: {output_path}")
         return
 
-    # Get Helm charts in output directory for deployment
-    chart_path = join(output_path, "diana-backend")
     if orchestrator == Orchestrator.KUBERNETES:
         shutil.copytree(join(dirname(__file__), "helm_charts"), output_path)
         # Cleanup any leftover build files
-        for root, _, files in walk(output_path):
+        for root, _, files in walk(dirname(output_path)):
             for file in files:
                 if any((file.endswith(x) for x in (".lock", ".tgz"))):
                     remove(join(root, file))
-        rmq_file = join(chart_path, "rabbitmq.json")
-        diana_config = join(chart_path, "diana.yaml")
+        rmq_file = join(output_path, "rabbitmq.json")
+        diana_config = join(output_path, "diana.yaml")
 
     elif orchestrator == Orchestrator.COMPOSE:
         shutil.copytree(join(dirname(__file__), "docker", "backend"),
                         output_path)
+        update_env_file(join(output_path, ".env"))
         rmq_file = join(output_path, "xdg", "config", "rabbitmq",
                         "rabbitmq.json")
         diana_config = join(output_path, "xdg", "config", "neon", "diana.yaml")
@@ -303,7 +357,7 @@ def configure_backend(username: str = None,
                 gh_username = click.prompt("GitHub username", type=str)
                 gh_token = click.prompt("GitHub Token with `read:packages` "
                                         "permission", type=str)
-                gh_secret_path = join(chart_path, "templates",
+                gh_secret_path = join(output_path, "templates",
                                       "secret_gh_token.yaml")
                 create_github_secret(gh_username, gh_token, gh_secret_path)
                 click.echo(f"Generated GH secret at {gh_secret_path}")
@@ -317,6 +371,72 @@ def configure_backend(username: str = None,
         click.echo(f"Writing configuration to {diana_config}")
         with open(diana_config, 'w+') as f:
             yaml.dump(config, f)
+        click.echo(f"Outputs generated in {output_path}")
+    except Exception as e:
+        click.echo(e)
+
+
+def configure_neon_core(mq_user: str = None,
+                        mq_pass: str = None,
+                        output_path: str = None,
+                        orchestrator: Orchestrator = Orchestrator.KUBERNETES):
+    """
+    Generate Neon Core definitions
+    @param mq_user: RabbitMQ Neon username to configure
+    @param mq_pass: RabbitMQ Neon password to configure
+    @param output_path: directory to write output definitions to
+    @param orchestrator: Container orchestrator to generate configuration for
+    """
+
+    # Validate output paths
+    output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
+    backend_config = join(output_path, "diana-backend", "diana.yaml")
+    # Output to `core` subdirectory
+    output_path = join(output_path, "diana-neon_core")
+    if not validate_output_path(output_path):
+        click.echo(f"Path exists: {output_path}")
+        return
+
+    if orchestrator == Orchestrator.KUBERNETES:
+        shutil.copytree(join(dirname(__file__), "helm_charts", "neon-services"),
+                        join(output_path, "neon-services"))
+        # Cleanup any leftover build files
+        for root, _, files in walk(dirname(output_path)):
+            for file in files:
+                if any((file.endswith(x) for x in (".lock", ".tgz"))):
+                    remove(join(root, file))
+        neon_config_file = join(output_path, "neon.yaml")
+
+    elif orchestrator == Orchestrator.COMPOSE:
+        shutil.copytree(join(dirname(__file__), "docker", "neon_core"),
+                        output_path)
+        update_env_file(join(output_path, ".env"))
+        neon_config_file = join(output_path, "xdg", "config", "neon",
+                                "neon.yaml")
+    else:
+        raise RuntimeError(f"{orchestrator} is not yet supported")
+
+    try:
+        # Get MQ User Configuration
+        user_config = _get_neon_mq_user_config(mq_user, mq_pass, backend_config)
+        if not all((user_config['user'], user_config['password'])):
+            # TODO: Prompt to configure MQ server/port?
+            mq_config = dict()
+        else:
+            mq_config = {"users": {"neon_chat_api": user_config},
+                         "server": "neon-rabbitmq", "port": 5672}
+        # Build default Neon config
+        neon_config = {
+            "websocket": {"host": "neon-messagebus",
+                          "shared_connection": True},
+            "gui_websocket": {"host": "neon-gui"},
+            "gui": {"server_path": "/xdg/data/neon/gui_files"},
+            "ready_settings": ["skills", "voice", "audio", "gui_service"],
+            "MQ": mq_config
+        }
+        click.echo(f"Writing configuration to {neon_config_file}")
+        with open(neon_config_file, 'w+') as f:
+            yaml.dump(neon_config, f)
         click.echo(f"Outputs generated in {output_path}")
     except Exception as e:
         click.echo(e)
