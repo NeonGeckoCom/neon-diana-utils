@@ -440,6 +440,10 @@ def configure_neon_core(mq_user: str = None,
             "gui_websocket": {"host": "neon-gui"},
             "gui": {"server_path": "/xdg/data/neon/gui_files"},
             "ready_settings": ["skills", "voice", "audio", "gui_service"],
+            "listener": {"enable_voice_loop": False},
+            "stt": {"fallback_module": None},
+            "skills": {"blacklisted_skills": ["skill-local_music.neongeckocom",
+                                              "skill-homeassistant.mikejgray"]},
             "MQ": mq_config
         }
         click.echo(f"Writing configuration to {neon_config_file}")

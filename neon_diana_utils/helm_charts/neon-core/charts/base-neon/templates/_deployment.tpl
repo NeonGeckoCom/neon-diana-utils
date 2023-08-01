@@ -26,8 +26,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}
           volumeMounts:
-            - mountPath: /config/neon
-              name: config
+            - name: config
+              mountPath: /config/neon/neon.yaml
+              subPath: neon.yaml
             {{- if .Values.persistentVolumeClaim }}
             - mountPath: {{ .Values.persistentVolumeClaim.containerPath }}
               name: {{ .Values.persistentVolumeClaim.name }}
