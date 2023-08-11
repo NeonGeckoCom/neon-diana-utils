@@ -139,6 +139,17 @@ class TestConfiguration(unittest.TestCase):
             self.assertEqual(user['name'], service_auth['user'])
             self.assertEqual(user['password'], service_auth['password'])
 
+    def test_update_env_file(self):
+        from neon_diana_utils.configuration import update_env_file
+        test_file = join(dirname(__file__), "test.env")
+        shutil.copyfile(test_file, f"{test_file}.bak")
+        update_env_file(test_file)
+        with open(test_file) as f:
+            contents = f.read()
+        self.assertEqual(contents, f"REL_PATH={dirname(__file__)}/test\n"
+                                   f"ABS_PATH=/tmp/test")
+        shutil.move(f"{test_file}.bak", test_file)
+
     def test_configure_backend(self):
         from neon_diana_utils.configuration import configure_backend
         # TODO

@@ -1,0 +1,10 @@
+replicaCount: 1
+configMap: neon-config
+port:
+  name: gui
+  number: 18181
+  targetPort: 18181
+image:
+  repository: ghcr.io/neongeckocom/neon_gui
+  pullPolicy: Always
+  tag: dev

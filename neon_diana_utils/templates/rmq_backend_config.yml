@@ -44,6 +44,11 @@ users:
     tags:
       - backend
       - llm
+  - name: "neon_core"
+    password:
+    tags:
+      - backend
+      - core
 vhosts:
   - name: "/neon_emails"
   - name: "/neon_api"
@@ -53,7 +58,18 @@ vhosts:
   - name: "/neon_testing"
   - name: "/translation"
   - name: "/llm"
+  - name: "/neon_chat_api"
 permissions:
+  - user: "neon_core"
+    vhost: "/neon_chat_api"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_api_utils"
+    vhost: "/neon_chat_api"
+    configure: ".*"
+    write: ".*"
+    read: ".*(?!_request).*"
   - user: "neon_llm_chatgpt"
     vhost: "/llm"
     configure: ".*"

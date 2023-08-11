@@ -1,5 +1,5 @@
 requests~=2.26
-pyyaml~=5.4
+pyyaml>=5.4,<7.0
 docker~=5.0
 click~=8.0
 click-default-group~=1.2

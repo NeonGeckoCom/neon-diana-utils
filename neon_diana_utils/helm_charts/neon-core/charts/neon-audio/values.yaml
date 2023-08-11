@@ -1,0 +1,6 @@
+replicaCount: 1
+configMap: neon-config
+image:
+  repository: ghcr.io/neongeckocom/neon_audio
+  pullPolicy: Always
+  tag: dev

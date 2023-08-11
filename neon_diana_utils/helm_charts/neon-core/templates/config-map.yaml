@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMap }}
+data:
+  "neon.yaml": |
+    {{ .Files.Get "neon.yaml" | nindent 4}}

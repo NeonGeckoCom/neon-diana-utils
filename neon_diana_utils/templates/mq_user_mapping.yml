@@ -15,3 +15,5 @@ neon_llm_chatgpt:
   - neon_llm_chatgpt
 neon_llm_fastchat:
   - neon_llm_fastchat
+neon_core:
+  - chat_api_proxy
