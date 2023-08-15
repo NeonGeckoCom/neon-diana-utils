@@ -444,6 +444,8 @@ def configure_neon_core(mq_user: str = None,
             "stt": {"fallback_module": None},
             "skills": {"blacklisted_skills": [
                 "skill-local_music.neongeckocom",
+                "skill-device_controls.neongeckocom",
+                "skill-update.neongeckocom",
                 "neon_homeassistant_skill.mikejgray"]},
             "MQ": mq_config
         }
