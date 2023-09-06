@@ -359,7 +359,7 @@ def configure_backend(username: str = None,
                 gh_username = click.prompt("GitHub username", type=str)
                 gh_token = click.prompt("GitHub Token with `read:packages` "
                                         "permission", type=str)
-                gh_secret_path = join(output_path, "templates",
+                gh_secret_path = join(output_path, "diana-backend", "templates",
                                       "secret_gh_token.yaml")
                 create_github_secret(gh_username, gh_token, gh_secret_path)
                 click.echo(f"Generated GH secret at {gh_secret_path}")
