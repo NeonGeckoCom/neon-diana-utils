@@ -53,6 +53,7 @@ ingress:
   enabled: True
   ingressClassName: nginx
   tlsSecretName: tls-letsencrypt-prod
+  certIssuer: letsencrypt-private-key
   rules:
     - host: *host_libretranslate
       serviceName: libretranslate

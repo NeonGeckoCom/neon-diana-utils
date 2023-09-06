@@ -11,8 +11,8 @@ configSecret: diana-config
 # Note: Changes here need to be reflected in all MQ containers
 
 letsencrypt:
-  sslSecret: letsencrypt-ssl
-  # Note: This should match `diana-http.ingress.tlsSecretName
+  sslSecret: &ssl_secret letsencrypt-private-key
+  # Note: This MUST match `diana-http.ingress.certIssuer
   server: https://acme-staging-v02.api.letsencrypt.org/directory
   email: developers@neon.ai
   # TODO: Update server and email to valid options
@@ -38,7 +38,8 @@ rabbitmq:
 diana-http:
   domain: *domain
   ingress:
-    tlsSecretName: letsencrypt-ssl
+    certIssuer: *ssl_secret
+    tlsSecretName: letsencrypt-tls-secret
     extraRules:
       - host: mqadmin
         serviceName: *name_rmq

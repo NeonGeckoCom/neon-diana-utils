@@ -13,7 +13,7 @@ metadata:
   name: ingress-diana-http
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingress.ingressClassName }}
-    cert-manager.io/issuer: {{ .Values.ingress.tlsSecretName }}
+    cert-manager.io/issuer: {{ .Values.ingress.certIssuer }}
 spec:
   tls:
     - secretName: {{ .Values.ingress.tlsSecretName }}
