@@ -1,0 +1,12 @@
+configMap: &config chatbots-config
+configFilename: &filename config.json
+imagePullSecret: &secret github-auth
+
+cbf-facilitators:
+  imagePullSecret: *secret
+  configMap: *config
+  configFilename: *filename
+cbf-subminds:
+  imagePullSecret: *secret
+  configMap: *config
+  configFilename: *filename

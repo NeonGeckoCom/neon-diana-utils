@@ -1,0 +1,20 @@
+replicaCount: 1
+configMap: chatbots-config
+configFilename: config.json
+configEnvVar: "CONFIG_PATH"
+images:
+  pullPolicy: Always
+  tag: 0.2.3
+  containers:
+    - image: "ghcr.io/neongeckocom/chatbots/eliza"
+      name: "eliza"
+    - image: "ghcr.io/neongeckocom/chatbots/alice"
+      name: "alice"
+    - image: "ghcr.io/neongeckocom/chatbots/hodor"
+      name: "hodor"
+    - image: "ghcr.io/neongeckocom/chatbots/ned"
+      name: "ned"
+    - image: "ghcr.io/neongeckocom/chatbots/pard"
+      name: "pard"
+    - image: "ghcr.io/neongeckocom/chatbots/wiz"
+      name: "wiz"

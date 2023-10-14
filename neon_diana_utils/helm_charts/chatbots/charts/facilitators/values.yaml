@@ -1,0 +1,22 @@
+replicaCount: 1
+configMap: chatbots-config
+configFilename: config.json
+images:
+  pullPolicy: Always
+  containers:
+    - image: "ghcr.io/neongeckocom/mq-chatbots-observer"
+      tag: "latest"
+      name: "chatbots-observer"
+      configEnvVar: "CHATBOTS_OBSERVER_CONFIG"
+    - image: "ghcr.io/neongeckocom/chatbots/proctor"
+      tag: "0.2.3"
+      name: "proctor"
+      configEnvVar: "CONFIG_PATH"
+    - image: "ghcr.io/neongeckocom/chatbots/scorekeeper"
+      tag: "0.2.3"
+      name: "scorekeeper"
+      configEnvVar: "CONFIG_PATH"
+    - image: "ghcr.io/neongeckocom/chatbots/chat_automator"
+      tag: "0.2.3"
+      name: "chat-automator"
+      configEnvVar: "CONFIG_PATH"
