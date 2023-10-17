@@ -76,6 +76,24 @@ class TestConfiguration(unittest.TestCase):
 
         os.remove(test_output_file)
 
+    def test_update_rmq_config(self):
+        from neon_diana_utils.configuration import update_rmq_config
+        test_file = join(dirname(__file__), "test_rabbitmq.json")
+        update_rmq_config(test_file)
+        self.assertTrue(isfile(test_file))
+        self.assertTrue(isfile(f"{test_file}.old"))
+        with open(test_file) as f:
+            new_config = json.load(f)
+        with open(f"{test_file}.old") as f:
+            old_config = json.load(f)
+        self.assertIsInstance(new_config, dict)
+        self.assertIsInstance(old_config, dict)
+        for user in old_config['users']:
+            self.assertIn(user, new_config['users'])
+
+        os.remove(test_file)
+        shutil.move(f"{test_file}.old", test_file)
+
     def test_generate_rmq_config(self):
         from neon_diana_utils.configuration import generate_rmq_config
         test_output_file = join(dirname(__file__), "test_rmq.json")
