@@ -195,6 +195,41 @@ def make_keys_config(write_config: bool,
     return config
 
 
+def update_rmq_config(config_file: str = None) -> str:
+    """
+    Update an existing RabbitMQ configuration with new definitions from DIANA.
+    This can be used to handle added service users without changing existing
+    ones and to reset/update permissions and vhosts.
+    @param config_file: Path to file to be updated
+    @returns: Path to updated file
+    """
+    if not config_file:
+        config_file = join(xdg_config_home(), "diana", "diana-backend",
+                           "rabbitmq.json")
+    else:
+        config_file = expanduser(config_file)
+
+    if not isfile(config_file):
+        raise FileNotFoundError(config_file)
+
+    with open(config_file) as f:
+        real_config = json.load(f)
+    new_config = generate_rmq_config("", "")
+    existing_users = (user['name'] for user in real_config['users'])
+    for user in new_config['users']:
+        if user['name'] in existing_users:
+            continue
+        LOG.info(f"Adding user: {user['name']}")
+        real_config['users'].append(user)
+    real_config['vhosts'] = new_config['vhosts']
+    real_config['permissions'] = new_config['permissions']
+
+    shutil.move(config_file, f"{config_file}.old")
+    with open(config_file, 'w+') as f:
+        json.dump(real_config, f, indent=2)
+    return config_file
+
+
 def generate_rmq_config(admin_username: str, admin_password: str,
                         output_file: str = None) -> dict:
     """
@@ -215,10 +250,12 @@ def generate_rmq_config(admin_username: str, admin_password: str,
             continue
         user['password'] = secrets.token_urlsafe(32)
 
-    base_config['users'].append({'name': admin_username,
-                                 'password': admin_password,
-                                 'tags': ['administrator']})
-
+    if admin_username and admin_password:
+        base_config['users'].append({'name': admin_username,
+                                     'password': admin_password,
+                                     'tags': ['administrator']})
+    else:
+        LOG.debug("Not adding unconfigured admin user")
     if output_file and validate_output_path(output_file):
         with open(output_file, 'w+') as f:
             json.dump(base_config, f, indent=2)
@@ -261,23 +298,24 @@ def update_env_file(env_file: str):
 
 
 def _get_neon_mq_user_config(mq_user: Optional[str], mq_pass: Optional[str],
-                             backend_config: str) -> dict:
+                             rmq_config: str) -> dict:
     """
     Get MQ config for neon core.
     @param mq_user: RabbitMQ Neon username
     @param mq_pass: RabbitMQ Neon password
-    @param backend_config: Path to Diana Backend configuration file to import
+    @param rmq_config: Path to RabbitMQ configuration file to import
     @returns dict user config to connect Neon Core to an MQ instance
     """
     # Check for passed or previously configured MQ user
-    if not all((mq_user, mq_pass)) and isfile(backend_config):
-        if click.confirm(f"Import Neon MQ user from {backend_config}?"):
-            with open(backend_config) as f:
-                config = yaml.safe_load(f)
-            user_config = config.get('MQ', {}).get('users',
-                                                   {}).get('chat_api_proxy', {})
-            mq_user = user_config.get('user')
-            mq_pass = user_config.get('password')
+    if not all((mq_user, mq_pass)) and isfile(rmq_config):
+        if click.confirm(f"Import Neon MQ user from {rmq_config}?"):
+            with open(rmq_config) as f:
+                config = json.load(f)
+            for user in config['users']:
+                if "core" in user['tags']:
+                    mq_user = user['name']
+                    mq_pass = user['password']
+                    break
 
     # Interactively configure MQ authentication
     user_config = {"user": mq_user, "password": mq_pass}
@@ -399,7 +437,7 @@ def configure_neon_core(mq_user: str = None,
 
     # Validate output paths
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
-    backend_config = join(output_path, "diana-backend", "diana.yaml")
+    rmq_config = join(output_path, "diana-backend", "rabbitmq.json")
     # Output to `core` subdirectory
     if not validate_output_path(join(output_path, "neon-core")):
         click.echo(f"Path exists: {output_path}")
@@ -426,7 +464,7 @@ def configure_neon_core(mq_user: str = None,
 
     try:
         # Get MQ User Configuration
-        user_config = _get_neon_mq_user_config(mq_user, mq_pass, backend_config)
+        user_config = _get_neon_mq_user_config(mq_user, mq_pass, rmq_config)
         if not all((user_config['user'], user_config['password'])):
             # TODO: Prompt to configure MQ server/port?
             mq_config = dict()

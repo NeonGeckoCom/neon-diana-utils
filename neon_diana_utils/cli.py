@@ -41,6 +41,15 @@ def neon_diana_cli(version: bool = False):
         click.echo(f"Diana version {__version__}")
 
 
+# Generic Utilities
+@neon_diana_cli.command(help="Update RabbitMQ Configuration")
+@click.argument("rabbitmq_json_path", default=None, required=False)
+def update_rabbitmq_config(rabbitmq_json_path):
+    from neon_diana_utils.configuration import update_rmq_config
+    updated_file = update_rmq_config(rabbitmq_json_path)
+    click.echo(f"Updated configuration at: {updated_file}")
+
+
 # Core
 @neon_diana_cli.command(help="Configure Neon Core")
 @click.option("--username", "-u", help="RabbitMQ username for Neon AI")
