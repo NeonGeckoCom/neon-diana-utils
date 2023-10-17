@@ -493,3 +493,26 @@ def configure_neon_core(mq_user: str = None,
         click.echo(f"Outputs generated in {output_path}")
     except Exception as e:
         click.echo(e)
+
+
+def configure_klat_chat():
+    internal_url = "http://klat-chat:8010"
+    external_url = ""  # TODO: Get external URL
+    mongo_config = {"host": "",
+                    # "port": 27017,
+                    "database": "klatchat"}  # TODO: Get MongoDB Config
+    config = {"SIO_URL": internal_url,
+              "SOCKET_IO_SERVER_URL": external_url,
+              # TODO: Get chat_observer MQ config
+              "MQ": {"users": {},
+                     "server": "neon-rabbitmq",
+                     "port": 5672},
+              "CHAT_CLIENT": {"PROD": {
+                  "SERVER_URL": internal_url,
+                  "RUNTIME_CONFIG": {"CHAT_SERVER_URL_BASE": external_url}
+              }},
+              "CHAT_SERVER": {"PROD": {
+                  "connection_properties": mongo_config,
+                  "SERVER_IP": "klat-chat"
+              }},
+              "DATABASE_CONFIG": {"PROD": {"pyklatchat_3333": mongo_config}}}

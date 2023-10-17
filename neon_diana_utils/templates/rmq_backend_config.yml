@@ -49,6 +49,11 @@ users:
     tags:
       - backend
       - core
+  - name: "chat_observer"
+    password:
+    tags:
+      - backend
+      - klat
 vhosts:
   - name: "/neon_emails"
   - name: "/neon_api"
@@ -142,6 +147,12 @@ permissions:
     read: "./*"
   - user: "neon_coupons"
     vhost: "/neon_coupons"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  # TODO: More specific permissions
+  - user: "chat_observer"
+    vhost: "/neon_chat_api"
     configure: ".*"
     write: ".*"
     read: ".*"

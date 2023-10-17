@@ -17,3 +17,5 @@ neon_llm_fastchat:
   - neon_llm_fastchat
 neon_core:
   - chat_api_proxy
+chat_observer:
+  - chat_observer
