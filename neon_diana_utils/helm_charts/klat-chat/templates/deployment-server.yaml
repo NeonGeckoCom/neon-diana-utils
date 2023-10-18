@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}-server
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      neon.diana.service: {{ .Chart.Name }}-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC"| quote }}
+      labels:
+        neon.diana.service: {{ .Chart.Name }}-server
+        neon.project.name: klat
+        neon.service.class: klat-chat
+    spec:
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ .Values.configMap }}
+      containers:
+        - image: {{ .Values.images.server.image }}:{{ .Values.images.tag }}
+          imagePullPolicy: {{ $.Values.images.pullPolicy }}
+          name: {{ .Values.images.server.name }}
+          env:
+            - name: OVOS_CONFIG_FILENAME
+              value: klat.yaml
+            - name: OVOS_CONFIG_BASE_FOLDER
+              value: neon
+            - name: XDG_CONFIG_HOME
+              value: /config
+            - name: CORS_ALLOWED_ORIGINS
+              value: https://klat.{{ .Values.domain }}
+            - name: LOG_LEVEL
+              value: DEBUG
+            - name: HOST
+              value: 0.0.0.0
+            - name: PORT
+              value: "8010"
+            - name: INCLUDED_LANGUAGES
+              value: en,es,de,uk,fr,pl,pt
+          volumeMounts:
+            - name: config
+              mountPath: /config/neon/{{ $.Values.configFilename }}
+              subPath: {{ $.Values.configFilename }}
+          {{- if $.Values.resources }}
+          resources:
+          {{- toYaml $.Values.resources | nindent 12 -}}
+        {{ end }}

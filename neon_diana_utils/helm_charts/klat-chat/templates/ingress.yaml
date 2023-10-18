@@ -17,12 +17,12 @@ spec:
   tls:
     - secretName: {{ .Values.ingress.tlsSecretName }}
       hosts:
-        {{- range $rules }}
+        {{- range .Values.ingress.rules }}
         - {{ printf "%s.%s " .host $.Values.domain }}
         {{- end }}
 
   rules:
-    {{- range $rules }}
+    {{- range .Values.ingress.rules }}
     - host: {{ printf "%s.%s " .host $.Values.domain }}
       http:
         paths:

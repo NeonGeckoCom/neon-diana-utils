@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}
+  name: {{ .Chart.Name }}-observer
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      neon.diana.service: {{ .Chart.Name }}
+      neon.diana.service: {{ .Chart.Name }}-observer
   strategy:
     type: Recreate
   template:
@@ -14,21 +14,30 @@ spec:
       annotations:
         releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC"| quote }}
       labels:
-        neon.diana.service: {{ .Chart.Name }}
+        neon.diana.service: {{ .Chart.Name }}-observer
         neon.project.name: klat
         neon.service.class: klat-chat
     spec:
       restartPolicy: Always
       imagePullSecrets:
         - name: {{ .Values.imagePullSecret }}
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ .Values.configMap }}
       containers:
-        {{- range .Values.images.containers }}
-        - image: {{ .image }}:{{ $.Values.images.tag }}
+        - image: {{ .Values.images.observer.image }}:{{ .Values.images.tag }}
           imagePullPolicy: {{ $.Values.images.pullPolicy }}
-          name: {{ .name }}
+          name: {{ .Values.images.observer.name }}
           env:
-            - name: {{ $.Values.configEnvVar }}
-              value: /config/neon/{{ $.Values.configFilename }}
+            - name: OVOS_CONFIG_FILENAME
+              value: klat.yaml
+            - name: OVOS_CONFIG_BASE_FOLDER
+              value: neon
+            - name: XDG_CONFIG_HOME
+              value: /config
           volumeMounts:
             - name: config
               mountPath: /config/neon/{{ $.Values.configFilename }}
@@ -36,5 +45,4 @@ spec:
           {{- if $.Values.resources }}
           resources:
           {{- toYaml $.Values.resources | nindent 12 -}}
-          {{ end }}
         {{ end }}
