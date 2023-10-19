@@ -411,8 +411,7 @@ def _get_chatbots_mq_config(rmq_config: str) -> dict:
                                               "stenographer",
                                               "scorekeeper",
                                               "chat_automator"]
-    # TODO: Interactive or NS-aware reference to Klat SIO address
-    chatbot_config['SIO_URL'] = "http://2022.us:8010"
+    chatbot_config['SIO_URL'] = "http://klat-chat-server:8010"
     return {"MQ": chatbot_config}
 
 
