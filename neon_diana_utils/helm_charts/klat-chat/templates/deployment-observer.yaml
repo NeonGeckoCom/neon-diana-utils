@@ -38,6 +38,8 @@ spec:
               value: neon
             - name: XDG_CONFIG_HOME
               value: /config
+            - name: SCAN_NEON_SERVICE
+              value: "true"
           volumeMounts:
             - name: config
               mountPath: /config/neon/{{ $.Values.configFilename }}
