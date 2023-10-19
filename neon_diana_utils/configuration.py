@@ -530,14 +530,27 @@ def configure_klat_chat(external_url: str = None,
 
     # Confirm URL
     while not external_url:
-        external_url = click.prompt("Klat URL", type=str)
+        external_url = click.prompt("Klat Client URL", type=str)
         if not click.confirm(f"Is '{external_url}' correct?"):
             external_url = None
     if not external_url.startswith("http"):
         external_url = f"https://{external_url}"
 
+    api_url = external_url.replace("klat", "klatapi", 1)
+    confirmed = False
+    while not confirmed:
+        api_url = click.prompt("Klat API URL", type=str,
+                                    default=api_url)
+        confirmed = click.confirm(f"Is '{api_url}' correct?")
+
+    libretranslate_url = "https://libretranslate.2022.us"  # TODO
+    confirmed = False
+    while not confirmed:
+        api_url = click.prompt("Libretranslate API URL", type=str,
+                               default=libretranslate_url)
+        confirmed = click.confirm(f"Is '{libretranslate_url}' correct?")
+
     https = external_url.startswith("https")
-    libretranslate_url = "https://libretranslate.2022.us"
 
     # Confirm MongoDB host/port
     confirmed = False
@@ -580,14 +593,14 @@ def configure_klat_chat(external_url: str = None,
         click.echo(pformat(sftp_config))
         confirmed = click.confirm("Is this configuration correct?")
 
-    config = {"SIO_URL": internal_url,
+    config = {"SIO_URL": api_url,
               "MQ": {"users": {"chat_observer": user_config},
                      "server": "neon-rabbitmq",
                      "port": 5672},
-              "CHAT_CLIENT": {"SERVER_URL": internal_url,
+              "CHAT_CLIENT": {"SERVER_URL": api_url,
                               "FORCE_HTTPS": https,
                               "RUNTIME_CONFIG": {
-                                  "CHAT_SERVER_URL_BASE": external_url}},
+                                  "CHAT_SERVER_URL_BASE": api_url}},
               "CHAT_SERVER": {"DEBUG": True,
                               "MINIFY": False,
                               "SERVER_IP": "klat-chat-server",
