@@ -498,15 +498,20 @@ def configure_neon_core(mq_user: str = None,
 
 
 def configure_klat_chat(external_url: str = None,
-                        mongodb_host: str = None,
-                        mongodb_user: str = None,
-                        mongodb_pass: str = None,
-                        mongo_database: str = None,
+                        mongo_config: dict = None,
+                        sftp_config: dict = None,
                         mq_user: str = None,
                         mq_pass: str = None,
                         output_path: str = None,
                         orchestrator: Orchestrator = Orchestrator.KUBERNETES,
                         prompt_update_rmq: bool = True):
+    """
+    Generate Klat chat definitions
+    @param mq_user: RabbitMQ Klat observer username to configure
+    @param mq_pass: RabbitMQ Klat observer password to configure
+    @param output_path: directory to write output definitions to
+    @param orchestrator: Container orchestrator to generate configuration for
+    """
 
     # Validate output paths
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
@@ -523,10 +528,9 @@ def configure_klat_chat(external_url: str = None,
     user_config = _get_mq_service_user_config(mq_user, mq_pass, "klat",
                                               rmq_config)
     # Get configuration
-    internal_url = "http://klat-chat-server:8010"
-    mongodb_port = 27017
-    mongo_config = dict()
-    sftp_config = dict()
+    mongo_config = mongo_config or dict()
+    mongodb_port = mongo_config.get("port") or 27017
+    sftp_config = sftp_config or dict()
 
     # Confirm URL
     while not external_url:
@@ -543,10 +547,10 @@ def configure_klat_chat(external_url: str = None,
                                     default=api_url)
         confirmed = click.confirm(f"Is '{api_url}' correct?")
 
-    libretranslate_url = "https://libretranslate.2022.us"  # TODO
+    libretranslate_url = "https://libretranslate.2022.us"
     confirmed = False
     while not confirmed:
-        api_url = click.prompt("Libretranslate API URL", type=str,
+        libretranslate_url = click.prompt("Libretranslate API URL", type=str,
                                default=libretranslate_url)
         confirmed = click.confirm(f"Is '{libretranslate_url}' correct?")
 
@@ -556,16 +560,19 @@ def configure_klat_chat(external_url: str = None,
     confirmed = False
     while not confirmed:
         mongodb_host = click.prompt("MongoDB host address", type=str,
-                                    default=mongodb_host)
-        mongodb_user = click.prompt("MongoDB username", type=str,
-                                    default=mongodb_user)
-        mongodb_pass = click.prompt("MongoDB password", type=str,
-                                    default=mongodb_pass)
-        mongo_database = click.prompt("MongoDB database", type=str,
-                                      default=mongo_database)
+                                    default=mongo_config.get("host"))
         if ':' in mongodb_host:
             mongodb_host, mongodb_port = mongodb_host.split(':')
             mongodb_port = int(mongodb_port)
+        else:
+            mongodb_port = click.prompt("MongoDB port", type=int,
+                                        default=mongodb_port)
+        mongodb_user = click.prompt("MongoDB username", type=str,
+                                    default=mongo_config.get("username"))
+        mongodb_pass = click.prompt("MongoDB password", type=str,
+                                    default=mongo_config.get("password"))
+        mongo_database = click.prompt("MongoDB database", type=str,
+                                      default=mongo_config.get("database"))
 
         mongo_config = {"host": mongodb_host,
                         "port": mongodb_port,
