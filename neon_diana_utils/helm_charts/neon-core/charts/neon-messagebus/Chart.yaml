@@ -4,7 +4,7 @@ description: Deploy Neon Core Messagebus
 
 type: application
 version: 0.0.1
-appVersion: "1.0.1a4"
+appVersion: "1.0.1a5"
 
 dependencies:
   - name: base-neon
