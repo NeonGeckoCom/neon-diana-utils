@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    neon.project.name: klat
+    neon.diana.service: {{ .Chart.Name }}
+    neon.service.class: klat-observer
+  name: {{ .Chart.Name }}-observer
+spec:
+  clusterIP: None
+  selector:
+    neon.diana.service: {{ .Chart.Name }}-observer
+  ports:
+    - name: headless
+      port: 55555
+      targetPort: 0

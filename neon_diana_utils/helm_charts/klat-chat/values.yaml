@@ -1,0 +1,31 @@
+replicaCount: 1
+imagePullSecret: github-auth
+configFilename: klat.yaml
+domain: diana.k8s
+configMap: klat-config
+
+images:
+  tag: dev
+  pullPolicy: Always
+  client:
+    image: ghcr.io/neongeckocom/chat_client
+    name: klat-chat-client
+  server:
+    image: ghcr.io/neongeckocom/chat_server
+    name: klat-chat-server
+  observer:
+    image: ghcr.io/neongeckocom/klatchat_observer
+    name: klat-chat-observer
+
+ingress:
+  enabled: True
+  ingressClassName: nginx
+  tlsSecretName: tls-letsencrypt-prod
+  certIssuer: letsencrypt-private-key
+  rules:
+    - host: klat
+      serviceName: klat-chat-client
+      servicePort: 8001
+    - host: klatapi
+      serviceName: klat-chat-server
+      servicePort: 8010

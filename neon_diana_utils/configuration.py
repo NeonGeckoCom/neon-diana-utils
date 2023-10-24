@@ -47,6 +47,20 @@ class Orchestrator(Enum):
     COMPOSE = "docker-compose"
 
 
+def _collect_helm_charts(output_path: str, charts_dir: str):
+    """
+    Collect Helm charts in the output directory and remove any leftover build
+    artifacts.
+    """
+    shutil.copytree(join(dirname(__file__), "helm_charts", charts_dir),
+                    join(output_path, charts_dir))
+    # Cleanup any leftover build files
+    for root, _, files in walk(join(output_path, charts_dir)):
+        for file in files:
+            if any((file.endswith(x) for x in (".lock", ".tgz"))):
+                remove(join(root, file))
+
+
 def validate_output_path(output_path: str) -> bool:
     """
     Ensure the requested output path is available to be written
@@ -297,22 +311,23 @@ def update_env_file(env_file: str):
         f.write(contents)
 
 
-def _get_neon_mq_user_config(mq_user: Optional[str], mq_pass: Optional[str],
-                             rmq_config: str) -> dict:
+def _get_mq_service_user_config(mq_user: Optional[str], mq_pass: Optional[str],
+                                mq_tag: str, rmq_config: str) -> dict:
     """
-    Get MQ config for neon core.
-    @param mq_user: RabbitMQ Neon username
-    @param mq_pass: RabbitMQ Neon password
+    Get MQ config for an added service from an existing RabbitMQ configuration.
+    @param mq_user: RabbitMQ service username
+    @param mq_pass: RabbitMQ service password
+    @param mq_tag: RabbitMQ User tag used to identify this service
     @param rmq_config: Path to RabbitMQ configuration file to import
     @returns dict user config to connect Neon Core to an MQ instance
     """
     # Check for passed or previously configured MQ user
     if not all((mq_user, mq_pass)) and isfile(rmq_config):
-        if click.confirm(f"Import Neon MQ user from {rmq_config}?"):
+        if click.confirm(f"Import {mq_tag} MQ user from {rmq_config}?"):
             with open(rmq_config) as f:
                 config = json.load(f)
             for user in config['users']:
-                if "core" in user['tags']:
+                if mq_tag in user['tags']:
                     mq_user = user['name']
                     mq_pass = user['password']
                     break
@@ -320,11 +335,10 @@ def _get_neon_mq_user_config(mq_user: Optional[str], mq_pass: Optional[str],
     # Interactively configure MQ authentication
     user_config = {"user": mq_user, "password": mq_pass}
     if not all((mq_user, mq_pass)):
-        if click.confirm("Configure MQ Connection?"):
+        if click.confirm("Configure MQ Connection Manually?"):
             confirmed = False
             while not confirmed:
-                mq_user = click.prompt("MQ Username", type=str,
-                                       default="neon_core")
+                mq_user = click.prompt("MQ Username", type=str)
                 mq_pass = click.prompt("MQ Password", type=str)
                 user_config = {
                     "user": mq_user,
@@ -359,13 +373,7 @@ def configure_backend(username: str = None,
     if orchestrator == Orchestrator.KUBERNETES:
         for path in ("diana-backend", "http-services", "ingress-common",
                      "mq-services", "neon-rabbitmq"):
-            shutil.copytree(join(dirname(__file__), "helm_charts", path),
-                            join(output_path, path))
-        # Cleanup any leftover build files
-        for root, _, files in walk(dirname(output_path)):
-            for file in files:
-                if any((file.endswith(x) for x in (".lock", ".tgz"))):
-                    remove(join(root, file))
+            _collect_helm_charts(output_path, path)
         rmq_file = join(output_path, "diana-backend", "rabbitmq.json")
         diana_config = join(output_path, "diana-backend", "diana.yaml")
 
@@ -444,15 +452,8 @@ def configure_neon_core(mq_user: str = None,
         return
 
     if orchestrator == Orchestrator.KUBERNETES:
-        shutil.copytree(join(dirname(__file__), "helm_charts", "neon-core"),
-                        join(output_path, "neon-core"))
-        # Cleanup any leftover build files
-        for root, _, files in walk(join(output_path, "neon-core")):
-            for file in files:
-                if any((file.endswith(x) for x in (".lock", ".tgz"))):
-                    remove(join(root, file))
+        _collect_helm_charts(output_path, "neon-core")
         neon_config_file = join(output_path, "neon-core", "neon.yaml")
-
     elif orchestrator == Orchestrator.COMPOSE:
         shutil.copytree(join(dirname(__file__), "docker", "neon_core"),
                         output_path)
@@ -464,7 +465,8 @@ def configure_neon_core(mq_user: str = None,
 
     try:
         # Get MQ User Configuration
-        user_config = _get_neon_mq_user_config(mq_user, mq_pass, rmq_config)
+        user_config = _get_mq_service_user_config(mq_user, mq_pass, "core",
+                                                  rmq_config)
         if not all((user_config['user'], user_config['password'])):
             # TODO: Prompt to configure MQ server/port?
             mq_config = dict()
@@ -493,3 +495,145 @@ def configure_neon_core(mq_user: str = None,
         click.echo(f"Outputs generated in {output_path}")
     except Exception as e:
         click.echo(e)
+
+
+def configure_klat_chat(external_url: str = None,
+                        mongo_config: dict = None,
+                        sftp_config: dict = None,
+                        mq_user: str = None,
+                        mq_pass: str = None,
+                        output_path: str = None,
+                        orchestrator: Orchestrator = Orchestrator.KUBERNETES,
+                        prompt_update_rmq: bool = True):
+    """
+    Generate Klat chat definitions
+    @param mq_user: RabbitMQ Klat observer username to configure
+    @param mq_pass: RabbitMQ Klat observer password to configure
+    @param output_path: directory to write output definitions to
+    @param orchestrator: Container orchestrator to generate configuration for
+    """
+
+    # Validate output paths
+    output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
+    rmq_config = join(output_path, "diana-backend", "rabbitmq.json")
+    # Output to `core` subdirectory
+    if not validate_output_path(join(output_path, "klat-chat")):
+        click.echo(f"Path exists: {output_path}")
+        return
+
+    # Get MQ User Configuration
+    if prompt_update_rmq and click.confirm("Configure RabbitMQ for Klat?"):
+        update_rmq_config(rmq_config)
+        click.echo(f"Updated RabbitMQ config file: {rmq_config}")
+    user_config = _get_mq_service_user_config(mq_user, mq_pass, "klat",
+                                              rmq_config)
+    # Get configuration
+    mongo_config = mongo_config or dict()
+    mongodb_port = mongo_config.get("port") or 27017
+    sftp_config = sftp_config or dict()
+
+    # Confirm URL
+    while not external_url:
+        external_url = click.prompt("Klat Client URL", type=str)
+        if not click.confirm(f"Is '{external_url}' correct?"):
+            external_url = None
+    if not external_url.startswith("http"):
+        external_url = f"https://{external_url}"
+
+    api_url = external_url.replace("klat", "klatapi", 1)
+    confirmed = False
+    while not confirmed:
+        api_url = click.prompt("Klat API URL", type=str,
+                                    default=api_url)
+        confirmed = click.confirm(f"Is '{api_url}' correct?")
+
+    libretranslate_url = "https://libretranslate.2022.us"
+    confirmed = False
+    while not confirmed:
+        libretranslate_url = click.prompt("Libretranslate API URL", type=str,
+                               default=libretranslate_url)
+        confirmed = click.confirm(f"Is '{libretranslate_url}' correct?")
+
+    https = external_url.startswith("https")
+
+    # Confirm MongoDB host/port
+    confirmed = False
+    while not confirmed:
+        mongodb_host = click.prompt("MongoDB host address", type=str,
+                                    default=mongo_config.get("host"))
+        if ':' in mongodb_host:
+            mongodb_host, mongodb_port = mongodb_host.split(':')
+            mongodb_port = int(mongodb_port)
+        else:
+            mongodb_port = click.prompt("MongoDB port", type=int,
+                                        default=mongodb_port)
+        mongodb_user = click.prompt("MongoDB username", type=str,
+                                    default=mongo_config.get("username"))
+        mongodb_pass = click.prompt("MongoDB password", type=str,
+                                    default=mongo_config.get("password"))
+        mongo_database = click.prompt("MongoDB database", type=str,
+                                      default=mongo_config.get("database"))
+
+        mongo_config = {"host": mongodb_host,
+                        "port": mongodb_port,
+                        "username": mongodb_user,
+                        "password": mongodb_pass,
+                        "database": mongo_database}
+        click.echo(pformat(mongo_config))
+        confirmed = click.confirm("Is this configuration correct?")
+    mongo_config['dialect'] = 'mongo'
+
+    # Configure SFTP
+    confirmed = False
+    while not confirmed:
+        sftp_host = click.prompt("SFTP host URL/IP address", type=str)
+        sftp_port = click.prompt("SFTP port", type=int, default=22)
+        sftp_user = click.prompt("SFTP auth username", type=str)
+        sftp_pass = click.prompt("SFTP auth password", type=str)
+        sftp_root = click.prompt("SFTP root path", type=str,
+                                 default="/files/klat/")
+        sftp_config = {"HOST": sftp_host,
+                       "PORT": sftp_port,
+                       "USERNAME": sftp_user,
+                       "PASSWORD": sftp_pass,
+                       "ROOT_PATH": sftp_root}
+        click.echo(pformat(sftp_config))
+        confirmed = click.confirm("Is this configuration correct?")
+
+    config = {"SIO_URL": api_url,
+              "MQ": {"users": {"chat_observer": user_config},
+                     "server": "neon-rabbitmq",
+                     "port": 5672},
+              "CHAT_CLIENT": {"SERVER_URL": api_url,
+                              "FORCE_HTTPS": https,
+                              "RUNTIME_CONFIG": {
+                                  "CHAT_SERVER_URL_BASE": api_url}},
+              "CHAT_SERVER": {"DEBUG": True,
+                              "MINIFY": False,
+                              "SERVER_IP": "klat-chat-server",
+                              "COOKIES": {
+                                  "LIFETIME": 3600,
+                                  "REFRESH_RATE": 300,
+                                  "SECRET": "775115fdecb9b4971193b919d27d410a",
+                                  "JWT_ALGO": "HS256"},
+                              "LIBRE_TRANSLATE_URL": libretranslate_url,
+                              "SFTP": sftp_config
+                              },
+              "DATABASE_CONFIG": mongo_config}
+
+    if orchestrator == Orchestrator.KUBERNETES:
+        _collect_helm_charts(output_path, "klat-chat")
+        klat_config_file = join(output_path, "klat-chat", "klat.yaml")
+        # Update Helm values with configured URL
+        with open(join(output_path, "klat-chat", "values.yaml"), 'r') as f:
+            helm_values = yaml.safe_load(f)
+        helm_values['domain'] = external_url.split('://', 1)[1].split('.', 1)[1]
+        with open(join(output_path, "klat-chat", "values.yaml"), 'w') as f:
+            yaml.safe_dump(helm_values, f)
+    else:
+        raise RuntimeError(f"{orchestrator} is not yet supported")
+
+    # Write Klat configuration
+    with open(klat_config_file, 'w+') as f:
+        yaml.safe_dump(config, f)
+    click.echo(f"Wrote Klat configuration to {klat_config_file}")

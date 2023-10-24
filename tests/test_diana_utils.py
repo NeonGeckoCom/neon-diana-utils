@@ -168,8 +168,45 @@ class TestConfiguration(unittest.TestCase):
                                    f"ABS_PATH=/tmp/test")
         shutil.move(f"{test_file}.bak", test_file)
 
+    def test_collect_helm_charts(self):
+        from neon_diana_utils.configuration import _collect_helm_charts
+        # TODO
+
+    @patch("neon_diana_utils.configuration.click.prompt")
+    @patch("neon_diana_utils.configuration.click.confirm")
+    def test_get_mq_service_user_config(self, confirm, prompt):
+        from neon_diana_utils.configuration import _get_mq_service_user_config
+        config_file = join(dirname(__file__), "test_rabbitmq.json")
+
+        confirm.return_value = True
+        prompt.return_value = "testing"
+
+
+        # Test config from rmq config
+        user = _get_mq_service_user_config(None, None, "test", config_file)
+        self.assertEqual(set(user.keys()), {"user", "password"})
+        self.assertEqual(user['user'], "neon_test")
+        self.assertEqual(user['password'], "neon_test_password")
+
+        # Test no config available get from stdin
+        user = _get_mq_service_user_config("", "", "test2", config_file)
+        self.assertEqual(user, {"user": "testing", "password": "testing"})
+
+        # Test no config available get from args
+        user = _get_mq_service_user_config("username", "password", "test2",
+                                           config_file)
+        self.assertEqual(user, {"user": "username", "password": "password"})
+
     def test_configure_backend(self):
         from neon_diana_utils.configuration import configure_backend
+        # TODO
+
+    def test_configure_neon_core(self):
+        from neon_diana_utils.configuration import configure_neon_core
+        # TODO
+
+    def test_configure_klat_chat(self):
+        from neon_diana_utils.configuration import configure_klat_chat
         # TODO
 
 

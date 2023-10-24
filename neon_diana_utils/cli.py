@@ -67,6 +67,26 @@ def configure_neon_core(username, password, orchestrator, output_path):
     configure_neon_core(username, password, output_path, orchestrator)
 
 
+# Klat
+@neon_diana_cli.command(help="Configure Klat Chat")
+@click.option("--klat-url", "--url", help="Externally accessible URL")
+@click.option("--username", "-u", help="RabbitMQ username for Klat Observer")
+@click.option("--password", "-p", help="RabbitMQ password for Klat Observer")
+@click.option("--orchestrator", "-o", default="kubernetes",
+              help="Container orchestrator (`kubernetes` or `docker-compose`")
+@click.argument("output_path", default=None, required=False)
+def configure_klat(klat_url, username, password, orchestrator, output_path):
+    from neon_diana_utils.configuration import configure_klat_chat, Orchestrator
+    try:
+        orchestrator = Orchestrator(orchestrator)
+    except ValueError:
+        click.echo(f"{orchestrator} is not a valid orchestrator")
+        return
+    configure_klat_chat(klat_url, mq_user=username, mq_pass=password,
+                        output_path=output_path, orchestrator=orchestrator,
+                        prompt_update_rmq=True)
+
+
 # Backend
 @neon_diana_cli.command(help="Configure DIANA Backend")
 @click.option("--username", "-u", help="RabbitMQ username")
