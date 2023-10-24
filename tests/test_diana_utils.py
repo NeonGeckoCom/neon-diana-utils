@@ -192,6 +192,10 @@ class TestConfiguration(unittest.TestCase):
                                            config_file)
         self.assertEqual(user, {"user": "username", "password": "password"})
 
+    def test_get_chatbots_mq_config(self):
+        from neon_diana_utils.configuration import _get_chatbots_mq_config
+        # TODO
+
     def test_configure_backend(self):
         from neon_diana_utils.configuration import configure_backend
         # TODO
@@ -202,6 +206,10 @@ class TestConfiguration(unittest.TestCase):
 
     def test_configure_klat_chat(self):
         from neon_diana_utils.configuration import configure_klat_chat
+        # TODO
+
+    def test_configure_chatbots(self):
+        from neon_diana_utils.configuration import configure_chatbots
         # TODO
 
 
