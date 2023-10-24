@@ -89,9 +89,9 @@ Commands:
 
 ```
 
-## Deploy NeonAI Diana
+## Deploy NeonAI Diana Backend
 
-This example deploys Diana in a local [Microk8s Kubernetes](https://microk8s.io/) cluster. 
+This example deploys Diana Backend in a local [Microk8s Kubernetes](https://microk8s.io/) cluster. 
 
 ### Install and Run Microk8s
 
