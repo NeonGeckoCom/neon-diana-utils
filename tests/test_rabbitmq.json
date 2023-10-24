@@ -55,6 +55,15 @@
         "backend",
         "service"
       ]
+    },
+    {
+      "name": "neon_test",
+      "password": "neon_test_password",
+      "tags": [
+        "backend",
+        "service",
+        "test"
+      ]
     }
   ],
   "vhosts": [
