@@ -1,4 +1,4 @@
-configMap: &config chatbots-config
+configMap: &config cbf-config
 configFilename: &filename config.json
 imagePullSecret: &secret github-auth
 

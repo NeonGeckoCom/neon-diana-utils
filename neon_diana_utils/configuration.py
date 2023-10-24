@@ -523,6 +523,8 @@ def configure_backend(username: str = None,
         if click.confirm("Configure Chatbots?"):
             configure_chatbots(rmq_file, output_path, False, orchestrator)
 
+        # TODO: Prompt for Klat deployment?
+
     except Exception as e:
         click.echo(e)
 

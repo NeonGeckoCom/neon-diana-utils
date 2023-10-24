@@ -69,8 +69,7 @@ helm install neon-core <output_path>/neon-core --namespace backend
 
 ### Klat Chat
 After [the backend](#diana-backend) has been deployed, Klat Chat may also
-be deployed to the same namespace. If you were prompted to configure Klat when setting
-up the backend, then the Helm charts and configuration has already been completed.
+be deployed to the same namespace.
 > Note that you will need a configured [MongoDB](https://www.mongodb.com/) 
 > instance as well as an available [SFTP Share](https://www.digitalocean.com/community/tutorials/how-to-use-sftp-to-securely-transfer-files-with-a-remote-server) 
 > to complete this deployment
@@ -91,6 +90,26 @@ Once the backend has been deployed or updated, Klat services can be deployed via
 helm install klat-chat <output_path>/klat-chat --namespace backend
 ```
 
+### Chatbots
+fter [the backend](#diana-backend) has been deployed, Chatbots services may also
+be deployed to the same namespace. If you were prompted to configure Chatbots when setting
+up the backend, then the Helm charts and configuration has already been completed.
+
+If Chatbots were not configured with the backend, you can generate helm charts via
+`diana configure-chatbots <output_path>`, where `<output_path>` is the same
+path used for the backend. Follow the prompts to either generate an updated MQ
+configuration or input values if you wish to manually update RabbitMQ. If you
+had `diana` automatically update MQ configuration, you can update an existing
+deployment via:
+```
+helm upgrade diana-backend <output_path>/diana-backend --namespace backend
+```
+
+Once the backend has been deployed or updated, Chatbot services can be deployed via:
+
+```
+helm install chatbots <output_path>/chatbots --namespace backend
+```
 
 ## Other Notes
 - The namespace used for Backend deployment is configurable; it may be desirable
