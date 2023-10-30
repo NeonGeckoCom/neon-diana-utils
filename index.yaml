@@ -3,23 +3,23 @@ entries:
   base-http:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-30T16:32:15.700364401-07:00"
+    created: "2023-10-30T16:56:34.060640188-07:00"
     description: Library chart for basic HTTP Services
-    digest: 2072919df26f85fe2bb0ba9aaa1501be29329f84b5012e2efe307ec0198641bd
+    digest: 53c7c589f634b9fb8378821ca1b379341cb4f0d44577be071042256c4b96cda1
     name: base-http
     type: library
     urls:
-    - https://neongeckocom.github.io/helm-charts/base-http-0.0.2.tgz
+    - https://neongeckocom.github.io/neon-diana-utils/base-http-0.0.2.tgz
     version: 0.0.2
   base-mq:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-30T16:32:15.700529313-07:00"
+    created: "2023-10-30T16:56:34.060782315-07:00"
     description: Library chart for basic MQ Services
-    digest: 26525d3ef83a817e54b7f1af3e11406d16e74017727ff90cfdde020ce1cccbc2
+    digest: 32518b2083281e87e1c279b9a3e8f153742f6a8d37e807c0c55030e1b110ebc2
     name: base-mq
     type: library
     urls:
-    - https://neongeckocom.github.io/helm-charts/base-mq-0.0.3.tgz
+    - https://neongeckocom.github.io/neon-diana-utils/base-mq-0.0.3.tgz
     version: 0.0.3
-generated: "2023-10-30T16:32:15.69997864-07:00"
+generated: "2023-10-30T16:56:34.060113143-07:00"
