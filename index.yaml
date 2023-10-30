@@ -1,3 +1,25 @@
 apiVersion: v1
-entries: {}
-generated: "2023-10-30T16:21:15.667981536-07:00"
+entries:
+  base-http:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T16:32:15.700364401-07:00"
+    description: Library chart for basic HTTP Services
+    digest: 2072919df26f85fe2bb0ba9aaa1501be29329f84b5012e2efe307ec0198641bd
+    name: base-http
+    type: library
+    urls:
+    - https://neongeckocom.github.io/helm-charts/base-http-0.0.2.tgz
+    version: 0.0.2
+  base-mq:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T16:32:15.700529313-07:00"
+    description: Library chart for basic MQ Services
+    digest: 26525d3ef83a817e54b7f1af3e11406d16e74017727ff90cfdde020ce1cccbc2
+    name: base-mq
+    type: library
+    urls:
+    - https://neongeckocom.github.io/helm-charts/base-mq-0.0.3.tgz
+    version: 0.0.3
+generated: "2023-10-30T16:32:15.69997864-07:00"
