@@ -24,11 +24,9 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-helm package neon_diana_utils/helm_charts/*
 git clone https://github.com/neongeckocom/neon-diana-utils -b helm-charts
-mv neon_diana_utils/helm_charts/*.tgz helm-charts
+helm package ../neon_diana_utils/helm_charts/*
 helm repo index --url https://neongeckocom.github.io/helm-charts helm-charts
-cd helm-charts
 git add .
 git commit -m "Update Helm Charts"
-git push
+git push --set-upstream origin helm-charts
