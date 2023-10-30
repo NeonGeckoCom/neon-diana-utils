@@ -25,7 +25,7 @@
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 helm package neon_diana_utils/helm_charts/*
-git checkout https://github.com/neongeckocom/neon-diana-utils -b helm-charts
+git clone https://github.com/neongeckocom/neon-diana-utils -b helm-charts
 mv neon_diana_utils/helm_charts/*.tgz helm-charts
 helm repo index --url https://neongeckocom.github.io/helm-charts helm-charts
 cd helm-charts
