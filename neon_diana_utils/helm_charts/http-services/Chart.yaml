@@ -14,10 +14,10 @@ dependencies:
     alias: tts-coqui
     version: *chart_version
     repository: file://charts/tts-coqui
-  - name: tts-glados
-    alias: tts-glados
-    version: *chart_version
-    repository: file://charts/tts-glados
+#  - name: tts-glados
+#    alias: tts-glados
+#    version: *chart_version
+#    repository: file://charts/tts-glados
   - name: tts-larynx
     alias: tts-larynx
     version: *chart_version
