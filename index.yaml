@@ -3,9 +3,9 @@ entries:
   base-http:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-30T16:56:34.060640188-07:00"
+    created: "2023-10-30T17:12:22.978568573-07:00"
     description: Library chart for basic HTTP Services
-    digest: 53c7c589f634b9fb8378821ca1b379341cb4f0d44577be071042256c4b96cda1
+    digest: f58129038ea946d9009dff2e81f97239b26c6e7710b0a2d11902c376fe8519be
     name: base-http
     type: library
     urls:
@@ -14,12 +14,207 @@ entries:
   base-mq:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-30T16:56:34.060782315-07:00"
+    created: "2023-10-30T17:12:22.978944772-07:00"
     description: Library chart for basic MQ Services
-    digest: 32518b2083281e87e1c279b9a3e8f153742f6a8d37e807c0c55030e1b110ebc2
+    digest: 00753777a31e9409820b2d49016a7995a7110611dac9abf4b7592730a24615b4
     name: base-mq
     type: library
     urls:
     - https://neongeckocom.github.io/neon-diana-utils/base-mq-0.0.3.tgz
     version: 0.0.3
-generated: "2023-10-30T16:56:34.060113143-07:00"
+  libretranslate:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.979449964-07:00"
+    dependencies:
+    - name: base-http
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.2
+    description: Deploy a Libretranslate Server
+    digest: 5a7963242f8745d2d1b40d658074deac814b01d5c7be570af6b189de5d785bca
+    name: libretranslate
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/libretranslate-0.0.1.tgz
+    version: 0.0.1
+  neon-api-proxy:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.979711235-07:00"
+    dependencies:
+    - name: base-mq
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.3
+    description: Deploy an MQ API Proxy
+    digest: fbada2216000f6eba472d9d90503b18d16d0e8fbc7022019b1260ab340b4ad7f
+    name: neon-api-proxy
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/neon-api-proxy-0.0.1.tgz
+    version: 0.0.1
+  neon-brands-service:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.979990611-07:00"
+    dependencies:
+    - name: base-mq
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.3
+    description: Deploy an MQ Brands Service
+    digest: cbe0483e371b4cfef2cc4848fad386f591be0f935a6319449774a9aeef820d67
+    name: neon-brands-service
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/neon-brands-service-0.0.1.tgz
+    version: 0.0.1
+  neon-email-proxy:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.980329072-07:00"
+    dependencies:
+    - name: base-mq
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.3
+    description: Deploy an Email Proxy Service
+    digest: d0c720bc4ebb6eea4c18888e8da2b9c4b0a078eb62a0aaf8fece8cd48429d02d
+    name: neon-email-proxy
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/neon-email-proxy-0.0.1.tgz
+    version: 0.0.1
+  neon-metrics-service:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.980591414-07:00"
+    dependencies:
+    - name: base-mq
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.3
+    description: Deploy a Metrics Collector Service
+    digest: 54a88e8265babe26ab8a44e02ff481d21664094b0df33c821e4b109886bba89c
+    name: neon-metrics-service
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/neon-metrics-service-0.0.2.tgz
+    version: 0.0.2
+  neon-script-parser:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.980824094-07:00"
+    dependencies:
+    - name: base-mq
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.3
+    description: Deploy an MQ CCL Script Parser Service
+    digest: 63947c1925e0426d2ec591d914ca5620ed58a5895bb5dd60c596194779776b6e
+    name: neon-script-parser
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/neon-script-parser-0.0.1.tgz
+    version: 0.0.1
+  tts-coqui:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.981141019-07:00"
+    dependencies:
+    - name: base-http
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.2
+    description: Deploy a Coqui TTS Server
+    digest: 06e719d34f6316e820cdf643b2a1f853d37a856ad76d478debc16f0617214252
+    name: tts-coqui
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/tts-coqui-0.0.1.tgz
+    version: 0.0.1
+  tts-glados:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.981679532-07:00"
+    dependencies:
+    - name: base-http
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.2
+    description: Deploy a Glados TTS Server
+    digest: 1bebb4e20b681207ddfc693ffd48ad868ff3ae654f8bdc72617b993b34cbddb9
+    name: tts-glados
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/tts-glados-0.0.1.tgz
+    version: 0.0.1
+  tts-larynx:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.982003416-07:00"
+    dependencies:
+    - name: base-http
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.2
+    description: Deploy a Larynx TTS Server
+    digest: ff38c4a6808c6f86da1982c1a9e3ca0ce44bbf8e0a93bc1a21aba754645b6fc3
+    name: tts-larynx
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/tts-larynx-0.0.1.tgz
+    version: 0.0.1
+  tts-ljspeech:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.982348998-07:00"
+    dependencies:
+    - name: base-http
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.2
+    description: Deploy a LJSpeech TTS Server
+    digest: 5cf17883e111ccba4edfe659a262380f659394b1634d86fb306650a35387b658
+    name: tts-ljspeech
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/tts-ljspeech-0.0.1.tgz
+    version: 0.0.1
+  tts-mozilla:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.982750337-07:00"
+    dependencies:
+    - name: base-http
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.2
+    description: Deploy a Mozilla TTS Server
+    digest: 892ee13793580a9329c19a92edc39de7d9a256c15cdd369b02627b3ea9851af6
+    name: tts-mozilla
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/tts-mozilla-0.0.1.tgz
+    version: 0.0.1
+  tts-nancy:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.983071421-07:00"
+    dependencies:
+    - name: base-http
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.2
+    description: Deploy a Nancy TTS Server
+    digest: 3c865c7466c0fa8bca44ae89eb79a1d1d2b16d3822c53c252a5c6c24941859f1
+    name: tts-nancy
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/tts-nancy-0.0.1.tgz
+    version: 0.0.1
+  ww-snowboy:
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-10-30T17:12:22.983391533-07:00"
+    dependencies:
+    - name: base-http
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.2
+    description: Deploy Snowboy Wake Word Trainer
+    digest: bc2c33964d37e4082bf47664b14809618b400e599537ac93581494126291a762
+    name: ww-snowboy
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/ww-snowboy-0.0.1.tgz
+    version: 0.0.1
+generated: "2023-10-30T17:12:22.978336969-07:00"
