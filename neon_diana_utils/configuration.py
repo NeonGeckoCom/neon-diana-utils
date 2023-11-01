@@ -47,18 +47,18 @@ class Orchestrator(Enum):
     COMPOSE = "docker-compose"
 
 
-def _collect_helm_charts(output_path: str, charts_dir: str):
-    """
-    Collect Helm charts in the output directory and remove any leftover build
-    artifacts.
-    """
-    shutil.copytree(join(dirname(__file__), "helm_charts", charts_dir),
-                    join(output_path, charts_dir))
-    # Cleanup any leftover build files
-    for root, _, files in walk(join(output_path, charts_dir)):
-        for file in files:
-            if any((file.endswith(x) for x in (".lock", ".tgz"))):
-                remove(join(root, file))
+# def _collect_helm_charts(output_path: str, charts_dir: str):
+#     """
+#     Collect Helm charts in the output directory and remove any leftover build
+#     artifacts.
+#     """
+#     shutil.copytree(join(dirname(__file__), "helm_charts", charts_dir),
+#                     join(output_path, charts_dir))
+#     # Cleanup any leftover build files
+#     for root, _, files in walk(join(output_path, charts_dir)):
+#         for file in files:
+#             if any((file.endswith(x) for x in (".lock", ".tgz"))):
+#                 remove(join(root, file))
 
 
 def validate_output_path(output_path: str) -> bool:
@@ -165,7 +165,8 @@ def make_keys_config(write_config: bool,
                 "model": gpt_model,
                 "role": gpt_role,
                 "context_depth": gpt_context,
-                "max_tokens": max_tokens
+                "max_tokens": max_tokens,
+                "num_parallel_processes": 1
             }
             click.echo(pformat(chatgpt_config))
             config_confirmed = \
@@ -199,7 +200,8 @@ def make_keys_config(write_config: bool,
     config = {"keys": {"api_services": api_services,
                        "emails": email_config,
                        "track_my_brands": brands_config},
-              "ChatGPT": chatgpt_config,
+              "ChatGPT": chatgpt_config,  # TODO: Deprecated reference
+              "LLM_CHAT_GPT": chatgpt_config,
               "FastChat": fastchat_config
               }
     if write_config:
@@ -366,17 +368,54 @@ def configure_backend(username: str = None,
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
 
     # Output to `backend` subdirectory
-    if not validate_output_path(join(output_path, "diana-backend")):
+    if not validate_output_path(join(output_path, "backend")):
         click.echo(f"Path exists: {output_path}")
         return
 
     if orchestrator == Orchestrator.KUBERNETES:
-        for path in ("diana-backend", "http-services", "ingress-common",
-                     "mq-services", "neon-rabbitmq"):
-            _collect_helm_charts(output_path, path)
+        shutil.copytree(join(dirname(__file__), "templates", "backend"),
+                        join(output_path, "diana-backend"))
         rmq_file = join(output_path, "diana-backend", "rabbitmq.json")
         diana_config = join(output_path, "diana-backend", "diana.yaml")
 
+        # Do Helm configuration
+        from neon_diana_utils.kubernetes_utils import get_github_encoded_auth
+        # Generate GH Auth config secret
+        encoded_token = ''
+        if click.confirm("Configure GitHub token for private services?"):
+            gh_username = click.prompt("GitHub username", type=str)
+            gh_token = click.prompt("GitHub Token with `read:packages` "
+                                    "permission", type=str)
+            encoded_token = get_github_encoded_auth(gh_username, gh_token)
+            click.echo(f"Parsed GH token for {gh_username}")
+        confirmed = False
+        email = ''
+        domain = ''
+        tag = 'latest'
+        while not confirmed:
+            email = click.prompt("Email address for SSL Certificates",
+                                 type=str, default=email)
+            domain = click.prompt("Root domain for HTTP services",
+                                  type=str, default=domain)
+            tag = click.prompt("Image tags to use for MQ Services",
+                               type=str, default=tag)
+            click.echo(pformat({'email': email,
+                                'domain': domain,
+                                'tag': tag}))
+            confirmed = click.confirm("Is this configuration correct?")
+
+        # Generate values.yaml with configured params
+        values_file = join(output_path, "diana-backend", "values.yaml")
+        with open(values_file, 'r') as f:
+            helm_values = yaml.safe_load(f)
+        helm_values['backend']['letsencrypt']['email'] = email
+        helm_values['backend']['diana-http']['domain'] = domain
+        helm_values['backend']['ghTokenEncoded'] = encoded_token
+        for service in helm_values['backend']['diana-mq']:
+            helm_values['backend']['diana-mq'][service]['image']['tag'] = \
+                tag
+        with open(values_file, 'w') as f:
+            yaml.safe_dump(helm_values, f)
     elif orchestrator == Orchestrator.COMPOSE:
         shutil.copytree(join(dirname(__file__), "docker", "backend"),
                         output_path)
@@ -397,18 +436,6 @@ def configure_backend(username: str = None,
         # Generate MQ Auth config
         mq_auth_config = generate_mq_auth_config(rmq_config)
         click.echo(f"Generated auth for services: {set(mq_auth_config.keys())}")
-
-        # Generate GH Auth config secret
-        if orchestrator == Orchestrator.KUBERNETES:
-            from neon_diana_utils.kubernetes_utils import create_github_secret
-            if click.confirm("Configure GitHub token for private services?"):
-                gh_username = click.prompt("GitHub username", type=str)
-                gh_token = click.prompt("GitHub Token with `read:packages` "
-                                        "permission", type=str)
-                gh_secret_path = join(output_path, "diana-backend", "templates",
-                                      "secret_gh_token.yaml")
-                create_github_secret(gh_username, gh_token, gh_secret_path)
-                click.echo(f"Generated GH secret at {gh_secret_path}")
 
         # Generate `diana.yaml` output
         keys_config = make_keys_config(False)

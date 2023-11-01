@@ -1,0 +1,19 @@
+backend:
+  diana-http: {}
+  diana-mq:
+    neon-api-proxy:
+      image: {}
+    neon-brands-service:
+      image: {}
+    neon-email-proxy:
+      image: {}
+    neon-llm-chatgpt:
+      image: {}
+    neon-llm-fastchat:
+      image: {}
+    neon-metrics-service:
+      image: {}
+    neon-script-parser:
+      image: {}
+  letsencrypt:
+    server: https://acme-v02.api.letsencrypt.org/directory

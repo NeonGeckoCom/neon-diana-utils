@@ -30,6 +30,8 @@ from typing import Optional
 from os import getenv
 from os.path import join, expanduser
 
+from ovos_utils.log import log_deprecation
+
 from neon_diana_utils.configuration import validate_output_path
 
 
@@ -42,6 +44,9 @@ def create_github_secret(username: str, token: str,
     :param output_file: output file to write
     :returns: path to written Kubernetes config file
     """
+    log_deprecation("Secret specs are handled in Helm charts. Use "
+                    "`get_github_encoded_auth` to get textual config value.",
+                    "2.0.0")
     import json
     from base64 import b64encode
     output_file = output_file or join(getenv("NEON_CONFIG_PATH",
@@ -68,3 +73,20 @@ def create_github_secret(username: str, token: str,
     with open(output_file, 'w+') as f:
         yaml.dump(secret_spec, f)
     return output_file
+
+
+def get_github_encoded_auth(username: str, token: str) -> str:
+    """
+    Parse a GitHub username and token into an encoded string to use in a
+    Kubernetes secret for pulling images.
+    :param username: GitHub username
+    :param token: GitHub token with read_packages permission
+    :returns: string Kubernetes config value (ghTokenEncoded)
+    """
+    import json
+    from base64 import b64encode
+    encoded_auth = b64encode(f"{username}:{token}".encode())
+    auth_dict = {"auths": {"ghcr.io": {"auth": encoded_auth.decode()}}}
+    auth_str = json.dumps(auth_dict)
+    encoded_config = b64encode(auth_str.encode())
+    return encoded_config.decode()
