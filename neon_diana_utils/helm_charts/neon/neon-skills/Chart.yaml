@@ -9,4 +9,4 @@ appVersion: "1.0.1a6"
 dependencies:
   - name: base-neon
     version: 0.0.1
-    repository: file://../base-neon
+    repository: https://neongeckocom.github.io/neon-diana-utils

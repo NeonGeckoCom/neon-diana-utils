@@ -1,5 +1,6 @@
 imageTag: &tag dev
 configMap: neon-config
+neonConfig: {}
 neon-messagebus:
   image:
     tag: *tag

@@ -1,6 +1,6 @@
 apiVersion: v2
-name: neon-enclosure
-description: Deploy Neon Core Enclosure Service
+name: neon-audio
+description: Deploy Neon Core Audio Service
 
 type: application
 version: 0.0.1
@@ -9,4 +9,4 @@ appVersion: "1.0.1a6"
 dependencies:
   - name: base-neon
     version: 0.0.1
-    repository: file://../base-neon
+    repository: https://neongeckocom.github.io/neon-diana-utils

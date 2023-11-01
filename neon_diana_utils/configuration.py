@@ -479,7 +479,8 @@ def configure_neon_core(mq_user: str = None,
         return
 
     if orchestrator == Orchestrator.KUBERNETES:
-        _collect_helm_charts(output_path, "neon-core")
+        shutil.copytree(join(dirname(__file__), "templates", "neon"),
+                        join(output_path, "neon-core"))
         neon_config_file = join(output_path, "neon-core", "neon.yaml")
     elif orchestrator == Orchestrator.COMPOSE:
         shutil.copytree(join(dirname(__file__), "docker", "neon_core"),
