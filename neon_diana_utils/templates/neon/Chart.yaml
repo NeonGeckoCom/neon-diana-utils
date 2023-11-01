@@ -1,6 +1,6 @@
 apiVersion: v2
 name: neon-deployment
-description: A Helm chart to deploy the Neon Diana backend
+description: A Helm chart to deploy Neon Core
 
 type: application
 version: 1.0.0
