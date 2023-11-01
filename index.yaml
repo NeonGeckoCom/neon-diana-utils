@@ -3,7 +3,27 @@ entries:
   backend:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.856337581-07:00"
+    created: "2023-11-01T11:11:01.526198938-07:00"
+    dependencies:
+    - name: rabbitmq
+      repository: https://charts.bitnami.com/bitnami
+      version: 11.13.0
+    - name: diana-http
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.1
+    - name: diana-mq
+      repository: https://neongeckocom.github.io/neon-diana-utils
+      version: 0.0.4
+    description: A Helm chart to deploy the Neon Diana backend
+    digest: 2ac93750c7308e1a405e3a62d1f5576c3e3740bfa765c772baf8304f30f258e1
+    name: backend
+    type: application
+    urls:
+    - https://neongeckocom.github.io/neon-diana-utils/backend-0.1.4.tgz
+    version: 0.1.4
+  - apiVersion: v2
+    appVersion: 1.0.1a5
+    created: "2023-11-01T11:11:01.51970162-07:00"
     dependencies:
     - name: rabbitmq
       repository: https://charts.bitnami.com/bitnami
@@ -23,7 +43,7 @@ entries:
     version: 0.1.3
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.846366417-07:00"
+    created: "2023-11-01T11:11:01.513077911-07:00"
     dependencies:
     - name: rabbitmq
       repository: https://charts.bitnami.com/bitnami
@@ -43,7 +63,7 @@ entries:
     version: 0.1.2
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.836953742-07:00"
+    created: "2023-11-01T11:11:01.506471668-07:00"
     dependencies:
     - name: rabbitmq
       repository: https://charts.bitnami.com/bitnami
@@ -64,7 +84,7 @@ entries:
   base-http:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.856552947-07:00"
+    created: "2023-11-01T11:11:01.526624675-07:00"
     description: Library chart for basic HTTP Services
     digest: f58129038ea946d9009dff2e81f97239b26c6e7710b0a2d11902c376fe8519be
     name: base-http
@@ -75,7 +95,7 @@ entries:
   base-mq:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.856701354-07:00"
+    created: "2023-11-01T11:11:01.52705411-07:00"
     description: Library chart for basic MQ Services
     digest: 00753777a31e9409820b2d49016a7995a7110611dac9abf4b7592730a24615b4
     name: base-mq
@@ -86,7 +106,7 @@ entries:
   base-neon:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.85684864-07:00"
+    created: "2023-11-01T11:11:01.527218686-07:00"
     description: Library chart for basic Neon Core Services
     digest: e4894d69ab1cffc5b67931dd24e590a60bf9a4673dbd77ca5fc6d7c4a6ab413a
     name: base-neon
@@ -97,7 +117,7 @@ entries:
   diana:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.865259243-07:00"
+    created: "2023-11-01T11:11:01.533326639-07:00"
     dependencies:
     - name: rabbitmq
       repository: https://charts.bitnami.com/bitnami
@@ -118,7 +138,7 @@ entries:
   diana-http:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.870190831-07:00"
+    created: "2023-11-01T11:11:01.535962155-07:00"
     dependencies:
     - alias: libretranslate
       name: libretranslate
@@ -162,7 +182,7 @@ entries:
   diana-mq:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.871884424-07:00"
+    created: "2023-11-01T11:11:01.537056645-07:00"
     dependencies:
     - alias: neon-api-proxy
       name: neon-api-proxy
@@ -198,7 +218,7 @@ entries:
   ingress-common:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.880023262-07:00"
+    created: "2023-11-01T11:11:01.542458967-07:00"
     dependencies:
     - name: ingress-nginx
       repository: https://kubernetes.github.io/ingress-nginx
@@ -216,7 +236,7 @@ entries:
   klat-chat:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.880565048-07:00"
+    created: "2023-11-01T11:11:01.542696671-07:00"
     description: Deploy Klat Services
     digest: 2cc6bc5fbcd059d38bfb80c4a29bd085f556995fd356231780463c0ca12fb35f
     name: klat-chat
@@ -227,7 +247,7 @@ entries:
   libretranslate:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.881156319-07:00"
+    created: "2023-11-01T11:11:01.543019002-07:00"
     dependencies:
     - name: base-http
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -242,7 +262,7 @@ entries:
   neon-api-proxy:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.881493092-07:00"
+    created: "2023-11-01T11:11:01.543241798-07:00"
     dependencies:
     - name: base-mq
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -257,7 +277,7 @@ entries:
   neon-audio:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.881796469-07:00"
+    created: "2023-11-01T11:11:01.543461363-07:00"
     dependencies:
     - name: base-neon
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -272,7 +292,7 @@ entries:
   neon-brands-service:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.882101888-07:00"
+    created: "2023-11-01T11:11:01.543687537-07:00"
     dependencies:
     - name: base-mq
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -287,7 +307,7 @@ entries:
   neon-core:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.884558252-07:00"
+    created: "2023-11-01T11:11:01.544801826-07:00"
     dependencies:
     - alias: neon-messagebus
       name: neon-messagebus
@@ -323,7 +343,7 @@ entries:
   neon-email-proxy:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.88504909-07:00"
+    created: "2023-11-01T11:11:01.545026948-07:00"
     dependencies:
     - name: base-mq
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -338,7 +358,7 @@ entries:
   neon-enclosure:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.885420108-07:00"
+    created: "2023-11-01T11:11:01.545246529-07:00"
     dependencies:
     - name: base-neon
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -353,7 +373,7 @@ entries:
   neon-gui:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.885947933-07:00"
+    created: "2023-11-01T11:11:01.545473483-07:00"
     dependencies:
     - name: base-neon
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -368,7 +388,7 @@ entries:
   neon-llm-chatgpt:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.886509645-07:00"
+    created: "2023-11-01T11:11:01.54569109-07:00"
     dependencies:
     - name: base-mq
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -383,7 +403,7 @@ entries:
   neon-llm-fastchat:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.887087794-07:00"
+    created: "2023-11-01T11:11:01.545915732-07:00"
     dependencies:
     - name: base-mq
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -398,7 +418,7 @@ entries:
   neon-messagebus:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.887525208-07:00"
+    created: "2023-11-01T11:11:01.546146897-07:00"
     dependencies:
     - name: base-neon
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -413,7 +433,7 @@ entries:
   neon-metrics-service:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.887858754-07:00"
+    created: "2023-11-01T11:11:01.546381698-07:00"
     dependencies:
     - name: base-mq
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -428,7 +448,7 @@ entries:
   neon-rabbitmq:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.892951033-07:00"
+    created: "2023-11-01T11:11:01.549890146-07:00"
     dependencies:
     - name: rabbitmq
       repository: https://charts.bitnami.com/bitnami
@@ -443,7 +463,7 @@ entries:
   neon-script-parser:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.893367774-07:00"
+    created: "2023-11-01T11:11:01.550177215-07:00"
     dependencies:
     - name: base-mq
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -458,7 +478,7 @@ entries:
   neon-skills:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.894015717-07:00"
+    created: "2023-11-01T11:11:01.550415388-07:00"
     dependencies:
     - name: base-neon
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -473,7 +493,7 @@ entries:
   neon-speech:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.894605988-07:00"
+    created: "2023-11-01T11:11:01.550645488-07:00"
     dependencies:
     - name: base-neon
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -488,7 +508,7 @@ entries:
   tts-coqui:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.895698127-07:00"
+    created: "2023-11-01T11:11:01.550959016-07:00"
     dependencies:
     - name: base-http
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -503,7 +523,7 @@ entries:
   tts-glados:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.897060145-07:00"
+    created: "2023-11-01T11:11:01.551274963-07:00"
     dependencies:
     - name: base-http
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -518,7 +538,7 @@ entries:
   tts-larynx:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.8978601-07:00"
+    created: "2023-11-01T11:11:01.551582077-07:00"
     dependencies:
     - name: base-http
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -533,7 +553,7 @@ entries:
   tts-ljspeech:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.898619329-07:00"
+    created: "2023-11-01T11:11:01.5518923-07:00"
     dependencies:
     - name: base-http
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -548,7 +568,7 @@ entries:
   tts-mozilla:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.899364212-07:00"
+    created: "2023-11-01T11:11:01.552199394-07:00"
     dependencies:
     - name: base-http
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -563,7 +583,7 @@ entries:
   tts-nancy:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.90012733-07:00"
+    created: "2023-11-01T11:11:01.552522051-07:00"
     dependencies:
     - name: base-http
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -578,7 +598,7 @@ entries:
   ww-snowboy:
   - apiVersion: v2
     appVersion: 1.0.1a5
-    created: "2023-10-31T19:45:01.900902321-07:00"
+    created: "2023-11-01T11:11:01.5528279-07:00"
     dependencies:
     - name: base-http
       repository: https://neongeckocom.github.io/neon-diana-utils
@@ -590,4 +610,4 @@ entries:
     urls:
     - https://neongeckocom.github.io/neon-diana-utils/ww-snowboy-0.0.1.tgz
     version: 0.0.1
-generated: "2023-10-31T19:45:01.825708806-07:00"
+generated: "2023-11-01T11:11:01.499733506-07:00"
