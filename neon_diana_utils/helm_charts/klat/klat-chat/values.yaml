@@ -1,6 +1,5 @@
 replicaCount: 1
 imagePullSecret: github-auth
-configFilename: klat.yaml
 domain: diana.k8s
 configMap: klat-config
 

@@ -568,13 +568,17 @@ def configure_klat_chat(external_url: str = None,
     if not external_url.startswith("http"):
         external_url = f"https://{external_url}"
 
-    api_url = external_url.replace("klat", "klatapi", 1)
+    # Confirm API URL
+    subdomain, domain = external_url.split('://', 1)[1].split('.', 1)
+    api_url = external_url.replace(subdomain, "klatapi", 1)
     confirmed = False
     while not confirmed:
         api_url = click.prompt("Klat API URL", type=str,
-                                    default=api_url)
+                               default=api_url)
         confirmed = click.confirm(f"Is '{api_url}' correct?")
+    api_subdomain = api_url.split('://', 1)[1].split('.', 1)[0]
 
+    # Get Libretranslate HTTP API URL
     libretranslate_url = "https://libretranslate.2022.us"
     confirmed = False
     while not confirmed:
@@ -582,6 +586,7 @@ def configure_klat_chat(external_url: str = None,
                                default=libretranslate_url)
         confirmed = click.confirm(f"Is '{libretranslate_url}' correct?")
 
+    # Validate https URL
     https = external_url.startswith("https")
 
     # Confirm MongoDB host/port
@@ -628,6 +633,7 @@ def configure_klat_chat(external_url: str = None,
         click.echo(pformat(sftp_config))
         confirmed = click.confirm("Is this configuration correct?")
 
+    # Define klat.yaml config
     config = {"SIO_URL": api_url,
               "MQ": {"users": {"chat_observer": user_config},
                      "server": "neon-rabbitmq",
@@ -650,12 +656,20 @@ def configure_klat_chat(external_url: str = None,
               "DATABASE_CONFIG": mongo_config}
 
     if orchestrator == Orchestrator.KUBERNETES:
-        _collect_helm_charts(output_path, "klat-chat")
+        shutil.copytree(join(dirname(__file__), "templates", "klat"),
+                        join(output_path, "klat-chat"))
         klat_config_file = join(output_path, "klat-chat", "klat.yaml")
         # Update Helm values with configured URL
         with open(join(output_path, "klat-chat", "values.yaml"), 'r') as f:
             helm_values = yaml.safe_load(f)
-        helm_values['domain'] = external_url.split('://', 1)[1].split('.', 1)[1]
+        helm_values['klat']['domain'] = domain
+        helm_values['klat']['images']['tag'] = 'dev'  # TODO: Get user config
+        helm_values['klat']['ingress']['rules'] = [
+            {'host': subdomain, 'serviceName': 'klat-chat-client',
+             'servicePort': 8001},
+            {'host': api_subdomain, 'serviceName': 'klat-chat-server',
+             'servicePort': 8010}
+        ]
         with open(join(output_path, "klat-chat", "values.yaml"), 'w') as f:
             yaml.safe_dump(helm_values, f)
     else:
