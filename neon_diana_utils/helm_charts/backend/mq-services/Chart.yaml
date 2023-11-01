@@ -9,24 +9,24 @@ dependencies:
   - name: neon-api-proxy
     alias: neon-api-proxy
     version: 0.0.1
-    repository: file://charts/neon-api-proxy
+    repository: https://neongeckocom.github.io/neon-diana-utils
   - name: neon-brands-service
     alias: neon-brands-service
     version: 0.0.1
-    repository: file://charts/neon-brands-service
+    repository: https://neongeckocom.github.io/neon-diana-utils
   - name: neon-email-proxy
     alias: neon-email-proxy
     version: 0.0.1
-    repository: file://charts/neon-email-proxy
+    repository: https://neongeckocom.github.io/neon-diana-utils
   - name: neon-metrics-service
     alias: neon-metrics-service
     version: 0.0.2
-    repository: file://charts/neon-metrics-service
+    repository: https://neongeckocom.github.io/neon-diana-utils
   - name: neon-script-parser
     alias: neon-script-parser
     version: 0.0.1
-    repository: file://charts/neon-script-parser
+    repository: https://neongeckocom.github.io/neon-diana-utils
   - name: neon-llm-chatgpt
     alias: neon-llm-chatgpt
     version: 0.0.1
-    repository: file://charts/neon-llm-chatgpt
+    repository: https://neongeckocom.github.io/neon-diana-utils

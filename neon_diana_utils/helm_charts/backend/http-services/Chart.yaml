@@ -1,0 +1,40 @@
+apiVersion: v2
+name: diana-http
+description: Deploy DIANA HTTP Services
+
+type: application
+version: 0.0.1
+appVersion: "1.0.1a5"
+dependencies:
+  - name: libretranslate
+    alias: libretranslate
+    version: 0.0.1
+    repository: https://neongeckocom.github.io/neon-diana-utils
+  - name: tts-coqui
+    alias: tts-coqui
+    version: 0.0.1
+    repository: https://neongeckocom.github.io/neon-diana-utils
+  - name: tts-glados
+    alias: tts-glados
+    version: 0.0.1
+    repository: https://neongeckocom.github.io/neon-diana-utils
+  - name: tts-larynx
+    alias: tts-larynx
+    version: 0.0.1
+    repository: https://neongeckocom.github.io/neon-diana-utils
+  - name: tts-ljspeech
+    alias: tts-ljspeech
+    version: 0.0.1
+    repository: https://neongeckocom.github.io/neon-diana-utils
+  - name: tts-mozilla
+    alias: tts-mozilla
+    version: 0.0.1
+    repository: https://neongeckocom.github.io/neon-diana-utils
+  - name: tts-nancy
+    alias: tts-nancy
+    version: 0.0.1
+    repository: https://neongeckocom.github.io/neon-diana-utils
+  - name: ww-snowboy
+    alias: ww-snowboy
+    version: 0.0.1
+    repository: https://neongeckocom.github.io/neon-diana-utils
