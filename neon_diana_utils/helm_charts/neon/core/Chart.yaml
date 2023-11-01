@@ -1,5 +1,5 @@
 apiVersion: v2
-name: core
+name: neon-core
 description: Deploy Neon Core Services
 
 type: application

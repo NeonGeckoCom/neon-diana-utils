@@ -7,6 +7,7 @@ version: 1.0.0
 appVersion: "1.0.1a5"
 
 dependencies:
-  - name: core
+  - name: neon-core
+    alias: core
     version: 0.0.2
     repository: https://neongeckocom.github.io/neon-diana-utils
