@@ -24,9 +24,62 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-git clone https://github.com/neongeckocom/neon-diana-utils -b helm-charts
-helm package ../neon_diana_utils/helm_charts/*
-helm repo index --url https://neongeckocom.github.io/helm-charts helm-charts
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.." || exit 0
+
+helm repo add diana https://neongeckocom.github.io/neon-diana-utils
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo add jetstack https://charts.jetstack.io
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+git clone https://github.com/NeonGeckoCom/neon-diana-utils -b helm-charts helm-charts > /dev/null
+cd helm-charts || exit 10
+
+# Package Base libraries
+for d in ../neon_diana_utils/helm_charts/base/*; do
+  helm dependency build "${d}" > /dev/null
+done
+helm package ../neon_diana_utils/helm_charts/base/*
+
+# Package HTTP Services
+for d in ../neon_diana_utils/helm_charts/http/*; do
+  helm dependency build "${d}" > /dev/null
+done
+helm package ../neon_diana_utils/helm_charts/http/*
+
+# Package MQ Services
+for d in ../neon_diana_utils/helm_charts/mq/*; do
+  helm dependency build "${d}"
+done
+helm package ../neon_diana_utils/helm_charts/mq/*
+
+# Package Backend
+for d in ../neon_diana_utils/helm_charts/backend/*-services; do
+  helm dependency build "${d}" > /dev/null
+done
+helm package ../neon_diana_utils/helm_charts/backend/*-services
+helm dependency build ../neon_diana_utils/helm_charts/backend/diana-backend > /dev/null
+helm package ../neon_diana_utils/helm_charts/backend/*
+
+# Package Neon
+for d in ../neon_diana_utils/helm_charts/neon/neon-*; do
+  helm dependency build "${d}" > /dev/null
+done
+helm package ../neon_diana_utils/helm_charts/neon/neon-*
+helm dependency build ../neon_diana_utils/helm_charts/neon/core > /dev/null
+helm package ../neon_diana_utils/helm_charts/neon/*
+
+# Package Klat
+for d in ../neon_diana_utils/helm_charts/klat/*; do
+  helm dependency build "${d}" > /dev/null
+done
+helm package ../neon_diana_utils/helm_charts/klat/*
+
+# Make sure existing charts aren't touched (new charts get new versions)
+git reset --hard HEAD
+
+# Update index.yaml and push changes
+helm repo index --url https://neongeckocom.github.io/neon-diana-utils .
 git add .
 git commit -m "Update Helm Charts"
-git push --set-upstream origin helm-charts
+git push
+cd .. && rm -rf helm-charts
