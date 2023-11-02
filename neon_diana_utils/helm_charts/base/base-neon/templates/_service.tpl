@@ -1,17 +1,16 @@
-{{ $serviceName := default .Chart.Name .Values.serviceName }}
 {{- define "base-neon.service" -}}
 apiVersion: v1
 kind: Service
 metadata:
   labels:
     neon.project.name: neon
-    neon.diana.service: {{ $serviceName }}
+    neon.diana.service: {{ default .Chart.Name .Values.serviceName }}
     neon.service.class: neon-core
-  name: {{ $serviceName }}
+  name: {{ default .Chart.Name .Values.serviceName }}
 spec:
   clusterIP: None
   selector:
-    neon.diana.service: {{ $serviceName }}
+    neon.diana.service: {{ default .Chart.Name .Values.serviceName }}
   ports:
     - name: headless
       port: 55555

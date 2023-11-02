@@ -34,43 +34,46 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 git clone https://github.com/NeonGeckoCom/neon-diana-utils -b helm-charts helm-charts > /dev/null
 cd helm-charts || exit 10
 
+# Remove all lock files
+rm ../neon_diana_utils/helm_charts/*/*/Chart.lock
+
 # Package Base libraries
 for d in ../neon_diana_utils/helm_charts/base/*; do
-  helm dependency build "${d}" > /dev/null
+  helm dependency update "${d}" > /dev/null
 done
 helm package ../neon_diana_utils/helm_charts/base/*
 
 # Package HTTP Services
 for d in ../neon_diana_utils/helm_charts/http/*; do
-  helm dependency build "${d}" > /dev/null
+  helm dependency update "${d}" > /dev/null
 done
 helm package ../neon_diana_utils/helm_charts/http/*
 
 # Package MQ Services
 for d in ../neon_diana_utils/helm_charts/mq/*; do
-  helm dependency build "${d}"
+  helm dependency update "${d}"
 done
 helm package ../neon_diana_utils/helm_charts/mq/*
 
 # Package Backend
 for d in ../neon_diana_utils/helm_charts/backend/*-services; do
-  helm dependency build "${d}" > /dev/null
+  helm dependency update "${d}" > /dev/null
 done
 helm package ../neon_diana_utils/helm_charts/backend/*-services
-helm dependency build ../neon_diana_utils/helm_charts/backend/diana-backend > /dev/null
+helm dependency update ../neon_diana_utils/helm_charts/backend/diana-backend > /dev/null
 helm package ../neon_diana_utils/helm_charts/backend/*
 
 # Package Neon
 for d in ../neon_diana_utils/helm_charts/neon/neon-*; do
-  helm dependency build "${d}" > /dev/null
+  helm dependency update "${d}" > /dev/null
 done
 helm package ../neon_diana_utils/helm_charts/neon/neon-*
-helm dependency build ../neon_diana_utils/helm_charts/neon/core > /dev/null
+helm dependency update ../neon_diana_utils/helm_charts/neon/core > /dev/null
 helm package ../neon_diana_utils/helm_charts/neon/*
 
 # Package Klat
 for d in ../neon_diana_utils/helm_charts/klat/*; do
-  helm dependency build "${d}" > /dev/null
+  helm dependency update "${d}" > /dev/null
 done
 helm package ../neon_diana_utils/helm_charts/klat/*
 

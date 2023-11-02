@@ -9,5 +9,5 @@ appVersion: "1.0.1a5"
 dependencies:
   - name: klat-chat
     alias: klat
-    version: 0.0.1  # TODO: 0.0.2
+    version: 0.0.3
     repository: https://neongeckocom.github.io/neon-diana-utils
