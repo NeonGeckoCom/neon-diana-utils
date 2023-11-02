@@ -381,13 +381,15 @@ def configure_backend(username: str = None,
         # Do Helm configuration
         from neon_diana_utils.kubernetes_utils import get_github_encoded_auth
         # Generate GH Auth config secret
-        encoded_token = ''
         if click.confirm("Configure GitHub token for private services?"):
             gh_username = click.prompt("GitHub username", type=str)
             gh_token = click.prompt("GitHub Token with `read:packages` "
                                     "permission", type=str)
             encoded_token = get_github_encoded_auth(gh_username, gh_token)
             click.echo(f"Parsed GH token for {gh_username}")
+        else:
+            # Define a default value so secret can be generated
+            encoded_token = get_github_encoded_auth("", "")
         confirmed = False
         email = ''
         domain = ''
@@ -454,6 +456,8 @@ def configure_backend(username: str = None,
             configure_neon_core(user.get('user'), user.get('password'),
                                 output_path, orchestrator)
 
+        # TODO: Prompt to continue to Klat Chat config
+
     except Exception as e:
         click.echo(e)
 
@@ -503,9 +507,9 @@ def configure_neon_core(mq_user: str = None,
                          "server": "neon-rabbitmq", "port": 5672}
         # Build default Neon config
         neon_config = {
-            "websocket": {"host": "neon-messagebus",
+            "websocket": {"host": "neon-core-messagebus",
                           "shared_connection": True},
-            "gui_websocket": {"host": "neon-gui"},
+            "gui_websocket": {"host": "neon-core-gui"},
             "gui": {"server_path": "/xdg/data/neon/gui_files"},
             "ready_settings": ["skills", "voice", "audio", "gui_service"],
             "listener": {"enable_voice_loop": False},
