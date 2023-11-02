@@ -663,6 +663,8 @@ def configure_klat_chat(external_url: str = None,
         with open(join(output_path, "klat-chat", "values.yaml"), 'r') as f:
             helm_values = yaml.safe_load(f)
         helm_values['klat']['domain'] = domain
+        helm_values['klat']['clientSubdomain'] = subdomain
+        helm_values['klat']['serverSubdomain'] = api_subdomain
         helm_values['klat']['images']['tag'] = 'dev'  # TODO: Get user config
         helm_values['klat']['ingress']['rules'] = [
             {'host': subdomain, 'serviceName': 'klat-chat-client',
