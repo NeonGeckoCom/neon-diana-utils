@@ -1,3 +1,4 @@
+serviceName: neon-core-skills
 replicaCount: 1
 configMap: neon-config
 image:

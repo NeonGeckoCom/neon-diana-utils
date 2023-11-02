@@ -1,3 +1,4 @@
+serviceName: neon-core-gui
 replicaCount: 1
 configMap: neon-config
 port:

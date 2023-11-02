@@ -1,3 +1,4 @@
+serviceName: neon-core-speech
 replicaCount: 1
 configMap: neon-config
 image:

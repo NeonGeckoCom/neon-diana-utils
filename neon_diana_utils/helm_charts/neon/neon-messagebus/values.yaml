@@ -1,3 +1,4 @@
+serviceName: neon-core-messagebus
 replicaCount: 1
 configMap: neon-config
 port:

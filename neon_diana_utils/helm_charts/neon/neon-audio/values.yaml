@@ -1,3 +1,4 @@
+serviceName: neon-core-audio
 replicaCount: 1
 configMap: neon-config
 image:
