@@ -24,7 +24,8 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.." || exit 0
+charts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../helm-charts"
+cd "$(dirname "${charts_dir}" )" || exit 0
 
 helm repo add diana https://neongeckocom.github.io/neon-diana-utils
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -32,7 +33,7 @@ helm repo add jetstack https://charts.jetstack.io
 helm repo add bitnami https://charts.bitnami.com/bitnami
 
 git clone https://github.com/NeonGeckoCom/neon-diana-utils -b helm-charts helm-charts > /dev/null
-cd helm-charts || exit 10
+cd "${charts_dir}" || exit 10
 
 # Remove all lock files
 rm ../neon_diana_utils/helm_charts/*/*/Chart.lock

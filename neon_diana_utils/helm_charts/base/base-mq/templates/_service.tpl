@@ -1,12 +1,14 @@
 {{- define "base-mq.service" -}}
+{{- $fullName := default .Chart.Name  .Values.serviceName -}}
+
 apiVersion: v1
 kind: Service
 metadata:
   labels:
     neon.project.name: diana
-    neon.diana.service: {{ .Chart.Name }}
+    neon.diana.service: {{ $fullName }}
     neon.service.class: mq-backend
-  name: {{ .Chart.Name }}
+  name: {{ $fullName }}
 spec:
   clusterIP: None
   ports:
@@ -14,5 +16,5 @@ spec:
       port: 55555
       targetPort: 0
   selector:
-    neon.diana.service: {{ .Chart.Name }}
+    neon.diana.service: {{ $fullName }}
 {{- end -}}

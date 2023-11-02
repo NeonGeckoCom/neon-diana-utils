@@ -1,6 +1,6 @@
 {{- define "base-http.ingress" -}}
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := .Chart.Name -}}
+{{- $fullName := default .Chart.Name  .Values.serviceName -}}
 {{- $svcPort := .Values.servicePort -}}
 {{- $hostname := include "service.domain" . -}}
 {{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}

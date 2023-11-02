@@ -2,6 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+serviceName: diana-libre
 replicaCount: 1
 subdomain: libretranslate
 domain: diana.local
