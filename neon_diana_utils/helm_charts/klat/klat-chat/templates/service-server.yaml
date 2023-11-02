@@ -3,13 +3,13 @@ kind: Service
 metadata:
   labels:
     neon.project.name: klat
-    neon.diana.service: {{ .Chart.Name }}
+    neon.diana.service: {{ .Values.serviceName }}
     neon.service.class: klat-server
-  name: {{ .Chart.Name }}-server
+  name: {{ .Values.serviceName }}-server
 spec:
   type: ClusterIP
   selector:
-    neon.diana.service: {{ .Chart.Name }}-server
+    neon.diana.service: {{ .Values.serviceName }}-server
   ports:
     - name: klat-server
       port: 8010

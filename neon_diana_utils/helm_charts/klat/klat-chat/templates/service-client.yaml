@@ -3,13 +3,13 @@ kind: Service
 metadata:
   labels:
     neon.project.name: klat
-    neon.diana.service: {{ .Chart.Name }}
+    neon.diana.service: {{ .Values.serviceName }}
     neon.service.class: klat-client
-  name: {{ .Chart.Name }}-client
+  name: {{ .Values.serviceName }}-client
 spec:
   type: ClusterIP
   selector:
-    neon.diana.service: {{ .Chart.Name }}-client
+    neon.diana.service: {{ .Values.serviceName }}-client
   ports:
     - name: klat-client
       port: 8001

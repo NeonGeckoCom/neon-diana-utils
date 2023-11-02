@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}-client
+  name: {{ .Values.serviceName }}-client
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      neon.diana.service: {{ .Chart.Name }}-client
+      neon.diana.service: {{ .Values.serviceName }}-client
   strategy:
     type: Recreate
   template:
@@ -14,7 +14,7 @@ spec:
       annotations:
         releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC"| quote }}
       labels:
-        neon.diana.service: {{ .Chart.Name }}-client
+        neon.diana.service: {{ .Values.serviceName }}-client
         neon.project.name: klat
         neon.service.class: klat-chat
     spec:

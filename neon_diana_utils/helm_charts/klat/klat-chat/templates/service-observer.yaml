@@ -3,13 +3,13 @@ kind: Service
 metadata:
   labels:
     neon.project.name: klat
-    neon.diana.service: {{ .Chart.Name }}
+    neon.diana.service: {{ .Values.serviceName }}
     neon.service.class: klat-observer
-  name: {{ .Chart.Name }}-observer
+  name: {{ .Values.serviceName }}-observer
 spec:
   clusterIP: None
   selector:
-    neon.diana.service: {{ .Chart.Name }}-observer
+    neon.diana.service: {{ .Values.serviceName }}-observer
   ports:
     - name: headless
       port: 55555
