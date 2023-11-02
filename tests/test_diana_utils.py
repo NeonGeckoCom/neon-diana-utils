@@ -168,10 +168,6 @@ class TestConfiguration(unittest.TestCase):
                                    f"ABS_PATH=/tmp/test")
         shutil.move(f"{test_file}.bak", test_file)
 
-    def test_collect_helm_charts(self):
-        from neon_diana_utils.configuration import _collect_helm_charts
-        # TODO
-
     @patch("neon_diana_utils.configuration.click.prompt")
     @patch("neon_diana_utils.configuration.click.confirm")
     def test_get_mq_service_user_config(self, confirm, prompt):
@@ -180,7 +176,6 @@ class TestConfiguration(unittest.TestCase):
 
         confirm.return_value = True
         prompt.return_value = "testing"
-
 
         # Test config from rmq config
         user = _get_mq_service_user_config(None, None, "test", config_file)
