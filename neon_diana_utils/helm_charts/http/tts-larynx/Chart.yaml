@@ -4,7 +4,7 @@ description: Deploy a Larynx TTS Server
 
 type: application
 version: 0.0.4
-appVersion: "1.0.1a6"
+appVersion: "1.0.1a7"
 
 dependencies:
   - name: base-http
