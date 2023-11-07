@@ -3,7 +3,7 @@ name: tts-larynx
 description: Deploy a Larynx TTS Server
 
 type: application
-version: 0.0.3
+version: 0.0.4
 appVersion: "1.0.1a6"
 
 dependencies:

@@ -1,4 +1,4 @@
-serviceName: diana-mq-metrics
+serviceName: backend-mq-metrics
 replicaCount: 1
 configSecret: diana-config
 image:

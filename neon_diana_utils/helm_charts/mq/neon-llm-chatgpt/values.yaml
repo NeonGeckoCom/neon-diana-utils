@@ -1,4 +1,4 @@
-serviceName: diana-llm-chatgpt
+serviceName: backend-llm-chatgpt
 replicaCount: 1
 configSecret: diana-config
 image:

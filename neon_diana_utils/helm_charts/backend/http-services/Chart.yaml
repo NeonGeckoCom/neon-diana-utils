@@ -3,16 +3,16 @@ name: diana-http
 description: Deploy DIANA HTTP Services
 
 type: application
-version: 0.0.6
+version: 0.0.7
 appVersion: "1.0.1a5"
 dependencies:
   - name: libretranslate
     alias: libretranslate
-    version: 0.0.3
+    version: 0.0.4
     repository: file://../../http/libretranslate
   - name: tts-coqui
     alias: tts-coqui
-    version: 0.0.3
+    version: 0.0.4
     repository: file://../../http/tts-coqui
 #  - name: tts-glados
 #    alias: tts-glados
@@ -20,21 +20,21 @@ dependencies:
 #    repository: https://neongeckocom.github.io/neon-diana-utils
   - name: tts-larynx
     alias: tts-larynx
-    version: 0.0.3
+    version: 0.0.4
     repository: file://../../http/tts-larynx
   - name: tts-ljspeech
     alias: tts-ljspeech
-    version: 0.0.3
+    version: 0.0.4
     repository: file://../../http/tts-ljspeech
   - name: tts-mozilla
     alias: tts-mozilla
-    version: 0.0.3
+    version: 0.0.4
     repository: file://../../http/tts-mozilla
   - name: tts-nancy
     alias: tts-nancy
-    version: 0.0.3
+    version: 0.0.4
     repository: file://../../http/tts-nancy
   - name: ww-snowboy
     alias: ww-snowboy
-    version: 0.0.3
+    version: 0.0.4
     repository: file://../../http/ww-snowboy

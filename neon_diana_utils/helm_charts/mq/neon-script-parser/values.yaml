@@ -1,4 +1,4 @@
-serviceName: diana-mq-script-parser
+serviceName: backend-mq-script-parser
 replicaCount: 1
 configSecret: diana-config
 image:

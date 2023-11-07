@@ -1,4 +1,4 @@
-serviceName: diana-mq-email-proxy
+serviceName: backend-mq-email-proxy
 replicaCount: 1
 configSecret: diana-config
 image:

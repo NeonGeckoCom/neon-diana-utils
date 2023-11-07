@@ -3,7 +3,7 @@ name: neon-metrics-service
 description: Deploy a Metrics Collector Service
 
 type: application
-version: 0.0.4
+version: 0.0.5
 appVersion: "1.0.1a6"
 
 dependencies:
