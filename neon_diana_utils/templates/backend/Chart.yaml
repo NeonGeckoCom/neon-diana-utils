@@ -8,5 +8,5 @@ appVersion: "1.0.1a5"
 
 dependencies:
   - name: backend
-    version: 0.1.9
+    version: 0.1.11
     repository: https://neongeckocom.github.io/neon-diana-utils

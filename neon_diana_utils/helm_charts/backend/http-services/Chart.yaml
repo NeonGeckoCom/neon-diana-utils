@@ -3,7 +3,7 @@ name: diana-http
 description: Deploy DIANA HTTP Services
 
 type: application
-version: 0.0.7
+version: 0.0.8
 appVersion: "1.0.1a5"
 dependencies:
   - name: libretranslate

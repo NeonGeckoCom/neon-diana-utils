@@ -484,7 +484,7 @@ def configure_neon_core(mq_user: str = None,
 
     # Prompt for IRIS Web UI configuration
     confirmed = False
-    iris_domain = "iris.diana.k8s"
+    iris_domain = "iris.diana.k8s"  # TODO: Read from backend config
     while not confirmed:
         iris_domain = click.prompt("Hostname for Iris Web UI", type=str,
                                    default=iris_domain)
@@ -573,7 +573,7 @@ def configure_klat_chat(external_url: str = None,
         return
 
     # Get MQ User Configuration
-    if prompt_update_rmq and click.confirm("Configure RabbitMQ for Klat?"):
+    if prompt_update_rmq and click.confirm("(Re-)Configure RabbitMQ for Klat?"):
         update_rmq_config(rmq_config)
         click.echo(f"Updated RabbitMQ config file: {rmq_config}")
     user_config = _get_mq_service_user_config(mq_user, mq_pass, "klat",

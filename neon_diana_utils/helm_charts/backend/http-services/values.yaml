@@ -56,27 +56,27 @@ ingress:
   certIssuer: letsencrypt-private-key
   rules:
     - host: *host_libretranslate
-      serviceName: diana-libre
+      serviceName: backend-libre
       servicePort: *default_port
     - host: *host_coqui
-      serviceName: diana-coqui
+      serviceName: backend-coqui
       servicePort: *default_port
 #    - host: *host_glados
 #      serviceName: tts-glados
 #      servicePort: *default_port
     - host: *host_larynx
-      serviceName: diana-larynx
+      serviceName: backend-larynx
       servicePort: *default_port
     - host: *host_ljspeech
-      serviceName: diana-ljspeech
+      serviceName: backend-ljs
       servicePort: *default_port
     - host: *host_mtts
-      serviceName: diana-mozilla
+      serviceName: backend-mozilla
       servicePort: *default_port
     - host: *host_nancy
-      serviceName: diana-nancy
+      serviceName: backend-nancy
       servicePort: *default_port
     - host: *host_snowboy
-      serviceName: diana-snowboy
+      serviceName: backend-snowboy
       servicePort: *default_port
   extraRules: []
