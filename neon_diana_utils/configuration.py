@@ -482,10 +482,26 @@ def configure_neon_core(mq_user: str = None,
         click.echo(f"Path exists: {output_path}")
         return
 
+    # Prompt for IRIS Web UI configuration
+    confirmed = False
+    iris_domain = "iris.diana.k8s"
+    while not confirmed:
+        iris_domain = click.prompt("Hostname for Iris Web UI", type=str,
+                                   default=iris_domain)
+        confirmed = click.confirm(f"Is {iris_domain} correct?")
+
     if orchestrator == Orchestrator.KUBERNETES:
         shutil.copytree(join(dirname(__file__), "templates", "neon"),
                         join(output_path, "neon-core"))
         neon_config_file = join(output_path, "neon-core", "neon.yaml")
+        # TODO: Configure image tag to use
+        values = join(output_path, "neon-core", "values.yaml")
+        with open(values, "r") as f:
+            config = yaml.safe_load(f)
+        config['iris']['subdomain'], config['iris']['domain'] =\
+            iris_domain.split('.', 1)
+        with open(values, 'w') as f:
+            yaml.safe_dump(config, f)
     elif orchestrator == Orchestrator.COMPOSE:
         shutil.copytree(join(dirname(__file__), "docker", "neon_core"),
                         output_path)
@@ -518,8 +534,11 @@ def configure_neon_core(mq_user: str = None,
                 "skill-local_music.neongeckocom",
                 "skill-device_controls.neongeckocom",
                 "skill-update.neongeckocom",
-                "neon_homeassistant_skill.mikejgray"]},
-            "MQ": mq_config
+                "neon_homeassistant_skill.mikejgray",
+                "skill-homescreen-lite.openvoiceos"]},
+            "MQ": mq_config,
+            "iris": {"languages": ["en-us", "uk-ua"]},
+            "log_level": "DEBUG"
         }
         click.echo(f"Writing configuration to {neon_config_file}")
         with open(neon_config_file, 'w+') as f:

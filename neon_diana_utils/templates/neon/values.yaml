@@ -11,3 +11,4 @@ core:
     image: {}
   neon-gui:
     image: {}
+iris: {}

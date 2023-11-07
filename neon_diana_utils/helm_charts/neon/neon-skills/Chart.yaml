@@ -3,10 +3,10 @@ name: neon-skills
 description: Deploy Neon Core Skills Service
 
 type: application
-version: 0.0.3
+version: 0.0.4
 appVersion: "1.0.1a6"
 
 dependencies:
   - name: base-neon
-    version: 0.0.3
+    version: 0.0.4
     repository: file://../../base/base-neon
