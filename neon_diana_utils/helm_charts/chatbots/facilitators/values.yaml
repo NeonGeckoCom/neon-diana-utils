@@ -1,4 +1,5 @@
 replicaCount: 1
+serviceName: cbf-facilitators
 configMap: chatbots-config
 configFilename: config.json
 images:

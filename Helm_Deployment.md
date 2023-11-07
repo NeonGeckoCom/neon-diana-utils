@@ -91,7 +91,7 @@ helm install klat-chat <output_path>/klat-chat --namespace backend
 ```
 
 ### Chatbots
-fter [the backend](#diana-backend) has been deployed, Chatbots services may also
+After [the backend](#diana-backend) has been deployed, Chatbots services may also
 be deployed to the same namespace. If you were prompted to configure Chatbots when setting
 up the backend, then the Helm charts and configuration has already been completed.
 

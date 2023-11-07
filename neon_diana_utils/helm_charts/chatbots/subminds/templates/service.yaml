@@ -3,13 +3,13 @@ kind: Service
 metadata:
   labels:
     neon.project.name: chatbots
-    neon.diana.service: {{ .Chart.Name }}
+    neon.diana.service: {{ default .Chart.Name .Values.serviceName }}
     neon.service.class: facilitators
-  name: {{ .Chart.Name }}
+  name: {{ default .Chart.Name .Values.serviceName }}
 spec:
   clusterIP: None
   selector:
-    neon.diana.service: {{ .Chart.Name }}
+    neon.diana.service: {{ default .Chart.Name .Values.serviceName }}
   ports:
     - name: headless
       port: 55555

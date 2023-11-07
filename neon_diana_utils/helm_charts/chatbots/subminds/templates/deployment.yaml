@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}
+  name: {{ default .Chart.Name .Values.serviceName }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      neon.diana.service: {{ .Chart.Name }}
+      neon.diana.service: {{ default .Chart.Name .Values.serviceName }}
   strategy:
     type: Recreate
   template:
@@ -14,7 +14,7 @@ spec:
       annotations:
         releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC"| quote }}
       labels:
-        neon.diana.service: {{ .Chart.Name }}
+        neon.diana.service: {{ default .Chart.Name .Values.serviceName }}
         neon.project.name: chatbots
         neon.service.class: facilitators
     spec:

@@ -549,13 +549,8 @@ def configure_chatbots(rmq_path: str = None,
         return
     try:
         if orchestrator == Orchestrator.KUBERNETES:
-            shutil.copytree(join(dirname(__file__), "helm_charts", "chatbots"),
+            shutil.copytree(join(dirname(__file__), "templates", "chatbots"),
                             join(output_path, "chatbots"))
-            # Cleanup any leftover build files
-            for root, _, files in walk(join(output_path, "chatbots")):
-                for file in files:
-                    if any((file.endswith(x) for x in (".lock", ".tgz"))):
-                        remove(join(root, file))
         else:
             raise RuntimeError(f"{orchestrator} is not yet supported")
 
@@ -563,10 +558,10 @@ def configure_chatbots(rmq_path: str = None,
             update_rmq_config(rmq_config)
             click.echo(f"Updated RabbitMQ config file: {rmq_config}")
         chatbots_config = _get_chatbots_mq_config(rmq_config)
-        with open(join(output_path, "chatbots", "chatbots_config.json"), 'w+') as f:
+        with open(join(output_path, "chatbots",
+                       "chatbots_config.json"), 'w+') as f:
             json.dump(chatbots_config, f, indent=2)
         click.echo(f"Outputs generated in {output_path}")
-        # TODO: Prompt to continue to Klat Chat config
 
     except Exception as e:
         click.echo(e)
