@@ -1,0 +1,7 @@
+serviceName: neon-core-enclosure
+replicaCount: 1
+configMap: neon-config
+image:
+  repository: ghcr.io/neongeckocom/neon_enclosure
+  pullPolicy: Always
+  tag: dev

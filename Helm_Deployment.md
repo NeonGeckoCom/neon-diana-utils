@@ -6,7 +6,13 @@ The Helm charts for Neon Diana are the recommended method for production deploym
 Before deploying a Diana backend, ensure the following has been completed:
 - Kubernetes Cluster is deployed and `helm` CLI is properly configured
 - Desired domain is ready to forward all relevant subdomains to the cluster
-
+- Add the following Helm repositories:
+  ```shell
+  helm repo add diana https://neongeckocom.github.io/neon-diana-utils
+  helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+  helm repo add jetstack https://charts.jetstack.io
+  helm repo add bitnami https://charts.bitnami.com/bitnami
+  ```
 ## Backend Configuration
 Configure the backend deployment with 
 `diana configure-mq-backend <output_path>`. Follow the shell prompts to 

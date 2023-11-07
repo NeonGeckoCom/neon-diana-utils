@@ -1,0 +1,3 @@
+{{- $_neon_config := .Files.Get "neon.yaml" -}}
+{{ $_ := set .Values.core "neonConfig" $_neon_config }}
+{{- include "neon_config.configmap" . }}

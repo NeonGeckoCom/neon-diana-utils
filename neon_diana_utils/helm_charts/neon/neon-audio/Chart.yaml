@@ -1,0 +1,12 @@
+apiVersion: v2
+name: neon-audio
+description: Deploy Neon Core Audio Service
+
+type: application
+version: 0.0.4
+appVersion: "1.0.1a6"
+
+dependencies:
+  - name: base-neon
+    version: 0.0.4
+    repository: file://../../base/base-neon

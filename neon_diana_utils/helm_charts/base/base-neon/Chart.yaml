@@ -1,0 +1,7 @@
+apiVersion: v2
+name: base-neon
+description: Library chart for basic Neon Core Services
+
+type: library
+version: 0.0.4
+appVersion: "1.0.1a6"

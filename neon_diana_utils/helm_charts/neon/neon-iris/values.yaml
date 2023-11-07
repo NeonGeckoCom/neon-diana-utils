@@ -1,0 +1,24 @@
+serviceName: neon-core-iris
+subdomain: iris
+domain: diana.local
+replicaCount: 1
+configMap: neon-config
+
+port:
+  name: web-ui
+  number: 7860
+  targetPort: 7860
+image:
+  repository: ghcr.io/neongeckocom/neon-iris
+  pullPolicy: Always
+  tag: dev
+
+ingress:
+  enabled: True
+  ingressClassName: nginx
+  tlsSecretName: tls-letsencrypt-iris
+  certIssuer: letsencrypt-private-key
+  rules:
+    - host: iris
+      serviceName: neon-core-iris
+      servicePort: 7860

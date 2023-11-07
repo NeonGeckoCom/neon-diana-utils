@@ -47,18 +47,18 @@ class Orchestrator(Enum):
     COMPOSE = "docker-compose"
 
 
-def _collect_helm_charts(output_path: str, charts_dir: str):
-    """
-    Collect Helm charts in the output directory and remove any leftover build
-    artifacts.
-    """
-    shutil.copytree(join(dirname(__file__), "helm_charts", charts_dir),
-                    join(output_path, charts_dir))
-    # Cleanup any leftover build files
-    for root, _, files in walk(join(output_path, charts_dir)):
-        for file in files:
-            if any((file.endswith(x) for x in (".lock", ".tgz"))):
-                remove(join(root, file))
+# def _collect_helm_charts(output_path: str, charts_dir: str):
+#     """
+#     Collect Helm charts in the output directory and remove any leftover build
+#     artifacts.
+#     """
+#     shutil.copytree(join(dirname(__file__), "helm_charts", charts_dir),
+#                     join(output_path, charts_dir))
+#     # Cleanup any leftover build files
+#     for root, _, files in walk(join(output_path, charts_dir)):
+#         for file in files:
+#             if any((file.endswith(x) for x in (".lock", ".tgz"))):
+#                 remove(join(root, file))
 
 
 def validate_output_path(output_path: str) -> bool:
@@ -165,7 +165,8 @@ def make_keys_config(write_config: bool,
                 "model": gpt_model,
                 "role": gpt_role,
                 "context_depth": gpt_context,
-                "max_tokens": max_tokens
+                "max_tokens": max_tokens,
+                "num_parallel_processes": 1
             }
             click.echo(pformat(chatgpt_config))
             config_confirmed = \
@@ -199,7 +200,8 @@ def make_keys_config(write_config: bool,
     config = {"keys": {"api_services": api_services,
                        "emails": email_config,
                        "track_my_brands": brands_config},
-              "ChatGPT": chatgpt_config,
+              "ChatGPT": chatgpt_config,  # TODO: Deprecated reference
+              "LLM_CHAT_GPT": chatgpt_config,
               "FastChat": fastchat_config
               }
     if write_config:
@@ -366,17 +368,56 @@ def configure_backend(username: str = None,
     output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
 
     # Output to `backend` subdirectory
-    if not validate_output_path(join(output_path, "diana-backend")):
+    if not validate_output_path(join(output_path, "backend")):
         click.echo(f"Path exists: {output_path}")
         return
 
     if orchestrator == Orchestrator.KUBERNETES:
-        for path in ("diana-backend", "http-services", "ingress-common",
-                     "mq-services", "neon-rabbitmq"):
-            _collect_helm_charts(output_path, path)
+        shutil.copytree(join(dirname(__file__), "templates", "backend"),
+                        join(output_path, "diana-backend"))
         rmq_file = join(output_path, "diana-backend", "rabbitmq.json")
         diana_config = join(output_path, "diana-backend", "diana.yaml")
 
+        # Do Helm configuration
+        from neon_diana_utils.kubernetes_utils import get_github_encoded_auth
+        # Generate GH Auth config secret
+        if click.confirm("Configure GitHub token for private services?"):
+            gh_username = click.prompt("GitHub username", type=str)
+            gh_token = click.prompt("GitHub Token with `read:packages` "
+                                    "permission", type=str)
+            encoded_token = get_github_encoded_auth(gh_username, gh_token)
+            click.echo(f"Parsed GH token for {gh_username}")
+        else:
+            # Define a default value so secret can be generated
+            encoded_token = get_github_encoded_auth("", "")
+        confirmed = False
+        email = ''
+        domain = ''
+        tag = 'latest'
+        while not confirmed:
+            email = click.prompt("Email address for SSL Certificates",
+                                 type=str, default=email)
+            domain = click.prompt("Root domain for HTTP services",
+                                  type=str, default=domain)
+            tag = click.prompt("Image tags to use for MQ Services",
+                               type=str, default=tag)
+            click.echo(pformat({'email': email,
+                                'domain': domain,
+                                'tag': tag}))
+            confirmed = click.confirm("Is this configuration correct?")
+
+        # Generate values.yaml with configured params
+        values_file = join(output_path, "diana-backend", "values.yaml")
+        with open(values_file, 'r') as f:
+            helm_values = yaml.safe_load(f)
+        helm_values['backend']['letsencrypt']['email'] = email
+        helm_values['backend']['diana-http']['domain'] = domain
+        helm_values['backend']['ghTokenEncoded'] = encoded_token
+        for service in helm_values['backend']['diana-mq']:
+            helm_values['backend']['diana-mq'][service]['image']['tag'] = \
+                tag
+        with open(values_file, 'w') as f:
+            yaml.safe_dump(helm_values, f)
     elif orchestrator == Orchestrator.COMPOSE:
         shutil.copytree(join(dirname(__file__), "docker", "backend"),
                         output_path)
@@ -398,18 +439,6 @@ def configure_backend(username: str = None,
         mq_auth_config = generate_mq_auth_config(rmq_config)
         click.echo(f"Generated auth for services: {set(mq_auth_config.keys())}")
 
-        # Generate GH Auth config secret
-        if orchestrator == Orchestrator.KUBERNETES:
-            from neon_diana_utils.kubernetes_utils import create_github_secret
-            if click.confirm("Configure GitHub token for private services?"):
-                gh_username = click.prompt("GitHub username", type=str)
-                gh_token = click.prompt("GitHub Token with `read:packages` "
-                                        "permission", type=str)
-                gh_secret_path = join(output_path, "diana-backend", "templates",
-                                      "secret_gh_token.yaml")
-                create_github_secret(gh_username, gh_token, gh_secret_path)
-                click.echo(f"Generated GH secret at {gh_secret_path}")
-
         # Generate `diana.yaml` output
         keys_config = make_keys_config(False)
         config = {**{"MQ": {"users": mq_auth_config,
@@ -426,6 +455,8 @@ def configure_backend(username: str = None,
             user = mq_auth_config.get("chat_api_proxy")
             configure_neon_core(user.get('user'), user.get('password'),
                                 output_path, orchestrator)
+
+        # TODO: Prompt to continue to Klat Chat config
 
     except Exception as e:
         click.echo(e)
@@ -451,9 +482,26 @@ def configure_neon_core(mq_user: str = None,
         click.echo(f"Path exists: {output_path}")
         return
 
+    # Prompt for IRIS Web UI configuration
+    confirmed = False
+    iris_domain = "iris.diana.k8s"  # TODO: Read from backend config
+    while not confirmed:
+        iris_domain = click.prompt("Hostname for Iris Web UI", type=str,
+                                   default=iris_domain)
+        confirmed = click.confirm(f"Is {iris_domain} correct?")
+
     if orchestrator == Orchestrator.KUBERNETES:
-        _collect_helm_charts(output_path, "neon-core")
+        shutil.copytree(join(dirname(__file__), "templates", "neon"),
+                        join(output_path, "neon-core"))
         neon_config_file = join(output_path, "neon-core", "neon.yaml")
+        # TODO: Configure image tag to use
+        values = join(output_path, "neon-core", "values.yaml")
+        with open(values, "r") as f:
+            config = yaml.safe_load(f)
+        config['iris']['subdomain'], config['iris']['domain'] =\
+            iris_domain.split('.', 1)
+        with open(values, 'w') as f:
+            yaml.safe_dump(config, f)
     elif orchestrator == Orchestrator.COMPOSE:
         shutil.copytree(join(dirname(__file__), "docker", "neon_core"),
                         output_path)
@@ -475,9 +523,9 @@ def configure_neon_core(mq_user: str = None,
                          "server": "neon-rabbitmq", "port": 5672}
         # Build default Neon config
         neon_config = {
-            "websocket": {"host": "neon-messagebus",
+            "websocket": {"host": "neon-core-messagebus",
                           "shared_connection": True},
-            "gui_websocket": {"host": "neon-gui"},
+            "gui_websocket": {"host": "neon-core-gui"},
             "gui": {"server_path": "/xdg/data/neon/gui_files"},
             "ready_settings": ["skills", "voice", "audio", "gui_service"],
             "listener": {"enable_voice_loop": False},
@@ -486,8 +534,11 @@ def configure_neon_core(mq_user: str = None,
                 "skill-local_music.neongeckocom",
                 "skill-device_controls.neongeckocom",
                 "skill-update.neongeckocom",
-                "neon_homeassistant_skill.mikejgray"]},
-            "MQ": mq_config
+                "neon_homeassistant_skill.mikejgray",
+                "skill-homescreen-lite.openvoiceos"]},
+            "MQ": mq_config,
+            "iris": {"languages": ["en-us", "uk-ua"]},
+            "log_level": "DEBUG"
         }
         click.echo(f"Writing configuration to {neon_config_file}")
         with open(neon_config_file, 'w+') as f:
@@ -522,7 +573,7 @@ def configure_klat_chat(external_url: str = None,
         return
 
     # Get MQ User Configuration
-    if prompt_update_rmq and click.confirm("Configure RabbitMQ for Klat?"):
+    if prompt_update_rmq and click.confirm("(Re-)Configure RabbitMQ for Klat?"):
         update_rmq_config(rmq_config)
         click.echo(f"Updated RabbitMQ config file: {rmq_config}")
     user_config = _get_mq_service_user_config(mq_user, mq_pass, "klat",
@@ -540,13 +591,17 @@ def configure_klat_chat(external_url: str = None,
     if not external_url.startswith("http"):
         external_url = f"https://{external_url}"
 
-    api_url = external_url.replace("klat", "klatapi", 1)
+    # Confirm API URL
+    subdomain, domain = external_url.split('://', 1)[1].split('.', 1)
+    api_url = external_url.replace(subdomain, "klatapi", 1)
     confirmed = False
     while not confirmed:
         api_url = click.prompt("Klat API URL", type=str,
-                                    default=api_url)
+                               default=api_url)
         confirmed = click.confirm(f"Is '{api_url}' correct?")
+    api_subdomain = api_url.split('://', 1)[1].split('.', 1)[0]
 
+    # Get Libretranslate HTTP API URL
     libretranslate_url = "https://libretranslate.2022.us"
     confirmed = False
     while not confirmed:
@@ -554,6 +609,7 @@ def configure_klat_chat(external_url: str = None,
                                default=libretranslate_url)
         confirmed = click.confirm(f"Is '{libretranslate_url}' correct?")
 
+    # Validate https URL
     https = external_url.startswith("https")
 
     # Confirm MongoDB host/port
@@ -600,6 +656,7 @@ def configure_klat_chat(external_url: str = None,
         click.echo(pformat(sftp_config))
         confirmed = click.confirm("Is this configuration correct?")
 
+    # Define klat.yaml config
     config = {"SIO_URL": api_url,
               "MQ": {"users": {"chat_observer": user_config},
                      "server": "neon-rabbitmq",
@@ -622,12 +679,22 @@ def configure_klat_chat(external_url: str = None,
               "DATABASE_CONFIG": mongo_config}
 
     if orchestrator == Orchestrator.KUBERNETES:
-        _collect_helm_charts(output_path, "klat-chat")
+        shutil.copytree(join(dirname(__file__), "templates", "klat"),
+                        join(output_path, "klat-chat"))
         klat_config_file = join(output_path, "klat-chat", "klat.yaml")
         # Update Helm values with configured URL
         with open(join(output_path, "klat-chat", "values.yaml"), 'r') as f:
             helm_values = yaml.safe_load(f)
-        helm_values['domain'] = external_url.split('://', 1)[1].split('.', 1)[1]
+        helm_values['klat']['domain'] = domain
+        helm_values['klat']['clientSubdomain'] = subdomain
+        helm_values['klat']['serverSubdomain'] = api_subdomain
+        helm_values['klat']['images']['tag'] = 'dev'  # TODO: Get user config
+        helm_values['klat']['ingress']['rules'] = [
+            {'host': subdomain, 'serviceName': 'klat-chat-client',
+             'servicePort': 8001},
+            {'host': api_subdomain, 'serviceName': 'klat-chat-server',
+             'servicePort': 8010}
+        ]
         with open(join(output_path, "klat-chat", "values.yaml"), 'w') as f:
             yaml.safe_dump(helm_values, f)
     else:

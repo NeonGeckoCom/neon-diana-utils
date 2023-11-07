@@ -1,0 +1,43 @@
+# This Chart will deploy Diana backend services, including RabbitMQ,
+# HTTP Services with associated ingress and certificates, MQ Services,
+# and configuration including secrets with keys and passwords.
+
+# Define default values that will be overridden
+ghTokenEncoded: ''
+dianaConfig: ''
+rabbitMqConfig: ''
+
+configSecret: diana-config
+
+letsencrypt:
+  sslSecret: &ssl_secret letsencrypt-private-key
+  # Note: This MUST match `diana-http.ingress.certIssuer
+  server: https://acme-staging-v02.api.letsencrypt.org/directory
+
+# Deploys RabbitMQ with specified auth credentials
+rabbitmq:
+  nameOverride: &name_rmq neon-rabbitmq
+  fullnameOverride: *name_rmq
+  persistence:
+    enabled: false
+  commonLabels:
+    neon.project.name: diana
+    neon.diana.service: *name_rmq
+    neon.service.class: communication
+  loadDefinition:
+    enabled: true
+    existingSecret: rmq-config
+  extraConfiguration: |
+    load_definitions = /app/load_definition.json
+  podAnnotations:
+    releaseTime: '{{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC"| quote }}'
+
+# Deploys HTTP Services
+diana-http:
+  ingress:
+    certIssuer: *ssl_secret
+    tlsSecretName: letsencrypt-tls-secret
+    extraRules:
+      - host: mqadmin
+        serviceName: *name_rmq
+        servicePort: 15672

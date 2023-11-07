@@ -1,0 +1,7 @@
+serviceName: neon-core-speech
+replicaCount: 1
+configMap: neon-config
+image:
+  repository: ghcr.io/neongeckocom/neon_speech
+  pullPolicy: Always
+  tag: dev

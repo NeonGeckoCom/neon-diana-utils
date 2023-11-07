@@ -1,0 +1,3 @@
+{{- $_klat_config := .Files.Get "klat.yaml" -}}
+{{ $_ := set .Values.klat "klatConfig" $_klat_config }}
+{{- include "klat_config.configmap" . }}

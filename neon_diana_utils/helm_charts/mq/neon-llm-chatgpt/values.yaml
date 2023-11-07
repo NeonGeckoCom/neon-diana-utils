@@ -1,0 +1,7 @@
+serviceName: backend-llm-chatgpt
+replicaCount: 1
+configSecret: diana-config
+image:
+  repository: ghcr.io/neongeckocom/neon-llm-chatgpt
+  pullPolicy: Always
+  tag: dev

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    neon.project.name: klat
+    neon.diana.service: {{ .Values.serviceName }}
+    neon.service.class: klat-client
+  name: {{ .Values.serviceName }}-client
+spec:
+  type: ClusterIP
+  selector:
+    neon.diana.service: {{ .Values.serviceName }}-client
+  ports:
+    - name: klat-client
+      port: 8001
+      targetPort: 8001
+      protocol: TCP

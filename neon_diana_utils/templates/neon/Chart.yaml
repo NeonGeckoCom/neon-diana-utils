@@ -1,0 +1,17 @@
+apiVersion: v2
+name: neon-deployment
+description: A Helm chart to deploy Neon Core
+
+type: application
+version: 1.0.0
+appVersion: "1.0.1a5"
+
+dependencies:
+  - name: neon-core
+    alias: core
+    version: 0.0.4
+    repository: https://neongeckocom.github.io/neon-diana-utils
+  - name: neon-iris
+    alias: iris
+    version: 0.0.2
+    repository: https://neongeckocom.github.io/neon-diana-utils
