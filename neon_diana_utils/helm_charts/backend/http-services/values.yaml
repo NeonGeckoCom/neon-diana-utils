@@ -6,6 +6,11 @@ libretranslate:
   ingress:
     enabled: False
 #  image.tag:
+stt-nemo:
+  subdomain: &host_nemo nemo
+  servicePort: *default_port
+  ingress:
+    enabled: False
 tts-coqui:
   subdomain: &host_coqui coqui
   servicePort: *default_port
@@ -55,6 +60,9 @@ ingress:
   tlsSecretName: tls-letsencrypt-prod
   certIssuer: letsencrypt-private-key
   rules:
+    - host: *host_nemo
+      serviceName: backend-nemo
+      servicePort: *default_port
     - host: *host_libretranslate
       serviceName: backend-libre
       servicePort: *default_port
