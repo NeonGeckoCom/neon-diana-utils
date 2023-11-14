@@ -3,7 +3,7 @@ name: diana-http
 description: Deploy DIANA HTTP Services
 
 type: application
-version: 0.0.8
+version: 0.0.9
 appVersion: "1.0.1a7"
 dependencies:
   - name: libretranslate
@@ -38,3 +38,7 @@ dependencies:
     alias: ww-snowboy
     version: 0.0.4
     repository: file://../../http/ww-snowboy
+  - name: stt-nemo
+    alias: stt-nemo
+    version: 0.0.1
+    repository: file://../../http/stt-nemo
