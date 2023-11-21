@@ -17,7 +17,7 @@ To install Diana:
 
 To deploy Diana: 
 
-* [Kubectl](https://kubernetes.io/docs/reference/kubectl/) Kubernetes command-line tool.
+*  [Kubectl](https://kubernetes.io/docs/reference/kubectl/) Kubernetes command-line tool.  (Curl tool may be needed for the install. Example: [sudo snap install curl # version 8.1.2])
 * [Helm](https://helm.sh/) package manager for Kubernetes.
 * A [Kubernetes](https://kubernetes.io/) installation.
   * The following instructions assume a local installation using [Microk8s](https://microk8s.io/) version 1.26/stable or later.
@@ -29,6 +29,12 @@ We recommend you use a [Python virtual environment](https://docs.python.org/3/li
 
 1. Create a Python virtual environment:
 
+Install the python3.10 venv package
+```
+sudo apt install python3.10 -m venv
+```
+
+Create the virtual environment
 ```
 python3.10 -m venv venv
 ```
@@ -43,15 +49,15 @@ Using this new window, proceed with the instructions.
 
 ## Install Diana
 
-3. Use Pip to install Diana:
+3. Use Pip to install the current stable version of Diana:
 
 ```
-pip install --pre neon-diana-utils
+pip install neon-diana-utils
 ```
 
 This command installs the newest pre-release version, which is described in this tutorial. 
 
-**Warning:** You can use `pip install neon-diana-utils` to install the current stable version. Version 1.0.0 includes Helm chart support. For information on installing and running older versions, see [the archived documentation in the README file](https://github.com/NeonGeckoCom/neon-diana-utils/blob/dev/README.md).
+**Warning:** You can use `pip install --pre neon-diana-utils` to install the current pre-release version. Only version 1.0.0 and higher include Helm chart support. For information on installing and running older versions, see [the archived documentation in the README file](https://github.com/NeonGeckoCom/neon-diana-utils/blob/dev/README.md).
 
 For more information on the available versions of Diana, see [the Python Package Index repo for Neon Diana](https://pypi.org/project/neon-diana-utils/).
 
@@ -102,6 +108,7 @@ sudo snap install microk8s --classic
 sudo usermod -aG microk8s $USER
 newgrp microk8s
 ```
+This can be done in the virtual environment terminal or in the regular terminal. 
 
 5. Start Microk8s:
 
@@ -133,11 +140,11 @@ Note: Unless you plan on adding multiple nodes, this range only needs one addres
 
 8. After Microk8s is running, use `microk8s kubectl create token default` to create a Microk8s token.
 
-9. In the new terminal window, use `microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 1443:443` to forward the dashboard port. 
+9. Use `microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 1443:443` to forward the dashboard port. 
 
 You can now access your Kubernetes dashboard in a browser at https://localhost:1443/ using the token you created in step 2. 
 
-10. The process in this terminal needs to keep running. Either background the process, or leave this terminal window open and open a new terminal window to continue working.
+10. The process in this terminal needs to keep running. Either background the process, or leave this terminal window open and open a new terminal window and activate the virtual environment in it (. venv/bin/activate) to continue working.
 
 ### Set Up DNS
 
@@ -145,7 +152,15 @@ The ingress controller needs URLs to be mapped to services. There are a number o
 
 For this guide, we will use the simple case of editing the `/etc/hosts` file.
 
-11. Edit the `/etc/hosts` file. Add one entry for the domain name of each service you intend to run. Add the canonical domain and point it to the IP address you gave MetalLB in step 3.
+11. Edit the `/etc/hosts` file. Use either:
+```
+sudo nano /etc/hosts
+```
+or if you prefer a GUI text editor:
+```
+sudo gedit /etc/hosts
+```
+Add one entry for the domain name of each service you intend to run. Add the canonical domain and point it to the IP address you gave MetalLB in step 3.
 
 For example, if you plan to run a service named `test-service` on the `diana.k8s` domain, add the following line:
 
