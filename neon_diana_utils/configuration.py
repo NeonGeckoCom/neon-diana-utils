@@ -529,7 +529,12 @@ def configure_neon_core(mq_user: str = None,
             "gui": {"server_path": "/xdg/data/neon/gui_files"},
             "ready_settings": ["skills", "voice", "audio", "gui_service"],
             "listener": {"enable_voice_loop": False},
-            "stt": {"fallback_module": None},
+            "stt": {"module": "neon-stt-plugin-nemo-remote",
+                    "neon-stt-plugin-nemo-remote": {
+                        "url": "http://backend-nemo:4430"}},
+            "tts": {"module": "neon-tts-plugin-coqui-remote",
+                    "neon-tts-plugin-coqui-remote": {
+                        "url": "http://backend-coqui:4430"}},
             "skills": {"blacklisted_skills": [
                 "skill-local_music.neongeckocom",
                 "skill-device_controls.neongeckocom",
