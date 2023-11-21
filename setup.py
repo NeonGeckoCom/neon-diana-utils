@@ -27,7 +27,7 @@
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from setuptools import setup, find_packages
-from os import getenv, path
+from os import getenv, path, walk
 
 BASE_PATH = path.abspath(path.dirname(__file__))
 
@@ -61,6 +61,21 @@ with open(path.join(BASE_PATH, "neon_diana_utils",
             else:
                 version = line.split("'")[1]
 
+
+def find_resource_files():
+    resource_base_dirs = ("docker", "helm_charts", "templates")
+    base_dir = path.join(BASE_PATH, "neon_diana_utils")
+    package_data = []
+    for res in resource_base_dirs:
+        if path.isdir(path.join(base_dir, res)):
+            for (directory, _, files) in walk(path.join(base_dir, res)):
+                if files:
+                    package_data.append(
+                        path.join(directory.replace(BASE_PATH, "").lstrip('/'),
+                                  '*'))
+    return package_data
+
+
 setup(
     name='neon-diana-utils',
     version=version,
@@ -72,8 +87,7 @@ setup(
     author_email='developers@neon.ai',
     license='BSD-3-Clause',
     packages=find_packages(),
-    package_data={'neon_diana_utils': ['templates/**', 'helm_charts/**']
-                  },
+    package_data={'neon_diana_utils': find_resource_files()},
     include_package_data=True,
     install_requires=get_requirements("requirements.txt"),
     zip_safe=True,
