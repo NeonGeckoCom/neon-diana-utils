@@ -4,7 +4,7 @@ description: Installs common ingress and certificate components
 
 type: application
 version: 0.0.1
-appVersion: "1.0.1a8"
+appVersion: "1.0.1a9"
 
 dependencies:
   - name: ingress-nginx
