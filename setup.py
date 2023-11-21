@@ -63,12 +63,12 @@ with open(path.join(BASE_PATH, "neon_diana_utils",
 
 
 def find_resource_files():
-    resource_base_dirs = ("docker", "helm_charts", "templates")
-    base_dir = path.join(BASE_PATH, "neon_diana_utils")
+    resource_base_dirs = ("neon_diana_utils/docker",
+                          "neon_diana_utils/templates")
     package_data = []
     for res in resource_base_dirs:
-        if path.isdir(path.join(base_dir, res)):
-            for (directory, _, files) in walk(path.join(base_dir, res)):
+        if path.isdir(path.join(BASE_PATH, res)):
+            for (directory, _, files) in walk(path.join(BASE_PATH, res)):
                 if files:
                     package_data.append(
                         path.join(directory.replace(BASE_PATH, "").lstrip('/'),
