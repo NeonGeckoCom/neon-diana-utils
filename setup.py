@@ -72,7 +72,7 @@ setup(
     author_email='developers@neon.ai',
     license='BSD-3-Clause',
     packages=find_packages(),
-    package_data={'neon_diana_utils': ['templates/*', 'helm_charts/**']
+    package_data={'neon_diana_utils': ['templates/**', 'helm_charts/**']
                   },
     include_package_data=True,
     install_requires=get_requirements("requirements.txt"),
