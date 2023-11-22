@@ -187,17 +187,24 @@ Replace `OUTPUT_PATH` with the directory where you want Diana to store its Helm 
 diana configure-mq-backend ~/neon_diana
 ```
 
-Follow the prompts to provide any necessary configuration parameters. 
+Follow the prompts to provide / add any necessary configuration parameters. 
+In order to enable all Neon skills, you will need to enable / choose yes for all these services. 
+Tips:
+Visit https://github.com/settings/tokens to generate the necessary token for the GitHub private services. 
+   It is only necessary to check the box for permission to read:packages.
+Some parameters are provided for you in brackets.
+SQL username & password are not necessary, you can put in any random text.
+If you want to enable ChatGPT, you will need to enter your own API key. You can generate that from an OpenAI account.
 
 13. **Optional:** To add extra TCP ports (i.e. for RabbitMQ), update the `OUTPUT_PATH/ingress-nginx/values.yaml` file accordingly.
 
 14. Deploy the NGINX ingress:
 
 ```
-helm install ingress-nginx OUTPUT_PATH/ingress-common --namespace ingress-nginx --create-namespace
+microk8s helm install ingress-nginx OUTPUT_PATH/ingress-common --namespace ingress-nginx --create-namespace
 ```
 
-15. Edit `OUTPUT_PATH/diana-backend-values.yaml` and update any necessary configuration. At minimum, you need to update the following parameters:
+15. Edit `OUTPUT_PATH/diana-backend/values.yaml` and update any necessary configuration. At minimum, you need to update the following parameters:
 
 * `domain` Change this to the domain you added to the `/etc/hosts` file in step 11.
 * `letsencrypt.email` If you are using a "real" domain, change this to the email address you want to use for the [Let's Encrypt](https://letsencrypt.org/) SSL certificate. For local testing, leave this as is.
@@ -213,8 +220,18 @@ helm dependency update OUTPUT_PATH/diana-backend
 
 17. Use Helm to launch Diana:
 
+If you haven't already:
 ```
-helm install diana-backend OUTPUT_PATH/test/diana-backend --namespace backend --create-namespace
+helm repo add jetstack https://charts.jetstack.io
+helm repo add bitnami https://charts.bitnami.com/bitnami
+```
+Then
+```
+helm dependency build ~/neon_diana/diana-backend
+```
+Finally
+```
+microk8s helm install diana-backend OUTPUT_PATH/diana-backend --namespace backend --create-namespace
 ```
 
 This creates the `backend` namespace and launches Diana into that namespace. You can change this to any namespace name you prefer. You may want to use separate namespaces for test versus production deployments, to separate the Diana backend from other deployments, or both.
