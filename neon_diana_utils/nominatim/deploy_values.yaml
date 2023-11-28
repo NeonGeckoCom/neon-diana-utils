@@ -1,0 +1,7 @@
+  nominatimInitialize:
+    enabled: false
+
+  postgresql:
+    primary:
+      persistence:
+        size: 200Gi
