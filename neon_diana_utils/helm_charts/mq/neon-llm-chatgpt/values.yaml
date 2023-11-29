@@ -5,3 +5,7 @@ image:
   repository: ghcr.io/neongeckocom/neon-llm-chatgpt
   pullPolicy: Always
   tag: dev
+resources:
+  requests:
+    memory: "600Mi"
+    cpu: "0.01"

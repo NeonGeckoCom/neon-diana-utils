@@ -5,3 +5,7 @@ image:
   repository: ghcr.io/neongeckocom/neon_skills-default_skills
   pullPolicy: Always
   tag: dev
+resources:
+  requests:
+    memory: "800Mi"
+    cpu: "0.1"

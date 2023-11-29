@@ -9,3 +9,7 @@ image:
   repository: ghcr.io/neongeckocom/neon_messagebus
   pullPolicy: Always
   tag: dev
+resources:
+  requests:
+    memory: "500Mi"
+    cpu: "0.1"

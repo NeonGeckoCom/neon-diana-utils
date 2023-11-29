@@ -18,6 +18,11 @@ images:
     image: ghcr.io/neongeckocom/klatchat_observer
     name: klat-chat-observer
 
+resources:
+  requests:
+    memory: "500Mi"
+    cpu: "0.01"
+
 ingress:
   enabled: True
   ingressClassName: nginx
