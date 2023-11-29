@@ -17,7 +17,7 @@ To install Diana:
 
 To deploy Diana: 
 
-*  [Kubectl](https://kubernetes.io/docs/reference/kubectl/) Kubernetes command-line tool.  (Curl tool may be needed for the install. Example: [sudo snap install curl # version 8.1.2])
+*  [Kubectl](https://kubernetes.io/docs/reference/kubectl/) Kubernetes command-line tool.  
 * [Helm](https://helm.sh/) package manager for Kubernetes.
 * A [Kubernetes](https://kubernetes.io/) installation.
   * The following instructions assume a local installation using [Microk8s](https://microk8s.io/) version 1.26/stable or later.
@@ -55,9 +55,9 @@ Using this new window, proceed with the instructions.
 pip install neon-diana-utils
 ```
 
-This command installs the newest pre-release version, which is described in this tutorial. 
+This command installs the newest stable version, which is described in this tutorial. 
 
-**Warning:** You can use `pip install --pre neon-diana-utils` to install the current pre-release version. Only version 1.0.0 and higher include Helm chart support. For information on installing and running older versions, see [the archived documentation in the README file](https://github.com/NeonGeckoCom/neon-diana-utils/blob/dev/README.md).
+**Tip:** You can use `pip install --pre neon-diana-utils` to install the current pre-release version. 
 
 For more information on the available versions of Diana, see [the Python Package Index repo for Neon Diana](https://pypi.org/project/neon-diana-utils/).
 
@@ -193,7 +193,7 @@ Tips:
 Visit https://github.com/settings/tokens to generate the necessary token for the GitHub private services. 
    It is only necessary to check the box for permission to read:packages.
 Some parameters are provided for you in brackets.
-SQL username & password are not necessary, you can put in any random text.
+SQL username & password are not necessary unless you are working on the brands/coupons skill which is not currently active, so you can skip these (or put in random text if the system won't allow you to leave them blank.)
 If you want to enable ChatGPT, you will need to enter your own API key. You can generate that from an OpenAI account.
 
 13. **Optional:** To add extra TCP ports (i.e. for RabbitMQ), update the `OUTPUT_PATH/ingress-nginx/values.yaml` file accordingly.
