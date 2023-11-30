@@ -94,7 +94,7 @@ def configure_klat(klat_url, username, password, orchestrator, output_path):
 @click.option("--orchestrator", "-o", default="kubernetes",
               help="Container orchestrator (`kubernetes` or `docker-compose`")
 @click.argument("output_path", default=None, required=False)
-def configure_backend(username, password, orchestrator, output_path):
+def configure_neon_backend(username, password, orchestrator, output_path) -> None:
     from neon_diana_utils.configuration import configure_backend, Orchestrator
     try:
         orchestrator = Orchestrator(orchestrator)
@@ -107,11 +107,18 @@ def configure_backend(username, password, orchestrator, output_path):
 @neon_diana_cli.command(help="Configure backend services for deployment")
 @click.option("--username", "-u", help="RabbitMQ username")
 @click.option("--password", "-p", help="RabbitMQ password")
+@click.option("--no-configure-ingress", is_flag=True,
+              help="Skip configuring default nginx ingress for Kubernetes")
 @click.argument("output_path", default=None, required=False)
-def configure_mq_backend(username, password, output_path):
+def configure_mq_backend(username, password, no_configure_ingress, output_path):
     # TODO: Deprecate in favor of `configure_backend`
-    from neon_diana_utils.configuration import configure_backend
+    from neon_diana_utils.configuration import configure_backend, configure_ingress_common
     configure_backend(username, password, output_path)
+    if no_configure_ingress:
+        click.echo("Skipping ingress configuration")
+    else:
+        click.echo("Configuring ingress")
+        configure_ingress_common(output_path)
 
 
 @neon_diana_cli.command(help="Generate RabbitMQ definitions")

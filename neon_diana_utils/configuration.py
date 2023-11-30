@@ -709,3 +709,20 @@ def configure_klat_chat(external_url: str = None,
     with open(klat_config_file, 'w+') as f:
         yaml.safe_dump(config, f)
     click.echo(f"Wrote Klat configuration to {klat_config_file}")
+
+
+def configure_ingress_common(output_path: str = ""):
+    """
+    Generate common ingress definitions.
+    @param output_path: directory to write output definitions to
+    """
+    # Validate output paths
+    output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
+
+    # Output to `ingress-common` subdirectory
+    if not validate_output_path(join(output_path, "ingress-common")):
+        click.echo(f"Path exists: {output_path}")
+        return
+
+    shutil.copytree(join(dirname(__file__), "templates", "ingress-common"),
+                    join(output_path, "ingress-common"))

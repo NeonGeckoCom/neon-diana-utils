@@ -204,6 +204,10 @@ class TestConfiguration(unittest.TestCase):
         from neon_diana_utils.configuration import configure_klat_chat
         # TODO
 
+    def test_configure_ingress_common(self):
+        from neon_diana_utils.configuration import configure_ingress_common
+        # TODO
+
 
 class TestKubernetesUtils(unittest.TestCase):
     def test_generate_github_secret(self):
