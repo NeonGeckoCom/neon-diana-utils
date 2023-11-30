@@ -4,7 +4,7 @@ description: Deploy a Nemo STT Server
 
 type: application
 version: 0.0.2
-appVersion: "1.0.1a10"
+appVersion: "1.0.1a11"
 
 dependencies:
   - name: base-http
