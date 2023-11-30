@@ -9,3 +9,7 @@ persistentVolumeClaim:
   name: metrics
   claimName: metrics
   containerPath: /data
+resources:
+  requests:
+    memory: "50Mi"
+    cpu: "0.01"

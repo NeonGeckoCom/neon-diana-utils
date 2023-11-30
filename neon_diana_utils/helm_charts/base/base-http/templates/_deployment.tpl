@@ -32,6 +32,10 @@ spec:
           volumeMounts:
             - mountPath: /config/neon
               name: config
+          {{- if .Values.resources }}
+          resources:
+          {{- toYaml $.Values.resources | nindent 12 -}}
+          {{ end }}
       volumes:
         - name: config
           projected:

@@ -5,3 +5,7 @@ image:
   repository: ghcr.io/neongeckocom/neon_speech
   pullPolicy: Always
   tag: dev
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "0.1"

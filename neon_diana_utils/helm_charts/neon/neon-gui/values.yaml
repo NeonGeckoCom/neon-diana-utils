@@ -9,3 +9,7 @@ image:
   repository: ghcr.io/neongeckocom/neon_gui
   pullPolicy: Always
   tag: dev
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "0.01"

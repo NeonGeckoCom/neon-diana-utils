@@ -5,3 +5,7 @@ image:
   repository: ghcr.io/neongeckocom/neon_enclosure
   pullPolicy: Always
   tag: dev
+resources:
+  requests:
+    memory: "100Mi"
+    cpu: "0.1"

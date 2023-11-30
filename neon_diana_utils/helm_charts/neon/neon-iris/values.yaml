@@ -12,7 +12,10 @@ image:
   repository: ghcr.io/neongeckocom/neon-iris
   pullPolicy: Always
   tag: dev
-
+resources:
+  requests:
+    memory: "500Mi"
+    cpu: "0.05"
 ingress:
   enabled: True
   ingressClassName: nginx

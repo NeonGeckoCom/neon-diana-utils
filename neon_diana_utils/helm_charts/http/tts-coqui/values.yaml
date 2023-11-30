@@ -18,6 +18,11 @@ service:
   type: ClusterIP
   targetPort: "9666"
 
+resources:
+  requests:
+    memory: "4Gi"
+    cpu: "1.0"
+
 ingress:
   enabled: true
   className: nginx

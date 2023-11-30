@@ -3,7 +3,7 @@ name: neon-llm-chatgpt
 description: Deploy an LLM proxy for Chat GPT
 
 type: application
-version: 0.0.4
+version: 0.0.6
 appVersion: "1.0.1a10"
 
 dependencies:
