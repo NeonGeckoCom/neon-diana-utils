@@ -20,14 +20,22 @@ neon_core:
 chat_observer:
   - chat_observer
 neon_bot_submind:
-  - hodor
-  - wiz
+  - alan
   - alice
+  - blender
+  - dodecadialog
   - eliza
-  - pard
-  - wolfram
-  - terry
+  - grant
+  - gruff
+  - hodor
+  - ima
+  - maksym
+  - mark
   - ned
+  - pard
+  - terry
+  - tucker
+  - wiz
 neon_bot_facilitator:
   - proctor
   - scorekeeper

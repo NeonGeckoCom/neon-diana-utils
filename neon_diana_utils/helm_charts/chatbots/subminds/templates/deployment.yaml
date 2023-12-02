@@ -23,6 +23,7 @@ spec:
         - name: {{ .Values.imagePullSecret }}
       containers:
         {{- range .Values.images.containers }}
+        {{- if .enabled }}
         - image: {{ .image }}:{{ $.Values.images.tag }}
           imagePullPolicy: {{ $.Values.images.pullPolicy }}
           name: {{ .name }}
@@ -37,6 +38,7 @@ spec:
           resources:
           {{- toYaml $.Values.resources | nindent 12 -}}
           {{ end }}
+        {{ end }}
         {{ end }}
       volumes:
         - name: config

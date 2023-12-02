@@ -5,17 +5,56 @@ configFilename: config.json
 configEnvVar: "CONFIG_PATH"
 images:
   pullPolicy: Always
-  tag: 0.2.3
+  tag: dev
   containers:
-    - image: "ghcr.io/neongeckocom/chatbots/eliza"
-      name: "eliza"
-    - image: "ghcr.io/neongeckocom/chatbots/alice"
+    - image: "ghcr.io/neongeckocom/chatbot-alan"
+      name: "alan"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-alice"
       name: "alice"
-#    - image: "ghcr.io/neongeckocom/chatbots/hodor"
-#      name: "hodor"
-    - image: "ghcr.io/neongeckocom/chatbots/ned"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-blender"
+      name: "blender"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-dodecadialog"
+      name: "dodecadialog"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-eliza"
+      name: "eliza"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-grant"
+      name: "grant"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-gruff"
+      name: "gruff"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-hodor"
+      name: "hodor"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-ima"
+      name: "ima"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-maksym"
+      name: "maksym"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-mark"
+      name: "mark"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-ned"
       name: "ned"
-    - image: "ghcr.io/neongeckocom/chatbots/pard"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-pard"
       name: "pard"
-    - image: "ghcr.io/neongeckocom/chatbots/wiz"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-terry"
+      name: "terry"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-tucker"
+      name: "tucker"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-wiz"
       name: "wiz"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-wolfram"
+      name: "wolfram"
+      enabled: true
