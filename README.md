@@ -182,7 +182,7 @@ Follow the prompts to provide any necessary configuration parameters.
 helm install ingress-nginx OUTPUT_PATH/ingress-common --namespace ingress-nginx --create-namespace
 ```
 
-15. Edit `OUTPUT_PATH/diana-backend-values.yaml` and update any necessary configuration. At minimum, you need to update the following parameters:
+15. Edit `OUTPUT_PATH/diana-backend/values.yaml` and update any necessary configuration. At minimum, you need to update the following parameters:
 
 * `domain` Change this to the domain you added to the `/etc/hosts` file in step 11.
 * `letsencrypt.email` If you are using a "real" domain, change this to the email address you want to use for the [Let's Encrypt](https://letsencrypt.org/) SSL certificate. For local testing, leave this as is.
