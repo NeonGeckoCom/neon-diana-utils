@@ -4,7 +4,7 @@ description: Deploy Neon IRIS Web UI
 
 type: application
 version: 0.0.4
-appVersion: "1.0.1a11"
+appVersion: "1.0.1a12"
 
 dependencies:
   - name: base-neon
