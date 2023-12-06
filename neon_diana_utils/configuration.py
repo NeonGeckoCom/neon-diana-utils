@@ -558,9 +558,8 @@ def configure_chatbots(rmq_path: str = None,
             update_rmq_config(rmq_config)
             click.echo(f"Updated RabbitMQ config file: {rmq_config}")
         chatbots_config = _get_chatbots_mq_config(rmq_config)
-        with open(join(output_path, "chatbots",
-                       "chatbots_config.json"), 'w+') as f:
-            json.dump(chatbots_config, f, indent=2)
+        with open(join(output_path, "chatbots", "chatbots.yaml"), 'w+') as f:
+            yaml.safe_dump(chatbots_config, f)
         click.echo(f"Outputs generated in {output_path}")
 
     except Exception as e:

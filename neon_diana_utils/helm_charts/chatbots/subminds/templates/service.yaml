@@ -4,7 +4,7 @@ metadata:
   labels:
     neon.project.name: chatbots
     neon.diana.service: {{ default .Chart.Name .Values.serviceName }}
-    neon.service.class: facilitators
+    neon.service.class: subminds
   name: {{ default .Chart.Name .Values.serviceName }}
 spec:
   clusterIP: None

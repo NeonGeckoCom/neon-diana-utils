@@ -1,23 +1,26 @@
 replicaCount: 1
 serviceName: cbf-facilitators
 configMap: chatbots-config
-configFilename: config.json
+configFilename: klat.yaml
 images:
   pullPolicy: Always
   containers:
-    - image: "ghcr.io/neongeckocom/mq-chatbots-observer"
-      tag: "latest"
+    # TODO: Update to neongeckocom repo before release
+    - image: "ghcr.io/neondaniel/mq-chatbots-observer"
+      tag: "test"
       name: "chatbots-observer"
-      configEnvVar: "CHATBOTS_OBSERVER_CONFIG"
-    - image: "ghcr.io/neongeckocom/chatbots/proctor"
-      tag: "0.2.3"
-      name: "proctor"
-      configEnvVar: "CONFIG_PATH"
-    - image: "ghcr.io/neongeckocom/chatbots/scorekeeper"
-      tag: "0.2.3"
-      name: "scorekeeper"
-      configEnvVar: "CONFIG_PATH"
-    - image: "ghcr.io/neongeckocom/chatbots/chat_automator"
-      tag: "0.2.3"
+    - image: "ghcr.io/neongeckocom/chat-facilitator-automator"
+      tag: "dev"
       name: "chat-automator"
-      configEnvVar: "CONFIG_PATH"
+    - image: "ghcr.io/neongeckocom/chat-facilitator-context_keeper"
+      tag: "dev"
+      name: "context-keeper"
+    - image: "ghcr.io/neongeckocom/chat-facilitator-proctor"
+      tag: "dev"
+      name: "proctor"
+    - image: "ghcr.io/neongeckocom/chat-facilitator-scorekeeper"
+      tag: "dev"
+      name: "scorekeeper"
+    - image: "ghcr.io/neongeckocom/chat-facilitator-stenographer"
+      tag: "dev"
+      name: "stenographer"

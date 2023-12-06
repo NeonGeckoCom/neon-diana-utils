@@ -26,9 +26,6 @@ spec:
         - image: {{ .image }}:{{ .tag }}
           imagePullPolicy: {{ $.Values.images.pullPolicy }}
           name: {{ .name }}
-          env:
-            - name: {{ .configEnvVar }}
-              value: /config/neon/{{ $.Values.configFilename }}
           volumeMounts:
             - name: config
               mountPath: /config/neon/{{ $.Values.configFilename }}

@@ -39,5 +39,5 @@ neon_bot_submind:
 neon_bot_facilitator:
   - proctor
   - scorekeeper
-  - chat_automator
+  - automator
   - chatbots_observer

@@ -1,5 +1,5 @@
 configMap: &config cbf-config
-configFilename: &filename config.json
+configFilename: &filename klat.yaml
 imagePullSecret: &secret github-auth
 
 cbf-facilitators:
