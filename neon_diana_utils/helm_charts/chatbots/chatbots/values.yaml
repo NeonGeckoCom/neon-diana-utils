@@ -1,5 +1,5 @@
 configMap: &config cbf-config
-configFilename: &filename klat.yaml
+configFilename: &filename chatbots.yaml
 imagePullSecret: &secret github-auth
 
 cbf-facilitators:

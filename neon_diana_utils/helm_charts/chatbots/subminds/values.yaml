@@ -1,7 +1,7 @@
 replicaCount: 1
 serviceName: cbf-subminds
 configMap: chatbots-config
-configFilename: klat.yaml
+configFilename: chatbots.yaml
 images:
   pullPolicy: Always
   tag: dev

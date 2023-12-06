@@ -23,9 +23,12 @@ spec:
         - name: {{ .Values.imagePullSecret }}
       containers:
         {{- range .Values.images.containers }}
-        - image: {{ .image }}:{{ .tag }}
+        - image: {{ .image }}:{{ $.Values.images.tag }}
           imagePullPolicy: {{ $.Values.images.pullPolicy }}
           name: {{ .name }}
+          env:
+            - name: OVOS_CONFIG_FILENAME
+              value: {{ $.Values.configFilename }}
           volumeMounts:
             - name: config
               mountPath: /config/neon/{{ $.Values.configFilename }}
