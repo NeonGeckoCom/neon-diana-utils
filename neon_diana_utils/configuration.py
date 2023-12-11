@@ -398,20 +398,6 @@ def _get_chatbots_mq_config(rmq_config: str) -> dict:
         else:
             LOG.warning(f"Unknown user: {user}")
 
-    # Add in automation config
-    # TODO: Config should not be under "MQ"
-    chatbot_config['prompts'] = ["Who is going to win US elections in 2024",
-                                 "Is the Earth flat",
-                                 "What is the smallest creature on Earth",
-                                 "What is the meaning of life?"]
-    chatbot_config['api_prompts_enabled'] = "1"
-    chatbot_config['shouts_emit_interval'] = 120
-    chatbot_config['bots_engaging_interval'] = 5
-    chatbot_config['facilitator_prefixes'] = ["proctor",
-                                              "stenographer",
-                                              "scorekeeper",
-                                              "chat_automator"]
-    chatbot_config['SIO_URL'] = "http://klat-chat-server:8010"
     return {"MQ": chatbot_config}
 
 

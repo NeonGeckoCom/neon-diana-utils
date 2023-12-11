@@ -8,13 +8,19 @@ images:
   containers:
     - image: "ghcr.io/neongeckocom/mq-chatbots-observer"
       name: "chatbots-observer"
+      enabled: True
     - image: "ghcr.io/neongeckocom/chat-facilitator-automator"
-      name: "chat-automator"
+      name: "automator"
+      enabled: True
     - image: "ghcr.io/neongeckocom/chat-facilitator-context_keeper"
       name: "context-keeper"
+      enabled: False
     - image: "ghcr.io/neongeckocom/chat-facilitator-proctor"
       name: "proctor"
+      enabled: True
     - image: "ghcr.io/neongeckocom/chat-facilitator-scorekeeper"
       name: "scorekeeper"
+      enabled: True
     - image: "ghcr.io/neongeckocom/chat-facilitator-stenographer"
       name: "stenographer"
+      enabled: False

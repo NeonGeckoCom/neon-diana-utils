@@ -41,3 +41,5 @@ neon_bot_facilitator:
   - scorekeeper
   - automator
   - chatbots_observer
+  - stenographer
+  - context_keeper
