@@ -32,7 +32,7 @@ images:
       enabled: false
     - image: "ghcr.io/neongeckocom/chatbot-ima"
       name: "ima"
-      enabled: true
+      enabled: false
     - image: "ghcr.io/neongeckocom/chatbot-maksym"
       name: "maksym"
       enabled: false
@@ -47,7 +47,7 @@ images:
       enabled: true
     - image: "ghcr.io/neongeckocom/chatbot-terry"
       name: "terry"
-      enabled: true
+      enabled: false
     - image: "ghcr.io/neongeckocom/chatbot-tucker"
       name: "tucker"
       enabled: false

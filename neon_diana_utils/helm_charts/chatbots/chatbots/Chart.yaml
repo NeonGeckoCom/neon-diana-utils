@@ -3,7 +3,7 @@ name: chatbots
 description: Deploy Chatbots
 
 type: application
-version: 0.0.9
+version: 0.0.10
 appVersion: "1.0.1a2"
 dependencies:
   - name: cbf-facilitators
@@ -12,5 +12,5 @@ dependencies:
     repository: file://../facilitators
   - name: cbf-subminds
     alias: cbf-subminds
-    version: 0.0.4
+    version: 0.0.5
     repository: file://../subminds
