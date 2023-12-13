@@ -356,7 +356,7 @@ def _get_chatbots_mq_config(rmq_config: str) -> dict:
     """
     Get MQ config for chatbots.
     @param rmq_config: Path to RabbitMQ configuration file to import
-    @returns: dict MQ configuration for chatbots
+    @returns: dict configuration for chatbots
     """
     # Define default user mappings and MQ config
     mq_map_file = join(dirname(__file__), "templates", "mq_user_mapping.yml")
@@ -375,7 +375,7 @@ def _get_chatbots_mq_config(rmq_config: str) -> dict:
                                          "password": ""}
     if not click.confirm(f"Import Chatbot users from {rmq_config}?"):
         click.echo("Chatbot user passwords will need to be manually configured")
-        return chatbot_config
+        return {"MQ": chatbot_config}
 
     with open(rmq_config) as f:
         config = json.load(f)

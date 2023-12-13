@@ -192,9 +192,35 @@ class TestConfiguration(unittest.TestCase):
                                            config_file)
         self.assertEqual(user, {"user": "username", "password": "password"})
 
-    def test_get_chatbots_mq_config(self):
+    @patch("neon_diana_utils.configuration.click.confirm")
+    def test_get_chatbots_mq_config(self, confirm):
         from neon_diana_utils.configuration import _get_chatbots_mq_config
-        # TODO
+        rmq_config_path = join(dirname(__file__), "test_rabbitmq.json")
+
+        # Test no import
+        confirm.return_value = False
+        config = _get_chatbots_mq_config(rmq_config_path)
+        self.assertEqual(list(config), ["MQ"])
+        for user in config["MQ"]['users']:
+            self.assertIn(config["MQ"]['users'][user]["user"],
+                          ("neon_bot_submind", "neon_bot_facilitator"))
+            if config["MQ"]['users'][user]["user"] == "neon_bot_submind":
+                self.assertEqual(config["MQ"]['users'][user]["password"], "")
+            else:
+                self.assertEqual(config["MQ"]['users'][user]["password"], "")
+
+        confirm.return_value = True
+        config = _get_chatbots_mq_config(rmq_config_path)
+        self.assertEqual(list(config), ["MQ"])
+        for user in config["MQ"]['users']:
+            self.assertIn(config["MQ"]['users'][user]["user"],
+                          ("neon_bot_submind", "neon_bot_facilitator"))
+            if config["MQ"]['users'][user]["user"] == "neon_bot_submind":
+                self.assertEqual(config["MQ"]['users'][user]["password"],
+                                 "submind_password")
+            else:
+                self.assertEqual(config["MQ"]['users'][user]["password"],
+                                 "facilitator_password")
 
     def test_configure_backend(self):
         from neon_diana_utils.configuration import configure_backend
