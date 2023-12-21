@@ -4,7 +4,7 @@ description: Deploy Neon Core Enclosure Service
 
 type: application
 version: 0.0.5
-appVersion: "1.0.1a12"
+appVersion: "1.0.1a13"
 
 dependencies:
   - name: base-neon
