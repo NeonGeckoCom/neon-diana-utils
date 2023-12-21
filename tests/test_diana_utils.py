@@ -54,6 +54,19 @@ class TestConfiguration(unittest.TestCase):
         shutil.rmtree(valid_output_path)
 
     @patch("click.confirm")
+    def test_make_llm_bot_config(self, confirm):
+        from neon_diana_utils.configuration import make_llm_bot_config
+        confirm.return_value = False
+        self.assertEqual(make_llm_bot_config(), {"llm_bots": {}})
+
+        confirm.return_value = True
+        config = make_llm_bot_config()
+        self.assertIsInstance(config['llm_bots'], dict)
+        self.assertIsInstance(config['llm_bots']['chat_gpt'], list)
+        for bot in config['llm_bots']['chat_gpt']:
+            self.assertEqual(set(bot), {'name', 'description'})
+
+    @patch("click.confirm")
     def test_make_keys_config(self, confirm):
         from neon_diana_utils.configuration import make_keys_config
         confirm.return_value = False

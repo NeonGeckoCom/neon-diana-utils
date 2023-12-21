@@ -77,6 +77,20 @@ def validate_output_path(output_path: str) -> bool:
     return True
 
 
+def make_llm_bot_config():
+    """
+    Interactive configuration tool to configure llm personas to participate in
+    chatbotsforum/Klat.
+    """
+    with open(join(dirname(__file__), "templates", "llm_personas.yml")) as f:
+        persona_config = yaml.safe_load(f)
+    configuration = {"llm_bots": dict()}
+    if click.confirm("Configure ChatGPT Personas?"):
+        configuration['llm_bots']['chat_gpt'] = persona_config['chat_gpt']
+    # TODO: Add other LLM personas here
+    return configuration
+
+
 def make_keys_config(write_config: bool,
                      output_file: str = None) -> Optional[dict]:
     """
@@ -200,7 +214,6 @@ def make_keys_config(write_config: bool,
     config = {"keys": {"api_services": api_services,
                        "emails": email_config,
                        "track_my_brands": brands_config},
-              "ChatGPT": chatgpt_config,  # TODO: Deprecated reference
               "LLM_CHAT_GPT": chatgpt_config,
               "FastChat": fastchat_config
               }
@@ -490,10 +503,15 @@ def configure_backend(username: str = None,
 
         # Generate `diana.yaml` output
         keys_config = make_keys_config(False)
+        if keys_config.get("LLM_CHAT_GPT"):
+            llm_config = make_llm_bot_config()
+        else:
+            llm_config = dict()
         config = {**{"MQ": {"users": mq_auth_config,
                             "server": "neon-rabbitmq",
                             "port": 5672}},
-                  **keys_config}
+                  **keys_config,
+                  **llm_config}
         click.echo(f"Writing configuration to {diana_config}")
         with open(diana_config, 'w+') as f:
             yaml.dump(config, f)
