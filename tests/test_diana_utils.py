@@ -76,7 +76,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertFalse(isfile(test_output_file))
         self.assertIsInstance(config, dict)
         self.assertIsInstance(config['keys'], dict)
-        self.assertIsInstance(config['ChatGPT'], dict)
+        self.assertIsInstance(config['LLM_CHAT_GPT'], dict)
         self.assertIsInstance(config['FastChat'], dict)
 
         # Test with file write
