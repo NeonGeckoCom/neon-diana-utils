@@ -1,0 +1,59 @@
+replicaCount: 1
+serviceName: cbf-subminds
+configMap: chatbots-config
+configFilename: chatbots.yaml
+images:
+  pullPolicy: Always
+  tag: dev
+  containers:
+    - image: "ghcr.io/neongeckocom/chatbot-alan"
+      name: "alan"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-alice"
+      name: "alice"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-blender"
+      name: "blender"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-dodecadialog"
+      name: "dodecadialog"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-eliza"
+      name: "eliza"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-grant"
+      name: "grant"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-gruff"
+      name: "gruff"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-hodor"
+      name: "hodor"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-ima"
+      name: "ima"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-maksym"
+      name: "maksym"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-mark"
+      name: "mark"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-ned"
+      name: "ned"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-pard"
+      name: "pard"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-terry"
+      name: "terry"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-tucker"
+      name: "tucker"
+      enabled: false
+    - image: "ghcr.io/neongeckocom/chatbot-wiz"
+      name: "wiz"
+      enabled: true
+    - image: "ghcr.io/neongeckocom/chatbot-wolfram"
+      name: "wolfram"
+      enabled: true

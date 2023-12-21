@@ -1,0 +1,7 @@
+apiVersion: v2
+name: cbf-facilitators
+description: Chatbotsforum facilitators
+
+type: application
+version: 0.0.6
+appVersion: "1.0.1a2"

@@ -1,0 +1,26 @@
+replicaCount: 1
+serviceName: cbf-facilitators
+configMap: chatbots-config
+configFilename: chatbots.yaml
+images:
+  pullPolicy: Always
+  tag: "dev"
+  containers:
+    - image: "ghcr.io/neongeckocom/mq-chatbots-observer"
+      name: "chatbots-observer"
+      enabled: True
+    - image: "ghcr.io/neongeckocom/chat-facilitator-automator"
+      name: "automator"
+      enabled: True
+    - image: "ghcr.io/neongeckocom/chat-facilitator-context_keeper"
+      name: "context-keeper"
+      enabled: False
+    - image: "ghcr.io/neongeckocom/chat-facilitator-proctor"
+      name: "proctor"
+      enabled: True
+    - image: "ghcr.io/neongeckocom/chat-facilitator-scorekeeper"
+      name: "scorekeeper"
+      enabled: True
+    - image: "ghcr.io/neongeckocom/chat-facilitator-stenographer"
+      name: "stenographer"
+      enabled: False

@@ -64,6 +64,20 @@
         "service",
         "test"
       ]
+    },
+    {
+      "name": "neon_bot_submind",
+      "password": "submind_password",
+      "tags": [
+        "chatbots"
+      ]
+    },
+    {
+      "name": "neon_bot_facilitator",
+      "password": "facilitator_password",
+      "tags": [
+        "chatbots"
+      ]
     }
   ],
   "vhosts": [

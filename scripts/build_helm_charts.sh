@@ -78,6 +78,12 @@ for d in ../neon_diana_utils/helm_charts/klat/*; do
 done
 helm package ../neon_diana_utils/helm_charts/klat/*
 
+# Package Chatbots
+for d in ../neon_diana_utils/helm_charts/chatbots/*; do
+  helm dependency update "${d}" > /dev/null
+done
+helm package ../neon_diana_utils/helm_charts/chatbots/*
+
 # Make sure existing charts aren't touched (new charts get new versions)
 git reset --hard HEAD
 

@@ -1,0 +1,3 @@
+{{- $_cbf_config := .Files.Get "chatbots.yaml" -}}
+{{ $_ := set .Values.chatbots "cbfConfig" $_cbf_config }}
+{{- include "cbf_config.configmap" . }}

@@ -54,6 +54,14 @@ users:
     tags:
       - backend
       - klat
+  - name: "neon_bot_submind"
+    password:
+    tags:
+      - chatbots
+  - name: "neon_bot_facilitator"
+    password:
+    tags:
+      - chatbots
 vhosts:
   - name: "/neon_emails"
   - name: "/neon_api"
@@ -148,6 +156,17 @@ permissions:
     read: "./*"
   - user: "neon_coupons"
     vhost: "/neon_coupons"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+# TODO: Limit chatbots vhost permissions
+  - user: "neon_bot_submind"
+    vhost: "/chatbots"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_bot_facilitator"
+    vhost: "/chatbots"
     configure: ".*"
     write: ".*"
     read: ".*"

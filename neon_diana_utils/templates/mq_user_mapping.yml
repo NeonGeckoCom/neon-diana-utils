@@ -19,3 +19,28 @@ neon_core:
   - chat_api_proxy
 chat_observer:
   - chat_observer
+neon_bot_submind:
+  - alan
+  - alice
+  - blender
+  - dodecadialog
+  - eliza
+  - grant
+  - gruff
+  - hodor
+  - ima
+  - maksym
+  - mark
+  - ned
+  - pard
+  - terry
+  - tucker
+  - wiz
+  - wolfram
+neon_bot_facilitator:
+  - proctor
+  - scorekeeper
+  - automator
+  - chatbots_observer
+  - stenographer
+  - context_keeper

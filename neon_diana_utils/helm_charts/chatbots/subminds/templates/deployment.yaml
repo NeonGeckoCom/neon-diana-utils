@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ default .Chart.Name .Values.serviceName }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      neon.diana.service: {{ default .Chart.Name .Values.serviceName }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        releaseTime: {{ dateInZone "2006-01-02 15:04:05Z" (now) "UTC"| quote }}
+      labels:
+        neon.diana.service: {{ default .Chart.Name .Values.serviceName }}
+        neon.project.name: chatbots
+        neon.service.class: facilitators
+    spec:
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      containers:
+        {{- range .Values.images.containers }}
+        {{- if .enabled }}
+        - image: {{ .image }}:{{ $.Values.images.tag }}
+          imagePullPolicy: {{ $.Values.images.pullPolicy }}
+          name: {{ .name }}
+          env:
+            - name: OVOS_CONFIG_FILENAME
+              value: {{ $.Values.configFilename }}
+          volumeMounts:
+            - name: config
+              mountPath: /config/neon/{{ $.Values.configFilename }}
+              subPath: {{ $.Values.configFilename }}
+          {{- if $.Values.resources }}
+          resources:
+          {{- toYaml $.Values.resources | nindent 12 -}}
+          {{ end }}
+        {{ end }}
+        {{ end }}
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: {{ .Values.configMap }}
+        {{- if .Values.persistentVolumeClaim }}
+        - name: {{ .Values.persistentVolumeClaim.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistentVolumeClaim.claimName }}
+        {{- end -}}

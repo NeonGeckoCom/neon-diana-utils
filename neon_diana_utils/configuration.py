@@ -352,6 +352,55 @@ def _get_mq_service_user_config(mq_user: Optional[str], mq_pass: Optional[str],
     return user_config
 
 
+def _get_chatbots_mq_config(rmq_config: str) -> dict:
+    """
+    Get MQ config for chatbots.
+    @param rmq_config: Path to RabbitMQ configuration file to import
+    @returns: dict configuration for chatbots
+    """
+    # Define default user mappings and MQ config
+    mq_map_file = join(dirname(__file__), "templates", "mq_user_mapping.yml")
+    chatbot_config = {"server": "neon-rabbitmq",
+                      "port": 5672,
+                      "users": {}}
+    with open(mq_map_file) as f:
+        mq_mapping = yaml.safe_load(f)
+    subminds = mq_mapping['neon_bot_submind']
+    facilitators = mq_mapping['neon_bot_facilitator']
+    for user in subminds:
+        chatbot_config['users'][user] = {"user": "neon_bot_submind",
+                                         "password": ""}
+    for user in facilitators:
+        chatbot_config['users'][user] = {"user": "neon_bot_facilitator",
+                                         "password": ""}
+    if not click.confirm(f"Import Chatbot users from {rmq_config}?"):
+        click.echo("Chatbot user passwords will need to be manually configured")
+        return {"MQ": chatbot_config}
+
+    with open(rmq_config) as f:
+        config = json.load(f)
+
+    # Get auth from MQ config
+    submind_pass = ""
+    facilitator_pass = ""
+    for user in config['users']:
+        if user['name'] == 'neon_bot_submind':
+            submind_pass = user['password']
+        if user['name'] == 'neon_bot_facilitator':
+            facilitator_pass = user['password']
+
+    # Update MQ config for chatbot users with MQ auth
+    for user in chatbot_config['users']:
+        if chatbot_config['users'][user]['user'] == 'neon_bot_submind':
+            chatbot_config['users'][user]['password'] = submind_pass
+        elif chatbot_config['users'][user]['user'] == 'neon_bot_facilitator':
+            chatbot_config['users'][user]['password'] = facilitator_pass
+        else:
+            LOG.warning(f"Unknown user: {user}")
+
+    return {"MQ": chatbot_config}
+
+
 def configure_backend(username: str = None,
                       password: str = None,
                       output_path: str = None,
@@ -456,7 +505,48 @@ def configure_backend(username: str = None,
             configure_neon_core(user.get('user'), user.get('password'),
                                 output_path, orchestrator)
 
-        # TODO: Prompt to continue to Klat Chat config
+        # Prompt to continue to Chatbots config
+        if click.confirm("Configure Chatbots?"):
+            configure_chatbots(rmq_file, output_path, False, orchestrator)
+
+        # TODO: Prompt for Klat deployment?
+
+    except Exception as e:
+        click.echo(e)
+
+
+def configure_chatbots(rmq_path: str = None,
+                       output_path: str = None,
+                       prompt_update_rmq: bool = True,
+                       orchestrator: Orchestrator = Orchestrator.KUBERNETES):
+    """
+    Generate Chatbots definitions
+    @param rmq_path: Path to RabbitMQ configuration file
+    @param output_path: directory to write output definitions to
+    @param prompt_update_rmq: if True, prompt user to update RabbitMQ config to
+        add chatbot-related users, vhosts, etc.
+    @param orchestrator: Container orchestrator to generate configuration for
+    """
+    output_path = expanduser(output_path or join(xdg_config_home(), "diana"))
+    rmq_config = rmq_path or join(output_path, "diana-backend", "rabbitmq.json")
+    # Output to `chatbots` subdirectory
+    if not validate_output_path(join(output_path, "chatbots")):
+        click.echo(f"Path exists: {output_path}")
+        return
+    try:
+        if orchestrator == Orchestrator.KUBERNETES:
+            shutil.copytree(join(dirname(__file__), "templates", "chatbots"),
+                            join(output_path, "chatbots"))
+        else:
+            raise RuntimeError(f"{orchestrator} is not yet supported")
+
+        if prompt_update_rmq and click.confirm("Configure RabbitMQ for chatbots?"):
+            update_rmq_config(rmq_config)
+            click.echo(f"Updated RabbitMQ config file: {rmq_config}")
+        chatbots_config = _get_chatbots_mq_config(rmq_config)
+        with open(join(output_path, "chatbots", "chatbots.yaml"), 'w+') as f:
+            yaml.safe_dump(chatbots_config, f)
+        click.echo(f"Outputs generated in {output_path}")
 
     except Exception as e:
         click.echo(e)
