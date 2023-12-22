@@ -13,17 +13,30 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingress.ingressClassName }}
     cert-manager.io/issuer: {{ .Values.ingress.certIssuer }}
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
   tls:
     - secretName: {{ .Values.ingress.tlsSecretName }}
       hosts:
         {{- range .Values.ingress.rules }}
+        {{- if eq .host "*" }}
+        - "*.{{ $.Values.domain }}"
+        {{- else if eq .host $.Values.domain }}
+        - {{ $.Values.domain}}
+        {{- else }}
         - {{ printf "%s.%s " .host $.Values.domain }}
+        {{- end }}
         {{- end }}
 
   rules:
     {{- range .Values.ingress.rules }}
+    {{- if eq .host "*" }}
+    - host: "*.{{ $.Values.domain }}"
+    {{- else if eq .host $.Values.domain }}
+    - host: {{ $.Values.domain}}
+    {{- else }}
     - host: {{ printf "%s.%s " .host $.Values.domain }}
+    {{- end }}
       http:
         paths:
           - path: /

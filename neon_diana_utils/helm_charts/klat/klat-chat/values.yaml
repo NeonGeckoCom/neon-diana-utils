@@ -26,7 +26,7 @@ resources:
 ingress:
   enabled: True
   ingressClassName: nginx
-  tlsSecretName: tls-letsencrypt-prod
+  tlsSecretName: tls-letsencrypt-klat
   certIssuer: letsencrypt-private-key
   rules:
     - host: klat

@@ -696,6 +696,10 @@ def configure_klat_chat(external_url: str = None,
         confirmed = click.confirm(f"Is '{api_url}' correct?")
     api_subdomain = api_url.split('://', 1)[1].split('.', 1)[0]
 
+    forward_www = False
+    if subdomain != "www":
+        forward_www = click.prompt(f"Route www.{domain} traffic to Klat?")
+
     # Get Libretranslate HTTP API URL
     libretranslate_url = "https://libretranslate.2022.us"
     confirmed = False
@@ -790,6 +794,11 @@ def configure_klat_chat(external_url: str = None,
             {'host': api_subdomain, 'serviceName': 'klat-chat-server',
              'servicePort': 8010}
         ]
+        if forward_www:
+            helm_values['klat']['ingress']['rules'].append({
+                {'host': 'www', 'serviceName': 'klat-chat-client',
+                 'servicePort': 8001}
+            })
         with open(join(output_path, "klat-chat", "values.yaml"), 'w') as f:
             yaml.safe_dump(helm_values, f)
     else:
