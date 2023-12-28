@@ -58,6 +58,11 @@ users:
     password:
     tags:
       - chatbots
+  - name: "neon_llm_submind"
+    password:
+    tags:
+      - chatbots
+      - llm
   - name: "neon_bot_facilitator"
     password:
     tags:
@@ -87,12 +92,12 @@ permissions:
   - user: "neon_llm_chatgpt"
     vhost: "/llm"
     configure: "chat_gpt_.*"
-    write: "chat_gpt_.*"
+    write: "chat_gpt_.*|amq\\.default"
     read: "chat_gpt_.*"
   - user: "neon_llm_fastchat"
     vhost: "/llm"
     configure: "fastchat_.*"
-    write: "fastchat_.*"
+    write: "fastchat_.*|amq\\.default"
     read: "fastchat_.*"
   - user: "neon_api_utils"
     vhost: "/llm"
@@ -161,6 +166,11 @@ permissions:
     read: ".*"
 # TODO: Limit chatbots vhost permissions
   - user: "neon_bot_submind"
+    vhost: "/chatbots"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "neon_llm_submind"
     vhost: "/chatbots"
     configure: ".*"
     write: ".*"
