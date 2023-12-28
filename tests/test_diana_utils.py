@@ -235,6 +235,34 @@ class TestConfiguration(unittest.TestCase):
                 self.assertEqual(config["MQ"]['users'][user]["password"],
                                  "facilitator_password")
 
+    def test_get_unconfigured_backend_services(self):
+        from neon_diana_utils.configuration import _get_unconfigured_mq_backend_services
+        all_configured = {'keys': {'api_services': {'configured': True},
+                                   'emails': {'configured': True},
+                                   'track_my_brands': True},
+                          'LLM_CHAT_GPT': {'config': False},
+                          'FastChat': True}
+        disabled = _get_unconfigured_mq_backend_services(all_configured)
+        self.assertEqual(disabled, set())
+
+        none_configured = {'keys': {'api_services': {},
+                                    'emails': None},
+                           'LLM_CHAT_GPT': {}}
+        disabled = _get_unconfigured_mq_backend_services(none_configured)
+        self.assertEqual(disabled, {'neon-api-proxy', 'neon-brands-service',
+                                    'neon-email-proxy', 'neon-llm-chatgpt',
+                                    'neon-llm-fastchat'})
+
+    def test_get_optional_http_backend(self):
+        from neon_diana_utils.configuration import _get_optional_http_backend
+        self.assertGreater(len(_get_optional_http_backend()), 0)
+        for service in _get_optional_http_backend():
+            self.assertIsInstance(service, str)
+
+        required_services = {'libretranslate', 'stt-nemo', 'tts-coqui'}
+        for service in required_services:
+            self.assertNotIn(service, _get_optional_http_backend(), service)
+
     def test_configure_backend(self):
         from neon_diana_utils.configuration import configure_backend
         # TODO

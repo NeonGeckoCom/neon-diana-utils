@@ -32,7 +32,7 @@ import shutil
 
 from enum import Enum
 from pprint import pformat
-from typing import Optional
+from typing import Optional, Set
 from os import makedirs, listdir
 from os.path import expanduser, join, abspath, isfile, isdir, dirname
 from ovos_utils.xdg_utils import xdg_config_home
@@ -503,6 +503,39 @@ def _get_chatbots_mq_config(rmq_config: str) -> dict:
     return {"MQ": chatbot_config}
 
 
+def _get_unconfigured_mq_backend_services(config: dict) -> Set[str]:
+    """
+    Get a list of MQ Backend services that are not configured to run
+    @param config: dict Configuration (diana.yaml)
+    """
+    config_to_service = {'keys.api_services': 'neon-api-proxy',
+                         'keys.emails': 'neon-email-proxy',
+                         'keys.track_my_brands': 'neon-brands-service',
+                         'LLM_CHAT_GPT': 'neon-llm-chatgpt',
+                         'FastChat': 'neon-llm-fastchat'}
+    disabled = list()
+    for key, service in config_to_service.items():
+        if '.' in key:
+            parts = key.split('.')
+            test = dict(config)
+            for part in parts:
+                test = test.get(part)
+            if not test:
+                disabled.append(service)
+        else:
+            if not config.get(key):
+                disabled.append(service)
+    return set(disabled)
+
+
+def _get_optional_http_backend() -> Set[str]:
+    """
+    Get a set of optional HTTP backend services
+    """
+    return {'tts-larynx', 'tts-ljspeech', 'tts-mozilla', 'tts-nancy',
+            'tts-glados', 'ww-snowboy'}
+
+
 def configure_backend(username: str = None,
                       password: str = None,
                       output_path: str = None,
@@ -523,6 +556,11 @@ def configure_backend(username: str = None,
         click.echo(f"Path exists: {output_path}")
         return
 
+    # Collect user inputs for service configuration
+    keys_config = make_keys_config(False)
+    disabled_mq_services = list(
+        _get_unconfigured_mq_backend_services(keys_config))
+
     if orchestrator == Orchestrator.KUBERNETES:
         shutil.copytree(join(dirname(__file__), "templates", "backend"),
                         join(output_path, "diana-backend"))
@@ -541,6 +579,9 @@ def configure_backend(username: str = None,
         else:
             # Define a default value so secret can be generated
             encoded_token = get_github_encoded_auth("", "")
+            to_disable = ['neon-brands-service', 'neon-script-parser']
+            click.echo(f"The following services are disabled: {to_disable}")
+            disabled_mq_services += to_disable
         confirmed = False
         email = ''
         domain = ''
@@ -557,6 +598,11 @@ def configure_backend(username: str = None,
                                 'tag': tag}))
             confirmed = click.confirm("Is this configuration correct?")
 
+        if click.confirm(f"Disable optional HTTP Services?"):
+            disabled_http_services = _get_optional_http_backend()
+        else:
+            disabled_http_services = set()
+
         # Generate values.yaml with configured params
         values_file = join(output_path, "diana-backend", "values.yaml")
         with open(values_file, 'r') as f:
@@ -564,6 +610,12 @@ def configure_backend(username: str = None,
         helm_values['backend']['letsencrypt']['email'] = email
         helm_values['backend']['diana-http']['domain'] = domain
         helm_values['backend']['ghTokenEncoded'] = encoded_token
+        for service in disabled_mq_services:
+            LOG.debug(f"Disable {service}")
+            helm_values['backend']['diana-mq'][service]['replicaCount'] = 0
+        for service in disabled_http_services:
+            LOG.debug(f"Disable {service}")
+            helm_values['backend']['diana-http'][service]['replicaCount'] = 0
         for service in helm_values['backend']['diana-mq']:
             helm_values['backend']['diana-mq'][service]['image']['tag'] = \
                 tag
@@ -591,7 +643,6 @@ def configure_backend(username: str = None,
         click.echo(f"Generated auth for services: {set(mq_auth_config.keys())}")
 
         # Generate `diana.yaml` output
-        keys_config = make_keys_config(False)
         if keys_config.get("LLM_CHAT_GPT"):
             llm_config = make_llm_bot_config()
         else:

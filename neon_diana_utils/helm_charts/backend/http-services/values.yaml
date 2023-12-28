@@ -17,12 +17,13 @@ tts-coqui:
   ingress:
     enabled: False
 #  image.tag:
-#tts-glados:
-#  subdomain: &host_glados glados
-#  servicePort: *default_port
-#  ingress:
-#    enabled: False
-#  image.tag:
+tts-glados:
+  replicaCount: 0
+  subdomain: &host_glados glados
+  servicePort: *default_port
+  ingress:
+    enabled: False
+  image.tag:
 tts-larynx:
   subdomain: &host_larynx larynx
   servicePort: *default_port
@@ -69,9 +70,9 @@ ingress:
     - host: *host_coqui
       serviceName: backend-coqui
       servicePort: *default_port
-#    - host: *host_glados
-#      serviceName: tts-glados
-#      servicePort: *default_port
+    - host: *host_glados
+      serviceName: tts-glados
+      servicePort: *default_port
     - host: *host_larynx
       serviceName: backend-larynx
       servicePort: *default_port
