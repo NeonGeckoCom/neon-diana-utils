@@ -615,6 +615,7 @@ def configure_backend(username: str = None,
             helm_values['backend']['diana-mq'][service]['replicaCount'] = 0
         for service in disabled_http_services:
             LOG.debug(f"Disable {service}")
+            helm_values['backend']['diana-http'].setdefault(service, dict())
             helm_values['backend']['diana-http'][service]['replicaCount'] = 0
         for service in helm_values['backend']['diana-mq']:
             helm_values['backend']['diana-mq'][service]['image']['tag'] = \
@@ -743,6 +744,7 @@ def configure_neon_core(mq_user: str = None,
         return
 
     # Prompt for IRIS Web UI configuration
+    # TODO: Optional
     confirmed = False
     iris_domain = "iris.diana.k8s"  # TODO: Read from backend config
     while not confirmed:
@@ -868,7 +870,7 @@ def configure_klat_chat(external_url: str = None,
 
     forward_www = False
     if subdomain != "www":
-        forward_www = click.prompt(f"Route www.{domain} traffic to Klat?")
+        forward_www = click.confirm(f"Route www.{domain} traffic to Klat?")
 
     # Get Libretranslate HTTP API URL
     libretranslate_url = "https://libretranslate.2022.us"
@@ -965,10 +967,10 @@ def configure_klat_chat(external_url: str = None,
              'servicePort': 8010}
         ]
         if forward_www:
-            helm_values['klat']['ingress']['rules'].append({
+            helm_values['klat']['ingress']['rules'].append(
                 {'host': 'www', 'serviceName': 'klat-chat-client',
                  'servicePort': 8001}
-            })
+            )
         with open(join(output_path, "klat-chat", "values.yaml"), 'w') as f:
             yaml.safe_dump(helm_values, f)
     else:
