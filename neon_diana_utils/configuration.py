@@ -33,7 +33,7 @@ import shutil
 from enum import Enum
 from pprint import pformat
 from typing import Optional
-from os import makedirs, listdir, walk, remove
+from os import makedirs, listdir
 from os.path import expanduser, join, abspath, isfile, isdir, dirname
 from ovos_utils.xdg_utils import xdg_config_home
 from ovos_utils.log import LOG
@@ -102,10 +102,12 @@ def make_keys_config(write_config: bool,
             alphavantage_key = click.prompt("AlphaVantage API Key",
                                             type=str)
             owm_key = click.prompt("OpenWeatherMap API Key", type=str)
+            maps_key = click.prompt("geocode.maps.co API Key", type=str)
             api_services = {
                 "wolfram_alpha": {"api_key": wolfram_key},
                 "alpha_vantage": {"api_key": alphavantage_key},
-                "open_weather_map": {"api_key": owm_key}
+                "open_weather_map": {"api_key": owm_key},
+                "map_maker": {"api_key": maps_key}
             }
             click.echo(pformat(api_services))
             keys_confirmed = click.confirm("Are these keys correct?")
