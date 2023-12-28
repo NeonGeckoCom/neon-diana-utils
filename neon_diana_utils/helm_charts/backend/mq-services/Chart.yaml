@@ -4,7 +4,7 @@ description: Deploy DIANA MQ Services
 
 type: application
 version: 0.0.9
-appVersion: "1.0.1a14"
+appVersion: "1.0.1a15"
 dependencies:
   - name: neon-api-proxy
     alias: neon-api-proxy
