@@ -757,10 +757,22 @@ def configure_neon_core(mq_user: str = None,
         shutil.copytree(join(dirname(__file__), "templates", "neon"),
                         join(output_path, "neon-core"))
         neon_config_file = join(output_path, "neon-core", "neon.yaml")
-        # TODO: Configure image tag to use
+
+        # Determine image tag to use
+        tag = 'latest'
+        confirmed = False
+        while not confirmed:
+            tag = click.prompt("Image tags to use for Neon Core Services",
+                               type=str, default=tag)
+            confirmed = click.confirm(f"Is `{tag}` correct?")
         values = join(output_path, "neon-core", "values.yaml")
         with open(values, "r") as f:
             config = yaml.safe_load(f)
+        for service in {'neon-messagebus', 'neon-speech', 'neon-skills',
+                        'neon-audio', 'neon-enclosure', 'neon-gui',
+                        'iris-gradio'}:
+            config['core'][service]['image']['tag'] = tag
+
         if iris_domain:
             iris_subdomain, iris_domain = iris_domain.split('.', 1)
             config['core']['domain'] = iris_domain
