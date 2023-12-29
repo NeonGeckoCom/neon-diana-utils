@@ -744,13 +744,14 @@ def configure_neon_core(mq_user: str = None,
         return
 
     # Prompt for IRIS Web UI configuration
-    # TODO: Optional
-    confirmed = False
-    iris_domain = "iris.diana.k8s"  # TODO: Read from backend config
-    while not confirmed:
-        iris_domain = click.prompt("Hostname for Iris Web UI", type=str,
-                                   default=iris_domain)
-        confirmed = click.confirm(f"Is {iris_domain} correct?")
+    iris_domain = None
+    if click.confirm("Configure IRIS Gradio Web UI?"):
+        confirmed = False
+        iris_domain = "iris.diana.k8s"  # TODO: Read from backend config
+        while not confirmed:
+            iris_domain = click.prompt("Hostname for Iris Gradio Web UI",
+                                       type=str, default=iris_domain)
+            confirmed = click.confirm(f"Is {iris_domain} correct?")
 
     if orchestrator == Orchestrator.KUBERNETES:
         shutil.copytree(join(dirname(__file__), "templates", "neon"),
@@ -760,8 +761,19 @@ def configure_neon_core(mq_user: str = None,
         values = join(output_path, "neon-core", "values.yaml")
         with open(values, "r") as f:
             config = yaml.safe_load(f)
-        config['iris']['subdomain'], config['iris']['domain'] =\
-            iris_domain.split('.', 1)
+        if iris_domain:
+            iris_subdomain, iris_domain = iris_domain.split('.', 1)
+            config['core']['domain'] = iris_domain
+            config['core']['ingress']['rules'].append(
+                {'host': iris_subdomain, 'serviceName': 'neon-core-iris',
+                 'servicePort': 7860})
+        else:
+            click.echo("iris Gradio UI disabled")
+            config['core']['iris-gradio']['replicaCount'] = 0
+
+        if not config['core']['ingress']['rules']:
+            click.echo('No HTTP ingress configured')
+            config['core']['ingress']['enabled'] = False
         with open(values, 'w') as f:
             yaml.safe_dump(config, f)
     elif orchestrator == Orchestrator.COMPOSE:

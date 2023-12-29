@@ -11,4 +11,9 @@ core:
     image: {}
   neon-gui:
     image: {}
-iris: {}
+  iris-gradio:
+    image: {}
+
+  domain: diana.local
+  ingress:
+    rules: []

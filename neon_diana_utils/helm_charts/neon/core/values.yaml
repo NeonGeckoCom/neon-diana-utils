@@ -19,3 +19,18 @@ neon-enclosure:
 neon-gui:
   image:
     tag: *tag
+iris-gradio:
+  ingress:
+    enabled: False
+
+domain: diana.local
+ingress:
+  enabled: True
+  ingressClassName: nginx
+  tlsSecretName: tls-letsencrypt-iris
+  certIssuer: letsencrypt-private-key
+  rules:
+    - host: iris
+      serviceName: neon-core-iris
+      servicePort: 7860
+    # Define ingress rules for any available web UIs that may be enabled here

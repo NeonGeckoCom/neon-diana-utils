@@ -3,9 +3,12 @@ name: neon-core
 description: Deploy Neon Core Services
 
 type: application
-version: 0.0.6
+version: 0.0.8
 appVersion: "1.0.1a19"
 dependencies:
+  - name: base-neon
+    version: 0.0.5
+    repository: file://../../base/base-neon
   - name: neon-messagebus
     alias: neon-messagebus
     version: 0.0.6
@@ -30,3 +33,7 @@ dependencies:
     alias: neon-gui
     version: 0.0.5
     repository: file://../neon-gui
+  - name: neon-iris
+    alias: iris-gradio
+    version: 0.0.5
+    repository: file://../neon-iris
