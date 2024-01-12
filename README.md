@@ -189,12 +189,13 @@ diana configure-mq-backend ~/neon_diana
 
 Follow the prompts to provide / add any necessary configuration parameters. 
 In order to enable all Neon skills, you will need to enable / choose yes for all these services. 
+
 Tips:
-Visit https://github.com/settings/tokens to generate the necessary token for the GitHub private services. 
-   It is only necessary to check the box for permission to read:packages.
-Some parameters are provided for you in brackets.
-SQL username & password are not necessary unless you are working on the brands/coupons skill which is not currently active, so you can skip these (or put in random text if the system won't allow you to leave them blank.)
-If you want to enable ChatGPT, you will need to enter your own API key. You can generate that from an OpenAI account.
+- Visit https://github.com/settings/tokens to generate the necessary token for the GitHub private services. 
+  > It is only necessary to check the box for permission to read:packages.
+- Some parameters are provided for you in brackets.
+- SQL username & password are not necessary unless you are working on the brands/coupons skill which is not currently active, so you can skip these (or put in random text if the system won't allow you to leave them blank.)
+- If you want to enable ChatGPT, you will need to enter your own API key. You can generate that from an OpenAI account.
 
 13. **Optional:** To add extra TCP ports (i.e. for RabbitMQ), update the `OUTPUT_PATH/ingress-nginx/values.yaml` file accordingly.
 
