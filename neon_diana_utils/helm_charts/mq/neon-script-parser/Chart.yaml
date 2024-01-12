@@ -4,7 +4,7 @@ description: Deploy an MQ CCL Script Parser Service
 
 type: application
 version: 0.0.5
-appVersion: "1.0.1a16"
+appVersion: "1.0.1a17"
 
 dependencies:
   - name: base-mq
