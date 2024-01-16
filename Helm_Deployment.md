@@ -20,14 +20,20 @@ provide any necessary configuration parameters; when complete, the specified
 `output_path` will be populated with Helm charts to deploy.
 
 ### Ingress
-An NGINX ingress chart is provided at `<output_path>/ingress-nginx`. `values.yaml`
-may be updated to include any additional TCP ports to be used (i.e. for RabbitMQ)
+An NGINX ingress chart is provided in the diana Helm repository,
+`diana/ingress-common`. A `values.yaml` file may be specified to include any 
+additional TCP ports to be used (i.e. for RabbitMQ)
 and then the chart is generally deployed to the `ingress-nginx` namespace. Only
-one ingress is necessary for a cluster. Deploy the configured ingress with:
-
+one ingress is necessary for a cluster. For example, an ingress `values.yaml`
+could look like:
+```yaml
+ingress-nginx:
+  tcp:
+    5672: "default/neon-rabbitmq:5672"
 ```
-helm dependency update <output_path>/ingress-common
-helm install ingress-nginx <output_path>/ingress-common --namespace ingress-nginx --create-namespace
+Assuming the file exists at `/home/$USER/values.yaml`, this would be deployed with:
+```
+helm install -f /home/$USER/values.yaml ingress-nginx diana/ingress-common --namespace ingress-nginx --create-namespace
 ```
 > At this point, check to make sure all expected subdomains resolve to the ingress
 > IP address (ping each domain and check the resolved address)
