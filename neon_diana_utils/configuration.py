@@ -536,6 +536,25 @@ def _get_optional_http_backend() -> Set[str]:
             'tts-glados', 'ww-snowboy'}
 
 
+def _read_backend_domain(deploy_path: str) -> str:
+    """
+    Read backend configuration to determine the configured root domain
+    @param deploy_path: Path to diana-backend deployment
+    """
+    if isdir(join(deploy_path, "diana-backend")):
+        deploy_path = join(deploy_path, "diana-backend")
+    values_file = join(deploy_path, "values.yaml")
+    if not isfile(values_file):
+        raise FileNotFoundError(values_file)
+    with open(values_file, 'r') as f:
+        backend_config = yaml.safe_load(f)
+    root_domain = backend_config.get('backend', {}).get('diana-http',
+                                                        {}).get('domain')
+    if not root_domain:
+        raise ValueError(f"Expected config not found in: {values_file}")
+    return root_domain
+
+
 def configure_backend(username: str = None,
                       password: str = None,
                       output_path: str = None,
@@ -747,10 +766,13 @@ def configure_neon_core(mq_user: str = None,
     iris_domain = None
     if click.confirm("Configure IRIS Gradio Web UI?"):
         confirmed = False
-        iris_domain = "iris.diana.k8s"  # TODO: Read from backend config
+        try:
+            domain = _read_backend_domain(output_path)
+        except FileNotFoundError:
+            domain = "diana.k8s"
         while not confirmed:
             iris_domain = click.prompt("Hostname for Iris Gradio Web UI",
-                                       type=str, default=iris_domain)
+                                       type=str, default=f"iris.{domain}")
             confirmed = click.confirm(f"Is {iris_domain} correct?")
 
     if orchestrator == Orchestrator.KUBERNETES:

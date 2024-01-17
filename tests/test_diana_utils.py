@@ -263,6 +263,17 @@ class TestConfiguration(unittest.TestCase):
         for service in required_services:
             self.assertNotIn(service, _get_optional_http_backend(), service)
 
+    def test_read_backend_domain(self):
+        from neon_diana_utils.configuration import _read_backend_domain
+        test_dir = join(dirname(__file__), "test_backend_domain")
+        self.assertEqual(_read_backend_domain(test_dir), "test.tld")
+        self.assertEqual(_read_backend_domain(join(test_dir, "diana-backend")),
+                         "test.tld")
+        with self.assertRaises(FileNotFoundError):
+            _read_backend_domain(dirname(test_dir))
+
+        # TODO: Test invalid values.yaml
+
     def test_configure_backend(self):
         from neon_diana_utils.configuration import configure_backend
         # TODO
