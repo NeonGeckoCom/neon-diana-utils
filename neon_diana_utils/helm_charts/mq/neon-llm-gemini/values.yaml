@@ -1,0 +1,13 @@
+serviceName: backend-llm-gemini
+replicaCount: 1
+configSecrets:
+  - diana-config
+  - google-json
+image:
+  repository: ghcr.io/neongeckocom/neon-llm-gemini
+  pullPolicy: Always
+  tag: dev
+resources:
+  requests:
+    memory: "600Mi"
+    cpu: "0.01"

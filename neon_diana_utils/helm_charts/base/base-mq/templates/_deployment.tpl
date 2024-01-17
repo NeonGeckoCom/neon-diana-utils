@@ -41,8 +41,15 @@ spec:
         - name: config
           projected:
             sources:
+            {{- if .Values.configSecrets }}
+            {{- range .Values.configSecrets }}
+              - secret:
+                  name: {{ . }}
+            {{- end }}
+            {{ else }}
               - secret:
                   name: {{ .Values.configSecret }}
+            {{- end }}
         {{- if .Values.persistentVolumeClaim }}
         - name: {{ .Values.persistentVolumeClaim.name }}
           persistentVolumeClaim:

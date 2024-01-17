@@ -87,7 +87,12 @@ def make_llm_bot_config():
     configuration = {"llm_bots": dict()}
     if click.confirm("Configure ChatGPT Personas?"):
         configuration['llm_bots']['chat_gpt'] = persona_config['chat_gpt']
-    # TODO: Add other LLM personas here
+    if click.confirm("Configure PaLM2 Personas?"):
+        configuration['llm_bots']['palm2'] = persona_config['palm2']
+    if click.confirm("Configure Gemini Personas?"):
+        configuration['llm_bots']['gemini'] = persona_config['gemini']
+    if click.confirm("Configure Claude Personas?"):
+        configuration['llm_bots']['claude'] = persona_config['claude']
     return configuration
 
 
@@ -163,7 +168,7 @@ def make_keys_config(write_config: bool,
                 click.confirm("Is this configuration correct?")
 
     chatgpt_config = dict()
-    if click.confirm("Configure ChatGPT Service?"):
+    if click.confirm("Configure ChatGPT LLM?"):
         config_confirmed = False
         while not config_confirmed:
             gpt_key = click.prompt("ChatGPT API Key", type=str)
@@ -189,7 +194,7 @@ def make_keys_config(write_config: bool,
                 click.confirm("Is this configuration correct?")
 
     fastchat_config = dict()
-    if click.confirm("Configure FastChat Service?"):
+    if click.confirm("Configure FastChat LLM?"):
         config_confirmed = False
         while not config_confirmed:
             model = click.prompt("FastChat Model", type=str,
@@ -213,11 +218,93 @@ def make_keys_config(write_config: bool,
             click.echo(pformat(fastchat_config))
             config_confirmed = click.confirm("Is this configuration correct?")
 
+    palm2_config = dict()
+    if click.confirm("Configure PaLM2 LLM?"):
+        config_confirmed = False
+        while not config_confirmed:
+            role = click.prompt("PaLM2 Role", type=str,
+                                default="You are trying to give a short "
+                                        "answer in less than 40 words.")
+            context = click.prompt("PaLM2 context depth", type=int,
+                                   default=3)
+            max_tokens = click.prompt("Max number of tokens in responses",
+                                      type=int, default=100)
+            num_processes = click.prompt(
+                "Number of queries to handle in parallel",
+                type=int, default=1)
+            palm2_config = {
+                "key_path": "/config/neon/google.json",
+                "role": role,
+                "context_depth": context,
+                "max_tokens": max_tokens,
+                "num_parallel_processes": num_processes
+            }
+            click.echo(pformat(palm2_config))
+            config_confirmed = click.confirm("Is this configuration correct?")
+
+    gemini_config = dict()
+    if click.confirm("Configure Gemini LLM?"):
+        config_confirmed = False
+        while not config_confirmed:
+            model = click.prompt("Gemini Model", type=str,
+                                 default="gemini-pro")
+            role = click.prompt("Gemini Role", type=str,
+                                default="You are trying to give a short "
+                                        "answer in less than 40 words.")
+            context = click.prompt("Gemini context depth", type=int,
+                                   default=3)
+            max_tokens = click.prompt("Max number of tokens in responses",
+                                      type=int, default=100)
+            num_processes = click.prompt(
+                "Number of queries to handle in parallel",
+                type=int, default=1)
+            gemini_config = {
+                "key_path": "/config/neon/google.json",
+                "model": model,
+                "role": role,
+                "context_depth": context,
+                "max_tokens": max_tokens,
+                "num_parallel_processes": num_processes
+            }
+            click.echo(pformat(gemini_config))
+            config_confirmed = click.confirm("Is this configuration correct?")
+
+    claude_config = dict()
+    if click.confirm("Configure Anthropic Claude LLM?"):
+        config_confirmed = False
+        while not config_confirmed:
+            anthropic_key = click.prompt("Antrhopic API Key", type=str)
+            openai_key = click.prompt("OpenAI API Key", type=str,
+                                      default=chatgpt_config.get('key'))
+            model = click.prompt("Anthropic Model", type=str,
+                                     default="claude-2")
+            role = click.prompt("Role", type=str,
+                                default="You are trying to give a short "
+                                        "answer in less than 40 words.")
+            context = click.prompt("Context depth", type=int, default=3)
+            max_tokens = click.prompt("Maximum tokens in responses", type=int,
+                                      default=256)
+            claude_config = {
+                "key": anthropic_key,
+                "openai_key": openai_key,
+                "model": model,
+                "role": role,
+                "context_depth": context,
+                "max_tokens": max_tokens
+            }
+            click.echo(pformat(claude_config))
+            config_confirmed = \
+                click.confirm("Is this configuration correct?")
+
     config = {"keys": {"api_services": api_services,
                        "emails": email_config,
                        "track_my_brands": brands_config},
               "LLM_CHAT_GPT": chatgpt_config,
-              "FastChat": fastchat_config
+              "LLM_FASTCHAT": fastchat_config,
+              "LLM_PALM2": palm2_config,
+              "LLM_GEMINI": gemini_config,
+              "LLM_CLAUDE": claude_config,
+              "FastChat": fastchat_config  # TODO: Backwards-compat. only
               }
     if write_config:
         click.echo(f"Writing configuration to {output_file}")
@@ -509,6 +596,18 @@ def configure_backend(username: str = None,
             llm_config = make_llm_bot_config()
         else:
             llm_config = dict()
+        # Check if google.json file is expected
+        if any((keys_config['LLM_PALM2'], keys_config['LLM_GEMINI'])):
+            handled = False
+            while not handled:
+                cred = click.prompt("Path to Google credential file", type=str)
+                cred = expanduser(cred)
+                if not isfile(cred):
+                    click.echo(f"Invalid path ({cred}). Please, try again.")
+                else:
+                    shutil.copyfile(cred, join(dirname(diana_config),
+                                               "google.json"))
+                    handled = True
         config = {**{"MQ": {"users": mq_auth_config,
                             "server": "neon-rabbitmq",
                             "port": 5672}},
