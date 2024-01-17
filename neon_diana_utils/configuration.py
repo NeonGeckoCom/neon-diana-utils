@@ -512,7 +512,10 @@ def _get_unconfigured_mq_backend_services(config: dict) -> Set[str]:
                          'keys.emails': 'neon-email-proxy',
                          'keys.track_my_brands': 'neon-brands-service',
                          'LLM_CHAT_GPT': 'neon-llm-chatgpt',
-                         'FastChat': 'neon-llm-fastchat'}
+                         'LLM_FASTCHAT': 'neon-llm-fastchat',
+                         'LLM_CLAUDE': 'neon-llm-claude',
+                         'LLM_GEMINI': 'neon-llm-gemini',
+                         'LLM_PALM2': 'neon-llm-palm'}
     disabled = list()
     for key, service in config_to_service.items():
         if '.' in key:
