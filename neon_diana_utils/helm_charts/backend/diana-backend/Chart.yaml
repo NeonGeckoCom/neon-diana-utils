@@ -35,5 +35,5 @@ dependencies:
     version: 0.0.12
     repository: file://../http-services
   - name: diana-mq
-    version: 0.0.16
+    version: 0.0.17
     repository: file://../mq-services
