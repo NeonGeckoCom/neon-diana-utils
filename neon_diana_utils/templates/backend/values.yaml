@@ -11,6 +11,12 @@ backend:
       image: {}
     neon-llm-fastchat:
       image: {}
+    neon-llm-claude:
+      image: {}
+    neon-llm-palm:
+      image: {}
+    neon-llm-gemini:
+      image: {}
     neon-metrics-service:
       image: {}
     neon-script-parser:

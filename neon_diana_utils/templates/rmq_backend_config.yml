@@ -44,6 +44,21 @@ users:
     tags:
       - backend
       - llm
+  - name: "neon_llm_claude"
+    password:
+    tags:
+      - backend
+      - llm
+  - name: "neon_llm_palm"
+    password:
+    tags:
+      - backend
+      - llm
+  - name: "neon_llm_gemini"
+    password:
+    tags:
+      - backend
+      - llm
   - name: "neon_core"
     password:
     tags:
@@ -99,6 +114,21 @@ permissions:
     configure: "fastchat_.*"
     write: "fastchat_.*|amq\\.default"
     read: "fastchat_.*"
+  - user: "neon_llm_claude"
+    vhost: "/llm"
+    configure: "claude_.*"
+    write: "claude_.*|amq\\.default"
+    read: "claude_.*"
+  - user: "neon_llm_palm"
+    vhost: "/llm"
+    configure: "palm2_.*"
+    write: "palm2_.*|amq\\.default"
+    read: "palm2_.*"
+  - user: "neon_llm_gemini"
+    vhost: "/llm"
+    configure: "gemini_.*"
+    write: "gemini_.*|amq\\.default"
+    read: "gemini_.*"
   - user: "neon_api_utils"
     vhost: "/llm"
     configure: ".*"

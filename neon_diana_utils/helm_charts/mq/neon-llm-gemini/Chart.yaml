@@ -1,10 +1,10 @@
 apiVersion: v2
-name: neon-api-proxy
-description: Deploy an MQ API Proxy
+name: neon-llm-gemini
+description: Deploy an LLM proxy for Gemini by Google
 
 type: application
-version: 0.0.6
-appVersion: "1.0.1a18"
+version: 0.0.2
+appVersion: "1.0.1a16"
 
 dependencies:
   - name: base-mq

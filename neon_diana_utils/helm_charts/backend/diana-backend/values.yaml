@@ -6,8 +6,10 @@
 ghTokenEncoded: ''
 dianaConfig: ''
 rabbitMqConfig: ''
+googleJson: ''
 
 configSecret: diana-config
+googleSecret: google-json
 
 letsencrypt:
   sslSecret: &ssl_secret letsencrypt-private-key
