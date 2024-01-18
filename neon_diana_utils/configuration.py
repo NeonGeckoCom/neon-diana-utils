@@ -602,7 +602,6 @@ def configure_backend(username: str = None,
             # Define a default value so secret can be generated
             encoded_token = get_github_encoded_auth("", "")
             to_disable = ['neon-brands-service', 'neon-script-parser']
-            click.echo(f"The following services are disabled: {to_disable}")
             disabled_mq_services += to_disable
         confirmed = False
         email = ''
@@ -620,8 +619,13 @@ def configure_backend(username: str = None,
                                 'tag': tag}))
             confirmed = click.confirm("Is this configuration correct?")
 
+        click.echo(f"The following MQ services are disabled: "
+                   f"{disabled_mq_services}")
+
         if click.confirm(f"Disable optional HTTP Services?"):
             disabled_http_services = _get_optional_http_backend()
+            click.echo(f"The following HTTP services are disabled: "
+                       f"{disabled_http_services}")
         else:
             disabled_http_services = set()
 
