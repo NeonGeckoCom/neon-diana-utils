@@ -5,6 +5,7 @@ domain: diana.k8s
 configMap: klat-config
 clientSubdomain: klat
 serverSubdomain: klatapi
+adminSubdomain: admin
 images:
   tag: dev
   pullPolicy: Always
@@ -17,10 +18,12 @@ images:
   observer:
     image: ghcr.io/neongeckocom/klatchat_observer
     name: klat-chat-observer
-
+  admin:
+    image: ghcr.io/neongeckocom/pyklatchat_admin
+    name: klat-chat-admin
 resources:
   requests:
-    memory: "500Mi"
+    memory: "1500Mi"
     cpu: "0.01"
 
 ingress:
@@ -35,3 +38,6 @@ ingress:
     - host: klatapi
       serviceName: klat-chat-server
       servicePort: 8010
+    - host: admin
+      serviceName: klat-chat-admin
+      servicePort: 3000
