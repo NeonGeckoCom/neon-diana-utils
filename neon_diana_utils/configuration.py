@@ -304,7 +304,11 @@ def make_keys_config(write_config: bool,
               "LLM_PALM2": palm2_config,
               "LLM_GEMINI": gemini_config,
               "LLM_CLAUDE": claude_config,
-              "FastChat": fastchat_config  # TODO: Backwards-compat. only
+              "FastChat": fastchat_config,  # TODO: Backwards-compat. only
+              "hana": {
+                  "access_token_secret": secrets.token_hex(32),
+                  "refresh_token_secret": secrets.token_hex(32)
+              }
               }
     if write_config:
         click.echo(f"Writing configuration to {output_file}")
@@ -646,6 +650,8 @@ def configure_backend(username: str = None,
         for service in helm_values['backend']['diana-mq']:
             helm_values['backend']['diana-mq'][service]['image']['tag'] = \
                 tag
+        helm_values['backend']['diana-http']['endpoint-hana']['image']['tag'] \
+            = tag
         with open(values_file, 'w') as f:
             yaml.safe_dump(helm_values, f)
     elif orchestrator == Orchestrator.COMPOSE:

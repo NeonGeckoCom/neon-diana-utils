@@ -6,6 +6,11 @@ libretranslate:
   ingress:
     enabled: False
 #  image.tag:
+endpoint-hana:
+  subdomain: &host_hana hana
+  servicePort: *default_port
+  ingress:
+    enabled: False
 stt-nemo:
   subdomain: &host_nemo nemo
   servicePort: *default_port
@@ -61,7 +66,10 @@ ingress:
   tlsSecretName: tls-letsencrypt-prod
   certIssuer: letsencrypt-private-key
   rules:
-    - host: *host_nemo
+    - host: *host_hana
+      serviceName: endpoint-hana
+      servicePort: *default_port
+    - host: *host_hana
       serviceName: backend-nemo
       servicePort: *default_port
     - host: *host_libretranslate
