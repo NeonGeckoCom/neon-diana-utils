@@ -5,7 +5,7 @@ domain: diana.k8s
 configMap: klat-config
 clientSubdomain: klat
 serverSubdomain: klatapi
-adminSubdomain: admin
+adminSubdomain: klatadmin
 images:
   tag: dev
   pullPolicy: Always
