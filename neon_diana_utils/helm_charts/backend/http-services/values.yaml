@@ -69,7 +69,7 @@ ingress:
     - host: *host_hana
       serviceName: endpoint-hana
       servicePort: *default_port
-    - host: *host_hana
+    - host: *host_nemo
       serviceName: backend-nemo
       servicePort: *default_port
     - host: *host_libretranslate
