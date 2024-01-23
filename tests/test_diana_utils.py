@@ -83,13 +83,15 @@ class TestConfiguration(unittest.TestCase):
         # Test with file write
         config2 = make_keys_config(True, test_output_file)
         self.assertTrue(isfile(test_output_file))
+        with open(test_output_file, 'r') as f:
+            from_disk = yaml.safe_load(f)
+        self.assertEqual(from_disk, config2)
+
+        # Test default configuration values
         hana_config2 = config2.pop("hana")
         self.assertEqual(config, config2)
         self.assertEqual(hana_config2.keys(), hana_config.keys())
         self.assertNotEqual(hana_config2, hana_config)
-        with open(test_output_file, 'r') as f:
-            from_disk = yaml.safe_load(f)
-        self.assertEqual(from_disk, config2)
 
         os.remove(test_output_file)
 
