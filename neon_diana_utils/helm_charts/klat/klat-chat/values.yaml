@@ -38,6 +38,6 @@ ingress:
     - host: klatapi
       serviceName: klat-chat-server
       servicePort: 8010
-    - host: admin
+    - host: klatadmin
       serviceName: klat-chat-admin
       servicePort: 3000
