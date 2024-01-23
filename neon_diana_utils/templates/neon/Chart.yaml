@@ -9,9 +9,5 @@ appVersion: "1.0.1a5"
 dependencies:
   - name: neon-core
     alias: core
-    version: 0.0.6
-    repository: https://neongeckocom.github.io/neon-diana-utils
-  - name: neon-iris
-    alias: iris
-    version: 0.0.4
+    version: 0.0.8
     repository: https://neongeckocom.github.io/neon-diana-utils

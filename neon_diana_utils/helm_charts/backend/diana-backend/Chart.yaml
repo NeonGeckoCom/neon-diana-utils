@@ -15,7 +15,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.1.22
+version: 0.1.23
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -32,8 +32,8 @@ dependencies:
     version: 11.13.0
     repository: https://charts.bitnami.com/bitnami
   - name: diana-http
-    version: 0.0.11
+    version: 0.0.12
     repository: file://../http-services
   - name: diana-mq
-    version: 0.0.16
+    version: 0.0.17
     repository: file://../mq-services
