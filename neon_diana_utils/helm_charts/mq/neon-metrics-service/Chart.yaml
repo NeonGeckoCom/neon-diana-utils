@@ -3,10 +3,10 @@ name: neon-metrics-service
 description: Deploy a Metrics Collector Service
 
 type: application
-version: 0.0.6
-appVersion: "1.0.1a14"
+version: 0.0.7
+appVersion: "1.0.1a20"
 
 dependencies:
   - name: base-mq
-    version: 0.0.5
+    version: 0.0.10
     repository: file://../../base/base-mq

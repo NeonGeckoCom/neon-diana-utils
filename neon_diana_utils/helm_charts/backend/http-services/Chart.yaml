@@ -3,8 +3,8 @@ name: diana-http
 description: Deploy DIANA HTTP Services
 
 type: application
-version: 0.0.11
-appVersion: "1.0.1a14"
+version: 0.0.12
+appVersion: "1.0.1a20"
 dependencies:
   - name: libretranslate
     alias: libretranslate
@@ -14,10 +14,10 @@ dependencies:
     alias: tts-coqui
     version: 0.0.5
     repository: file://../../http/tts-coqui
-#  - name: tts-glados
-#    alias: tts-glados
-#    version: 0.0.1
-#    repository: https://neongeckocom.github.io/neon-diana-utils
+  - name: tts-glados
+    alias: tts-glados
+    version: 0.0.1
+    repository: https://neongeckocom.github.io/neon-diana-utils
   - name: tts-larynx
     alias: tts-larynx
     version: 0.0.5

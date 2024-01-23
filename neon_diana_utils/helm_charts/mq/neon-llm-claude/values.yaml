@@ -1,0 +1,11 @@
+serviceName: backend-llm-claude
+replicaCount: 1
+configSecret: diana-config
+image:
+  repository: ghcr.io/neongeckocom/neon-llm-claude
+  pullPolicy: Always
+  tag: dev
+resources:
+  requests:
+    memory: "600Mi"
+    cpu: "0.01"

@@ -3,10 +3,10 @@ name: neon-gui
 description: Deploy Neon Core GUI Service
 
 type: application
-version: 0.0.5
-appVersion: "1.0.1a14"
+version: 0.0.6
+appVersion: "1.0.1a20"
 
 dependencies:
   - name: base-neon
-    version: 0.0.4
+    version: 0.0.5
     repository: file://../../base/base-neon

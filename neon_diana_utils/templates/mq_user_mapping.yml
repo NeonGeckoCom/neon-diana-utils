@@ -15,10 +15,18 @@ neon_llm_chatgpt:
   - neon_llm_chat_gpt
 neon_llm_fastchat:
   - neon_llm_fastchat
+neon_llm_claude:
+  - neon_llm_claude
+neon_llm_palm:
+  - neon_llm_palm2
+neon_llm_gemini:
+  - neon_llm_gemini
 neon_core:
   - chat_api_proxy
 chat_observer:
   - chat_observer
+neon_llm_submind:
+  - neon_llm_submind
 neon_bot_submind:
   - alan
   - alice

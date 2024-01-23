@@ -1,0 +1,13 @@
+backend:
+  diana-http:
+    domain: test.tld
+  diana-mq:
+    neon-api-proxy:
+      image:
+        tag: dev
+    neon-brands-service:
+      image:
+        tag: dev
+    neon-email-proxy:
+      image:
+        tag: dev

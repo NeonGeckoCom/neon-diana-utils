@@ -17,7 +17,7 @@ To install Diana:
 
 To deploy Diana: 
 
-* [Kubectl](https://kubernetes.io/docs/reference/kubectl/) Kubernetes command-line tool.
+*  [Kubectl](https://kubernetes.io/docs/reference/kubectl/) Kubernetes command-line tool.  
 * [Helm](https://helm.sh/) package manager for Kubernetes.
 * A [Kubernetes](https://kubernetes.io/) installation.
   * The following instructions assume a local installation using [Microk8s](https://microk8s.io/) version 1.26/stable or later.
@@ -29,6 +29,12 @@ We recommend you use a [Python virtual environment](https://docs.python.org/3/li
 
 1. Create a Python virtual environment:
 
+Install the python3.10 venv package
+```
+sudo apt install python3.10 -m venv
+```
+
+Create the virtual environment
 ```
 python3.10 -m venv venv
 ```
@@ -43,15 +49,15 @@ Using this new window, proceed with the instructions.
 
 ## Install Diana
 
-3. Use Pip to install Diana:
+3. Use Pip to install the current stable version of Diana:
 
 ```
-pip install --pre neon-diana-utils
+pip install neon-diana-utils
 ```
 
-This command installs the newest pre-release version, which is described in this tutorial. 
+This command installs the newest stable version, which is described in this tutorial. 
 
-**Warning:** You can use `pip install neon-diana-utils` to install the current stable version. Version 1.0.0 includes Helm chart support. For information on installing and running older versions, see [the archived documentation in the README file](https://github.com/NeonGeckoCom/neon-diana-utils/blob/dev/README.md).
+**Tip:** You can use `pip install --pre neon-diana-utils` to install the current pre-release version. 
 
 For more information on the available versions of Diana, see [the Python Package Index repo for Neon Diana](https://pypi.org/project/neon-diana-utils/).
 
@@ -102,6 +108,7 @@ sudo snap install microk8s --classic
 sudo usermod -aG microk8s $USER
 newgrp microk8s
 ```
+This can be done in the virtual environment terminal or in the regular terminal. 
 
 5. Start Microk8s:
 
@@ -133,11 +140,11 @@ Note: Unless you plan on adding multiple nodes, this range only needs one addres
 
 8. After Microk8s is running, use `microk8s kubectl create token default` to create a Microk8s token.
 
-9. In the new terminal window, use `microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 1443:443` to forward the dashboard port. 
+9. Use `microk8s kubectl port-forward -n kube-system service/kubernetes-dashboard 1443:443` to forward the dashboard port. 
 
 You can now access your Kubernetes dashboard in a browser at https://localhost:1443/ using the token you created in step 2. 
 
-10. The process in this terminal needs to keep running. Either background the process, or leave this terminal window open and open a new terminal window to continue working.
+10. The process in this terminal needs to keep running. Either background the process, or leave this terminal window open and open a new terminal window and activate the virtual environment in it (. venv/bin/activate) to continue working.
 
 ### Set Up DNS
 
@@ -145,7 +152,15 @@ The ingress controller needs URLs to be mapped to services. There are a number o
 
 For this guide, we will use the simple case of editing the `/etc/hosts` file.
 
-11. Edit the `/etc/hosts` file. Add one entry for the domain name of each service you intend to run. Add the canonical domain and point it to the IP address you gave MetalLB in step 3.
+11. Edit the `/etc/hosts` file. Use either:
+```
+sudo nano /etc/hosts
+```
+or if you prefer a GUI text editor:
+```
+sudo gedit /etc/hosts
+```
+Add one entry for the domain name of each service you intend to run. Add the canonical domain and point it to the IP address you gave MetalLB in step 3.
 
 For example, if you plan to run a service named `test-service` on the `diana.k8s` domain, add the following line:
 
@@ -172,17 +187,25 @@ Replace `OUTPUT_PATH` with the directory where you want Diana to store its Helm 
 diana configure-mq-backend ~/neon_diana
 ```
 
-Follow the prompts to provide any necessary configuration parameters. 
+Follow the prompts to provide / add any necessary configuration parameters. 
+In order to enable all Neon skills, you will need to enable / choose yes for all these services. 
+
+Tips:
+- Visit https://github.com/settings/tokens to generate the necessary token for the GitHub private services. 
+  > It is only necessary to check the box for permission to read:packages.
+- Some parameters are provided for you in brackets.
+- SQL username & password are not necessary unless you are working on the brands/coupons skill which is not currently active, so you can skip these (or put in random text if the system won't allow you to leave them blank.)
+- If you want to enable ChatGPT, you will need to enter your own API key. You can generate that from an OpenAI account.
 
 13. **Optional:** To add extra TCP ports (i.e. for RabbitMQ), update the `OUTPUT_PATH/ingress-nginx/values.yaml` file accordingly.
 
 14. Deploy the NGINX ingress:
 
 ```
-helm install ingress-nginx OUTPUT_PATH/ingress-common --namespace ingress-nginx --create-namespace
+microk8s helm install ingress-nginx OUTPUT_PATH/ingress-common --namespace ingress-nginx --create-namespace
 ```
 
-15. Edit `OUTPUT_PATH/diana-backend-values.yaml` and update any necessary configuration. At minimum, you need to update the following parameters:
+15. Edit `OUTPUT_PATH/diana-backend/values.yaml` and update any necessary configuration. At minimum, you need to update the following parameters:
 
 * `domain` Change this to the domain you added to the `/etc/hosts` file in step 11.
 * `letsencrypt.email` If you are using a "real" domain, change this to the email address you want to use for the [Let's Encrypt](https://letsencrypt.org/) SSL certificate. For local testing, leave this as is.
@@ -198,8 +221,18 @@ helm dependency update OUTPUT_PATH/diana-backend
 
 17. Use Helm to launch Diana:
 
+If you haven't already:
 ```
-helm install diana-backend OUTPUT_PATH/test/diana-backend --namespace backend --create-namespace
+helm repo add jetstack https://charts.jetstack.io
+helm repo add bitnami https://charts.bitnami.com/bitnami
+```
+Then
+```
+helm dependency build ~/neon_diana/diana-backend
+```
+Finally
+```
+microk8s helm install diana-backend OUTPUT_PATH/diana-backend --namespace backend --create-namespace
 ```
 
 This creates the `backend` namespace and launches Diana into that namespace. You can change this to any namespace name you prefer. You may want to use separate namespaces for test versus production deployments, to separate the Diana backend from other deployments, or both.

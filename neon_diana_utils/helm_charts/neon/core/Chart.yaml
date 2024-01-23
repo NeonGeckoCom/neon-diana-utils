@@ -3,30 +3,34 @@ name: neon-core
 description: Deploy Neon Core Services
 
 type: application
-version: 0.0.6
-appVersion: "1.0.1a14"
+version: 0.0.9
+appVersion: "1.0.1a20"
 dependencies:
   - name: neon-messagebus
     alias: neon-messagebus
-    version: 0.0.6
+    version: 0.0.7
     repository: file://../neon-messagebus
   - name: neon-speech
     alias: neon-speech
-    version: 0.0.5
+    version: 0.0.6
     repository: file://../neon-speech
   - name: neon-skills
     alias: neon-skills
-    version: 0.0.6
+    version: 0.0.7
     repository: file://../neon-skills
   - name: neon-audio
     alias: neon-audio
-    version: 0.0.6
+    version: 0.0.7
     repository: file://../neon-audio
   - name: neon-enclosure
     alias: neon-enclosure
-    version: 0.0.5
+    version: 0.0.6
     repository: file://../neon-enclosure
   - name: neon-gui
     alias: neon-gui
-    version: 0.0.5
+    version: 0.0.6
     repository: file://../neon-gui
+  - name: neon-iris
+    alias: iris-gradio
+    version: 0.0.5
+    repository: file://../neon-iris

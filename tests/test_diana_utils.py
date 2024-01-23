@@ -54,6 +54,19 @@ class TestConfiguration(unittest.TestCase):
         shutil.rmtree(valid_output_path)
 
     @patch("click.confirm")
+    def test_make_llm_bot_config(self, confirm):
+        from neon_diana_utils.configuration import make_llm_bot_config
+        confirm.return_value = False
+        self.assertEqual(make_llm_bot_config(), {"llm_bots": {}})
+
+        confirm.return_value = True
+        config = make_llm_bot_config()
+        self.assertIsInstance(config['llm_bots'], dict)
+        self.assertIsInstance(config['llm_bots']['chat_gpt'], list)
+        for bot in config['llm_bots']['chat_gpt']:
+            self.assertEqual(set(bot), {'name', 'description'})
+
+    @patch("click.confirm")
     def test_make_keys_config(self, confirm):
         from neon_diana_utils.configuration import make_keys_config
         confirm.return_value = False
@@ -63,7 +76,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertFalse(isfile(test_output_file))
         self.assertIsInstance(config, dict)
         self.assertIsInstance(config['keys'], dict)
-        self.assertIsInstance(config['ChatGPT'], dict)
+        self.assertIsInstance(config['LLM_CHAT_GPT'], dict)
         self.assertIsInstance(config['FastChat'], dict)
 
         # Test with file write
@@ -221,6 +234,49 @@ class TestConfiguration(unittest.TestCase):
             else:
                 self.assertEqual(config["MQ"]['users'][user]["password"],
                                  "facilitator_password")
+
+    def test_get_unconfigured_backend_services(self):
+        from neon_diana_utils.configuration import _get_unconfigured_mq_backend_services
+        all_configured = {'keys': {'api_services': {'configured': True},
+                                   'emails': {'configured': True},
+                                   'track_my_brands': True},
+                          'LLM_CHAT_GPT': {'config': False},
+                          'LLM_CLAUDE': {'': ''},
+                          'LLM_PALM2': 'enabled',
+                          'LLM_GEMINI': 'enabled',
+                          'LLM_FASTCHAT': True}
+        disabled = _get_unconfigured_mq_backend_services(all_configured)
+        self.assertEqual(disabled, set())
+
+        none_configured = {'keys': {'api_services': {},
+                                    'emails': None},
+                           'LLM_CHAT_GPT': {}}
+        disabled = _get_unconfigured_mq_backend_services(none_configured)
+        self.assertEqual(disabled, {'neon-api-proxy', 'neon-brands-service',
+                                    'neon-email-proxy', 'neon-llm-chatgpt',
+                                    'neon-llm-fastchat', 'neon-llm-claude',
+                                    'neon-llm-palm', 'neon-llm-gemini'})
+
+    def test_get_optional_http_backend(self):
+        from neon_diana_utils.configuration import _get_optional_http_backend
+        self.assertGreater(len(_get_optional_http_backend()), 0)
+        for service in _get_optional_http_backend():
+            self.assertIsInstance(service, str)
+
+        required_services = {'libretranslate', 'stt-nemo', 'tts-coqui'}
+        for service in required_services:
+            self.assertNotIn(service, _get_optional_http_backend(), service)
+
+    def test_read_backend_domain(self):
+        from neon_diana_utils.configuration import _read_backend_domain
+        test_dir = join(dirname(__file__), "test_backend_domain")
+        self.assertEqual(_read_backend_domain(test_dir), "test.tld")
+        self.assertEqual(_read_backend_domain(join(test_dir, "diana-backend")),
+                         "test.tld")
+        with self.assertRaises(FileNotFoundError):
+            _read_backend_domain(dirname(test_dir))
+
+        # TODO: Test invalid values.yaml
 
     def test_configure_backend(self):
         from neon_diana_utils.configuration import configure_backend

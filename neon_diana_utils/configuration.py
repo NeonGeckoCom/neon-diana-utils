@@ -32,8 +32,8 @@ import shutil
 
 from enum import Enum
 from pprint import pformat
-from typing import Optional
-from os import makedirs, listdir, walk, remove
+from typing import Optional, Set
+from os import makedirs, listdir
 from os.path import expanduser, join, abspath, isfile, isdir, dirname
 from ovos_utils.xdg_utils import xdg_config_home
 from ovos_utils.log import LOG
@@ -77,6 +77,25 @@ def validate_output_path(output_path: str) -> bool:
     return True
 
 
+def make_llm_bot_config():
+    """
+    Interactive configuration tool to configure llm personas to participate in
+    chatbotsforum/Klat.
+    """
+    with open(join(dirname(__file__), "templates", "llm_personas.yml")) as f:
+        persona_config = yaml.safe_load(f)
+    configuration = {"llm_bots": dict()}
+    if click.confirm("Configure ChatGPT Personas?"):
+        configuration['llm_bots']['chat_gpt'] = persona_config['chat_gpt']
+    if click.confirm("Configure PaLM2 Personas?"):
+        configuration['llm_bots']['palm2'] = persona_config['palm2']
+    if click.confirm("Configure Gemini Personas?"):
+        configuration['llm_bots']['gemini'] = persona_config['gemini']
+    if click.confirm("Configure Claude Personas?"):
+        configuration['llm_bots']['claude'] = persona_config['claude']
+    return configuration
+
+
 def make_keys_config(write_config: bool,
                      output_file: str = None) -> Optional[dict]:
     """
@@ -102,10 +121,12 @@ def make_keys_config(write_config: bool,
             alphavantage_key = click.prompt("AlphaVantage API Key",
                                             type=str)
             owm_key = click.prompt("OpenWeatherMap API Key", type=str)
+            maps_key = click.prompt("geocode.maps.co API Key", type=str)
             api_services = {
                 "wolfram_alpha": {"api_key": wolfram_key},
                 "alpha_vantage": {"api_key": alphavantage_key},
-                "open_weather_map": {"api_key": owm_key}
+                "open_weather_map": {"api_key": owm_key},
+                "map_maker": {"api_key": maps_key}
             }
             click.echo(pformat(api_services))
             keys_confirmed = click.confirm("Are these keys correct?")
@@ -147,7 +168,7 @@ def make_keys_config(write_config: bool,
                 click.confirm("Is this configuration correct?")
 
     chatgpt_config = dict()
-    if click.confirm("Configure ChatGPT Service?"):
+    if click.confirm("Configure ChatGPT LLM?"):
         config_confirmed = False
         while not config_confirmed:
             gpt_key = click.prompt("ChatGPT API Key", type=str)
@@ -173,7 +194,7 @@ def make_keys_config(write_config: bool,
                 click.confirm("Is this configuration correct?")
 
     fastchat_config = dict()
-    if click.confirm("Configure FastChat Service?"):
+    if click.confirm("Configure FastChat LLM?"):
         config_confirmed = False
         while not config_confirmed:
             model = click.prompt("FastChat Model", type=str,
@@ -197,12 +218,93 @@ def make_keys_config(write_config: bool,
             click.echo(pformat(fastchat_config))
             config_confirmed = click.confirm("Is this configuration correct?")
 
+    palm2_config = dict()
+    if click.confirm("Configure PaLM2 LLM?"):
+        config_confirmed = False
+        while not config_confirmed:
+            role = click.prompt("PaLM2 Role", type=str,
+                                default="You are trying to give a short "
+                                        "answer in less than 40 words.")
+            context = click.prompt("PaLM2 context depth", type=int,
+                                   default=3)
+            max_tokens = click.prompt("Max number of tokens in responses",
+                                      type=int, default=100)
+            num_processes = click.prompt(
+                "Number of queries to handle in parallel",
+                type=int, default=1)
+            palm2_config = {
+                "key_path": "/config/neon/google.json",
+                "role": role,
+                "context_depth": context,
+                "max_tokens": max_tokens,
+                "num_parallel_processes": num_processes
+            }
+            click.echo(pformat(palm2_config))
+            config_confirmed = click.confirm("Is this configuration correct?")
+
+    gemini_config = dict()
+    if click.confirm("Configure Gemini LLM?"):
+        config_confirmed = False
+        while not config_confirmed:
+            model = click.prompt("Gemini Model", type=str,
+                                 default="gemini-pro")
+            role = click.prompt("Gemini Role", type=str,
+                                default="You are trying to give a short "
+                                        "answer in less than 40 words.")
+            context = click.prompt("Gemini context depth", type=int,
+                                   default=3)
+            max_tokens = click.prompt("Max number of tokens in responses",
+                                      type=int, default=100)
+            num_processes = click.prompt(
+                "Number of queries to handle in parallel",
+                type=int, default=1)
+            gemini_config = {
+                "key_path": "/config/neon/google.json",
+                "model": model,
+                "role": role,
+                "context_depth": context,
+                "max_tokens": max_tokens,
+                "num_parallel_processes": num_processes
+            }
+            click.echo(pformat(gemini_config))
+            config_confirmed = click.confirm("Is this configuration correct?")
+
+    claude_config = dict()
+    if click.confirm("Configure Anthropic Claude LLM?"):
+        config_confirmed = False
+        while not config_confirmed:
+            anthropic_key = click.prompt("Antrhopic API Key", type=str)
+            openai_key = click.prompt("OpenAI API Key", type=str,
+                                      default=chatgpt_config.get('key'))
+            model = click.prompt("Anthropic Model", type=str,
+                                     default="claude-2")
+            role = click.prompt("Role", type=str,
+                                default="You are trying to give a short "
+                                        "answer in less than 40 words.")
+            context = click.prompt("Context depth", type=int, default=3)
+            max_tokens = click.prompt("Maximum tokens in responses", type=int,
+                                      default=256)
+            claude_config = {
+                "key": anthropic_key,
+                "openai_key": openai_key,
+                "model": model,
+                "role": role,
+                "context_depth": context,
+                "max_tokens": max_tokens
+            }
+            click.echo(pformat(claude_config))
+            config_confirmed = \
+                click.confirm("Is this configuration correct?")
+
     config = {"keys": {"api_services": api_services,
                        "emails": email_config,
                        "track_my_brands": brands_config},
-              "ChatGPT": chatgpt_config,  # TODO: Deprecated reference
               "LLM_CHAT_GPT": chatgpt_config,
-              "FastChat": fastchat_config
+              "LLM_FASTCHAT": fastchat_config,
+              "LLM_PALM2": palm2_config,
+              "LLM_GEMINI": gemini_config,
+              "LLM_CLAUDE": claude_config,
+              "FastChat": fastchat_config  # TODO: Backwards-compat. only
               }
     if write_config:
         click.echo(f"Writing configuration to {output_file}")
@@ -401,6 +503,61 @@ def _get_chatbots_mq_config(rmq_config: str) -> dict:
     return {"MQ": chatbot_config}
 
 
+def _get_unconfigured_mq_backend_services(config: dict) -> Set[str]:
+    """
+    Get a list of MQ Backend services that are not configured to run
+    @param config: dict Configuration (diana.yaml)
+    """
+    config_to_service = {'keys.api_services': 'neon-api-proxy',
+                         'keys.emails': 'neon-email-proxy',
+                         'keys.track_my_brands': 'neon-brands-service',
+                         'LLM_CHAT_GPT': 'neon-llm-chatgpt',
+                         'LLM_FASTCHAT': 'neon-llm-fastchat',
+                         'LLM_CLAUDE': 'neon-llm-claude',
+                         'LLM_GEMINI': 'neon-llm-gemini',
+                         'LLM_PALM2': 'neon-llm-palm'}
+    disabled = list()
+    for key, service in config_to_service.items():
+        if '.' in key:
+            parts = key.split('.')
+            test = dict(config)
+            for part in parts:
+                test = test.get(part)
+            if not test:
+                disabled.append(service)
+        else:
+            if not config.get(key):
+                disabled.append(service)
+    return set(disabled)
+
+
+def _get_optional_http_backend() -> Set[str]:
+    """
+    Get a set of optional HTTP backend services
+    """
+    return {'tts-larynx', 'tts-ljspeech', 'tts-mozilla', 'tts-nancy',
+            'tts-glados', 'ww-snowboy'}
+
+
+def _read_backend_domain(deploy_path: str) -> str:
+    """
+    Read backend configuration to determine the configured root domain
+    @param deploy_path: Path to diana-backend deployment
+    """
+    if isdir(join(deploy_path, "diana-backend")):
+        deploy_path = join(deploy_path, "diana-backend")
+    values_file = join(deploy_path, "values.yaml")
+    if not isfile(values_file):
+        raise FileNotFoundError(values_file)
+    with open(values_file, 'r') as f:
+        backend_config = yaml.safe_load(f)
+    root_domain = backend_config.get('backend', {}).get('diana-http',
+                                                        {}).get('domain')
+    if not root_domain:
+        raise ValueError(f"Expected config not found in: {values_file}")
+    return root_domain
+
+
 def configure_backend(username: str = None,
                       password: str = None,
                       output_path: str = None,
@@ -421,6 +578,11 @@ def configure_backend(username: str = None,
         click.echo(f"Path exists: {output_path}")
         return
 
+    # Collect user inputs for service configuration
+    keys_config = make_keys_config(False)
+    disabled_mq_services = list(
+        _get_unconfigured_mq_backend_services(keys_config))
+
     if orchestrator == Orchestrator.KUBERNETES:
         shutil.copytree(join(dirname(__file__), "templates", "backend"),
                         join(output_path, "diana-backend"))
@@ -439,6 +601,8 @@ def configure_backend(username: str = None,
         else:
             # Define a default value so secret can be generated
             encoded_token = get_github_encoded_auth("", "")
+            to_disable = ['neon-brands-service', 'neon-script-parser']
+            disabled_mq_services += to_disable
         confirmed = False
         email = ''
         domain = ''
@@ -455,6 +619,16 @@ def configure_backend(username: str = None,
                                 'tag': tag}))
             confirmed = click.confirm("Is this configuration correct?")
 
+        click.echo(f"The following MQ services are disabled: "
+                   f"{disabled_mq_services}")
+
+        if click.confirm(f"Disable optional HTTP Services?"):
+            disabled_http_services = _get_optional_http_backend()
+            click.echo(f"The following HTTP services are disabled: "
+                       f"{disabled_http_services}")
+        else:
+            disabled_http_services = set()
+
         # Generate values.yaml with configured params
         values_file = join(output_path, "diana-backend", "values.yaml")
         with open(values_file, 'r') as f:
@@ -462,6 +636,13 @@ def configure_backend(username: str = None,
         helm_values['backend']['letsencrypt']['email'] = email
         helm_values['backend']['diana-http']['domain'] = domain
         helm_values['backend']['ghTokenEncoded'] = encoded_token
+        for service in disabled_mq_services:
+            LOG.debug(f"Disable {service}")
+            helm_values['backend']['diana-mq'][service]['replicaCount'] = 0
+        for service in disabled_http_services:
+            LOG.debug(f"Disable {service}")
+            helm_values['backend']['diana-http'].setdefault(service, dict())
+            helm_values['backend']['diana-http'][service]['replicaCount'] = 0
         for service in helm_values['backend']['diana-mq']:
             helm_values['backend']['diana-mq'][service]['image']['tag'] = \
                 tag
@@ -489,11 +670,27 @@ def configure_backend(username: str = None,
         click.echo(f"Generated auth for services: {set(mq_auth_config.keys())}")
 
         # Generate `diana.yaml` output
-        keys_config = make_keys_config(False)
+        if keys_config.get("LLM_CHAT_GPT"):
+            llm_config = make_llm_bot_config()
+        else:
+            llm_config = dict()
+        # Check if google.json file is expected
+        if any((keys_config['LLM_PALM2'], keys_config['LLM_GEMINI'])):
+            handled = False
+            while not handled:
+                cred = click.prompt("Path to Google credential file", type=str)
+                cred = expanduser(cred)
+                if not isfile(cred):
+                    click.echo(f"Invalid path ({cred}). Please, try again.")
+                else:
+                    shutil.copyfile(cred, join(dirname(diana_config),
+                                               "google.json"))
+                    handled = True
         config = {**{"MQ": {"users": mq_auth_config,
                             "server": "neon-rabbitmq",
                             "port": 5672}},
-                  **keys_config}
+                  **keys_config,
+                  **llm_config}
         click.echo(f"Writing configuration to {diana_config}")
         with open(diana_config, 'w+') as f:
             yaml.dump(config, f)
@@ -573,23 +770,51 @@ def configure_neon_core(mq_user: str = None,
         return
 
     # Prompt for IRIS Web UI configuration
-    confirmed = False
-    iris_domain = "iris.diana.k8s"  # TODO: Read from backend config
-    while not confirmed:
-        iris_domain = click.prompt("Hostname for Iris Web UI", type=str,
-                                   default=iris_domain)
-        confirmed = click.confirm(f"Is {iris_domain} correct?")
+    iris_domain = None
+    if click.confirm("Configure IRIS Gradio Web UI?"):
+        confirmed = False
+        try:
+            domain = _read_backend_domain(output_path)
+        except FileNotFoundError:
+            domain = "diana.k8s"
+        while not confirmed:
+            iris_domain = click.prompt("Hostname for Iris Gradio Web UI",
+                                       type=str, default=f"iris.{domain}")
+            confirmed = click.confirm(f"Is {iris_domain} correct?")
 
     if orchestrator == Orchestrator.KUBERNETES:
         shutil.copytree(join(dirname(__file__), "templates", "neon"),
                         join(output_path, "neon-core"))
         neon_config_file = join(output_path, "neon-core", "neon.yaml")
-        # TODO: Configure image tag to use
+
+        # Determine image tag to use
+        tag = 'latest'
+        confirmed = False
+        while not confirmed:
+            tag = click.prompt("Image tags to use for Neon Core Services",
+                               type=str, default=tag)
+            confirmed = click.confirm(f"Is `{tag}` correct?")
         values = join(output_path, "neon-core", "values.yaml")
         with open(values, "r") as f:
             config = yaml.safe_load(f)
-        config['iris']['subdomain'], config['iris']['domain'] =\
-            iris_domain.split('.', 1)
+        for service in {'neon-messagebus', 'neon-speech', 'neon-skills',
+                        'neon-audio', 'neon-enclosure', 'neon-gui',
+                        'iris-gradio'}:
+            config['core'][service]['image']['tag'] = tag
+
+        if iris_domain:
+            iris_subdomain, iris_domain = iris_domain.split('.', 1)
+            config['core']['domain'] = iris_domain
+            config['core']['ingress']['rules'].append(
+                {'host': iris_subdomain, 'serviceName': 'neon-core-iris',
+                 'servicePort': 7860})
+        else:
+            click.echo("iris Gradio UI disabled")
+            config['core']['iris-gradio']['replicaCount'] = 0
+
+        if not config['core']['ingress']['rules']:
+            click.echo('No HTTP ingress configured')
+            config['core']['ingress']['enabled'] = False
         with open(values, 'w') as f:
             yaml.safe_dump(config, f)
     elif orchestrator == Orchestrator.COMPOSE:
@@ -698,7 +923,7 @@ def configure_klat_chat(external_url: str = None,
 
     forward_www = False
     if subdomain != "www":
-        forward_www = click.prompt(f"Route www.{domain} traffic to Klat?")
+        forward_www = click.confirm(f"Route www.{domain} traffic to Klat?")
 
     # Get Libretranslate HTTP API URL
     libretranslate_url = "https://libretranslate.2022.us"
@@ -795,10 +1020,10 @@ def configure_klat_chat(external_url: str = None,
              'servicePort': 8010}
         ]
         if forward_www:
-            helm_values['klat']['ingress']['rules'].append({
+            helm_values['klat']['ingress']['rules'].append(
                 {'host': 'www', 'serviceName': 'klat-chat-client',
                  'servicePort': 8001}
-            })
+            )
         with open(join(output_path, "klat-chat", "values.yaml"), 'w') as f:
             yaml.safe_dump(helm_values, f)
     else:
