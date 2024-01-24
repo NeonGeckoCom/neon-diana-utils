@@ -1,5 +1,7 @@
 backend:
-  diana-http: {}
+  diana-http:
+    endpoint-hana:
+      image: {}
   diana-mq:
     neon-api-proxy:
       image: {}

@@ -3,7 +3,7 @@ name: diana-http
 description: Deploy DIANA HTTP Services
 
 type: application
-version: 0.0.12
+version: 0.0.14
 appVersion: "1.0.1a21"
 dependencies:
   - name: libretranslate
@@ -42,3 +42,7 @@ dependencies:
     alias: stt-nemo
     version: 0.0.2
     repository: file://../../http/stt-nemo
+  - name: hana
+    alias: endpoint-hana
+    version: 0.0.1
+    repository: file://../../http/hana

@@ -78,14 +78,20 @@ class TestConfiguration(unittest.TestCase):
         self.assertIsInstance(config['keys'], dict)
         self.assertIsInstance(config['LLM_CHAT_GPT'], dict)
         self.assertIsInstance(config['FastChat'], dict)
+        hana_config = config.pop("hana")
 
         # Test with file write
         config2 = make_keys_config(True, test_output_file)
         self.assertTrue(isfile(test_output_file))
-        self.assertEqual(config, config2)
         with open(test_output_file, 'r') as f:
             from_disk = yaml.safe_load(f)
         self.assertEqual(from_disk, config2)
+
+        # Test default configuration values
+        hana_config2 = config2.pop("hana")
+        self.assertEqual(config, config2)
+        self.assertEqual(hana_config2.keys(), hana_config.keys())
+        self.assertNotEqual(hana_config2, hana_config)
 
         os.remove(test_output_file)
 
