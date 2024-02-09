@@ -23,6 +23,7 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from os.path import join
 
 import click
 
@@ -137,6 +138,13 @@ def configure_mq_backend(username, password, output_path):
 def make_rmq_config(username, password, output_file):
     from neon_diana_utils.configuration import generate_rmq_config
     generate_rmq_config(username, password, output_file)
+
+
+@neon_diana_cli.command(help="Update RabbitMQ definitions")
+@click.argument("config_path", default=None, required=False)
+def update_rmq_config(config_path):
+    from neon_diana_utils.configuration import update_rmq_config
+    update_rmq_config(join(config_path, "rabbitmq.json"))
 
 
 @neon_diana_cli.command(help="Generate a configuration file with access keys")

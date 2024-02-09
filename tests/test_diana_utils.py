@@ -110,6 +110,10 @@ class TestConfiguration(unittest.TestCase):
         for user in old_config['users']:
             self.assertIn(user, new_config['users'])
 
+        # Ensure no duplicated users
+        for user in new_config['users']:
+            self.assertEqual(len([u for u in new_config['users']
+                                  if u['name'] == user['name']]), 1, user)
         os.remove(test_file)
         shutil.move(f"{test_file}.old", test_file)
 
@@ -129,6 +133,12 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(set(config.keys()), {'users', 'vhosts', 'permissions'})
         for user in config['users']:
             self.assertEqual(set(user.keys()), {'name', 'password', 'tags'})
+
+        # Ensure no duplicate users
+        for user in config['users']:
+            self.assertEqual(len([u for u in config['users']
+                                  if u['name'] == user['name']]), 1, user)
+
         for vhost in config['vhosts']:
             self.assertEqual(set(vhost.keys()), {'name'})
             self.assertTrue(vhost['name'].startswith('/'))
