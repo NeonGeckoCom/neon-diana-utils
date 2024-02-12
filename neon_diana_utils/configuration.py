@@ -337,7 +337,7 @@ def update_rmq_config(config_file: str = None) -> str:
     with open(config_file) as f:
         real_config = json.load(f)
     new_config = generate_rmq_config("", "")
-    existing_users = (user['name'] for user in real_config['users'])
+    existing_users = [user['name'] for user in real_config['users']]
     for user in new_config['users']:
         if user['name'] in existing_users:
             continue
