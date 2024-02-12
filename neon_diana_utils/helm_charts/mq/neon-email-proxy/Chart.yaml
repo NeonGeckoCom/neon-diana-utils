@@ -4,7 +4,7 @@ description: Deploy an Email Proxy Service
 
 type: application
 version: 0.0.6
-appVersion: "1.0.1a22"
+appVersion: "1.0.1a23"
 
 dependencies:
   - name: base-mq
