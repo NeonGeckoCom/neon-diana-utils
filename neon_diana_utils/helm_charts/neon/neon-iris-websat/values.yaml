@@ -1,0 +1,27 @@
+serviceName: neon-core-iris-websat
+subdomain: iris
+domain: diana.local
+replicaCount: 1
+configMap: neon-config
+
+port:
+  name: websat-ui
+  number: 8000
+  targetPort: 8000
+image:
+  repository: ghcr.io/neongeckocom/neon-iris-websat
+  pullPolicy: Always
+  tag: dev
+resources:
+  requests:
+    memory: "500Mi"
+    cpu: "0.05"
+ingress:
+  enabled: True
+  ingressClassName: nginx
+  tlsSecretName: tls-letsencrypt-iris-websat
+  certIssuer: letsencrypt-private-key
+  rules:
+    - host: iris
+      serviceName: neon-core-iris-websat
+      servicePort: 8000

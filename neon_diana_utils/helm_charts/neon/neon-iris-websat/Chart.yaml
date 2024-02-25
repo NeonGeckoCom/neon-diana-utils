@@ -1,0 +1,12 @@
+apiVersion: v2
+name: neon-iris-websat
+description: Deploy Neon IRIS Web Satellite UI
+
+type: application
+version: 0.0.1
+appVersion: "1.0.1a14"
+
+dependencies:
+  - name: base-neon
+    version: 0.0.4
+    repository: file://../../base/base-neon
