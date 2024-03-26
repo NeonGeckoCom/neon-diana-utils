@@ -28,10 +28,13 @@ spec:
             - name: {{ $fullName }}
               containerPort: {{ .Values.servicePort }}
               protocol: TCP
-          {{- if .Values.configSecret }}
+          {{- if .Values.configSecret || .Values.volumeMounts }}
           volumeMounts:
+          {{- if .Values.configSecret }}
             - mountPath: /config/neon
               name: config
+          {{- if .Values.volumeMounts }}
+          {{- toYaml $.Values.volumeMounts | nindent 12 -}}
           {{- if .Values.resources }}
           resources:
           {{- toYaml $.Values.resources | nindent 12 -}}
@@ -42,6 +45,9 @@ spec:
             sources:
               - secret:
                   name: {{ .Values.configSecret }}
+        {{- if .Values.volumes}}
+        {{- toYaml $.Values.volumes | nindent 8 -}}
+        {{- end }}
       {{- end }}
       restartPolicy: Always
 {{- end -}}

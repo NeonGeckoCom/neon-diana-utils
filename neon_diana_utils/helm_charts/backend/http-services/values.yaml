@@ -59,6 +59,11 @@ ww-snowboy:
   ingress:
     enabled: False
 #  image.tag:
+stt-fasterwhisper:
+  subdomain: &host_fasterwhisper fasterwhisper
+  servicePort: *default_port
+  ingress:
+    enabled: True
 
 ingress:
   enabled: True
@@ -95,5 +100,8 @@ ingress:
       servicePort: *default_port
     - host: *host_snowboy
       serviceName: backend-snowboy
+      servicePort: *default_port
+    - host: *host_fasterwhisper
+      serviceName: backend-fasterwhisper
       servicePort: *default_port
   extraRules: []
