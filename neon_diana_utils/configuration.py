@@ -963,6 +963,19 @@ def configure_klat_chat(external_url: str = None,
     if subdomain != "www":
         forward_www = click.confirm(f"Route www.{domain} traffic to Klat?")
 
+    # Confirm admin login
+    username = "admin"
+    password = None
+    confirmed = False
+    while not confirmed:
+        username = click.prompt("Klat admin username", type=str,
+                                default=username)
+        password = click.prompt("Klat admin password", type=str,
+                                default=password)
+        confirmed = click.confirm(f"Is `{username}`/`{password}` correct?")
+    klat_admin = {"KLAT_AUTH_CREDENTIALS": {"username": username,
+                                            "password": password}}
+
     # Get Libretranslate HTTP API URL
     libretranslate_url = "https://libretranslate.2022.us"
     confirmed = False
@@ -1018,15 +1031,27 @@ def configure_klat_chat(external_url: str = None,
         click.echo(pformat(sftp_config))
         confirmed = click.confirm("Is this configuration correct?")
 
+    # Configure k8s management
+    confirmed = False
+    k8s_ns = "default"
+    while not confirmed:
+        k8s_ns = click.prompt("Kubernetes Namespace", type=str,
+                              default=k8s_ns)
+        confirmed = click.confirm(f"Is this `{k8s_ns}` correct?")
+
     # Define klat.yaml config
-    config = {"SIO_URL": api_url,
-              "MQ": {"users": {"chat_observer": user_config},
-                     "server": "neon-rabbitmq",
-                     "port": 5672},
+    config = {"CHAT_OBSERVER": {"SIO_URL": api_url,
+                                "MQ": {"users": {"chat_observer": user_config},
+                                       "server": "neon-rabbitmq",
+                                       "port": 5672},
+                                "KLAT_AUTH_CREDENTIALS": klat_admin,
+                                "SCAN_NEON_SERVICE": False},
               "CHAT_CLIENT": {"SERVER_URL": api_url,
                               "FORCE_HTTPS": https,
                               "RUNTIME_CONFIG": {
-                                  "CHAT_SERVER_URL_BASE": api_url}},
+                                  # TODO: `CHAT_SERVER_URL_BASE` is deprecated
+                                  "CHAT_SERVER_URL_BASE": api_url,
+                                  "MAX_CONVERSATIONS_PER_PAGE": 4}},
               "CHAT_SERVER": {"DEBUG": True,
                               "MINIFY": False,
                               "SERVER_IP": "klat-chat-server",
@@ -1036,9 +1061,11 @@ def configure_klat_chat(external_url: str = None,
                                   "SECRET": "775115fdecb9b4971193b919d27d410a",
                                   "JWT_ALGO": "HS256"},
                               "LIBRE_TRANSLATE_URL": libretranslate_url,
-                              "SFTP": sftp_config
-                              },
-              "DATABASE_CONFIG": mongo_config}
+                              "SFTP": sftp_config,
+                              "K8S_CONFIG": {"K8S_DEFAULT_NAMESPACE": k8s_ns,
+                                             "K8S_CONFIG_PATH": "kube_config"},
+                              "DATABASE_CONFIG": mongo_config}
+              }
 
     if orchestrator == Orchestrator.KUBERNETES:
         shutil.copytree(join(dirname(__file__), "templates", "klat"),

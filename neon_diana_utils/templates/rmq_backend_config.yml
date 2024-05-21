@@ -82,6 +82,11 @@ users:
     password:
     tags:
       - chatbots
+  - name: "chatbots_observer"
+    password:
+    tags:
+      - klat
+      - chatbots
 vhosts:
   - name: "/neon_emails"
   - name: "/neon_api"
@@ -223,6 +228,16 @@ permissions:
     read: ".*"
   - user: "chat_observer"
     vhost: "/translation"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "chat_observer"
+    vhost: "/llm"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
+  - user: "chatbots_observer"
+    vhost: "/chatbots"
     configure: ".*"
     write: ".*"
     read: ".*"
