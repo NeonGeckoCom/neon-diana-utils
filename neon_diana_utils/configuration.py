@@ -410,6 +410,7 @@ def generate_hana_config() -> dict:
     Generate HANA config based on user inputs.
     :returns: Configuration for HANA frontend
     """
+    click.echo("Configuring HANA (HTTP API for Neon AI)")
     email = click.confirm("Enable endpoint to send email?")
     node_user, node_pass = None, None
     if click.confirm("Enable node websocket connections?"):
