@@ -186,6 +186,39 @@ class TestConfiguration(unittest.TestCase):
             self.assertEqual(user['name'], service_auth['user'])
             self.assertEqual(user['password'], service_auth['password'])
 
+    @patch("neon_diana_utils.configuration.click.prompt")
+    @patch("neon_diana_utils.configuration.click.confirm")
+    def test_generate_hana_config(self, confirm, prompt):
+        from neon_diana_utils.configuration import generate_hana_config
+
+        # Test all confirmed
+        confirm.return_value = True
+        prompt.side_effect = ['neon', 'neon', 60, 6]
+        hana_config = generate_hana_config()
+        self.assertIsInstance(hana_config['hana'], dict)
+        hana_config = hana_config['hana']
+        self.assertTrue(hana_config['enable_email'])
+        self.assertEqual(hana_config['node_username'], 'neon')
+        self.assertEqual(hana_config['node_password'], 'neon')
+        self.assertIsInstance(hana_config['access_token_secret'], str)
+        self.assertIsInstance(hana_config['refresh_token_secret'], str)
+        self.assertEqual(hana_config['requests_per_minute'], 60)
+        self.assertEqual(hana_config['auth_requests_per_minute'], 6)
+
+        # Test none confirmed
+        confirm.return_value = False
+        prompt.side_effect = [30, 3]
+        hana_config = generate_hana_config()
+        self.assertIsInstance(hana_config['hana'], dict)
+        hana_config = hana_config['hana']
+        self.assertFalse(hana_config['enable_email'])
+        self.assertIsNone(hana_config['node_username'])
+        self.assertIsNone(hana_config['node_password'])
+        self.assertIsInstance(hana_config['access_token_secret'], str)
+        self.assertIsInstance(hana_config['refresh_token_secret'], str)
+        self.assertEqual(hana_config['requests_per_minute'], 30)
+        self.assertEqual(hana_config['auth_requests_per_minute'], 3)
+
     def test_update_env_file(self):
         from neon_diana_utils.configuration import update_env_file
         test_file = join(dirname(__file__), "test.env")

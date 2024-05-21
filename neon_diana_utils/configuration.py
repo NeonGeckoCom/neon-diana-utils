@@ -277,7 +277,7 @@ def make_keys_config(write_config: bool,
             openai_key = click.prompt("OpenAI API Key", type=str,
                                       default=chatgpt_config.get('key'))
             model = click.prompt("Anthropic Model", type=str,
-                                     default="claude-2")
+                                 default="claude-2")
             role = click.prompt("Role", type=str,
                                 default="You are trying to give a short "
                                         "answer in less than 40 words.")
@@ -403,6 +403,33 @@ def generate_mq_auth_config(rmq_config: dict) -> dict:
             mq_config[service] = {"user": username,
                                   "password": user['password']}
     return mq_config
+
+
+def generate_hana_config() -> dict:
+    """
+    Generate HANA config based on user inputs.
+    :returns: Configuration for HANA frontend
+    """
+    email = click.confirm("Enable endpoint to send email?")
+    node_user, node_pass = None, None
+    if click.confirm("Enable node websocket connections?"):
+        node_user = click.prompt("Node username", type=str, default="neon")
+        node_pass = click.prompt("Node password", type=str, default="neon")
+    rpm = click.prompt("Client maximum requests per limit", type=int,
+                       default=60)
+    auth_rpm = click.prompt("Client maximum auth requests per limit",
+                            type=int, default=6)
+
+    hana_config = {"enable_email": email,
+                   "node_username": node_user,
+                   "node_password": node_pass,
+                   "access_token_secret": secrets.token_hex(32),
+                   "refresh_token_secret": secrets.token_hex(32),
+                   "requests_per_minute": rpm,
+                   "auth_requests_per_minute": auth_rpm
+                   }
+    LOG.debug(pformat(hana_config))
+    return {"hana": hana_config}
 
 
 def update_env_file(env_file: str):
@@ -675,6 +702,9 @@ def configure_backend(username: str = None,
         mq_auth_config = generate_mq_auth_config(rmq_config)
         click.echo(f"Generated auth for services: {set(mq_auth_config.keys())}")
 
+        # Generate HANA frontend config
+        hana_config = generate_hana_config()
+
         # Generate `diana.yaml` output
         if keys_config.get("LLM_CHAT_GPT"):
             llm_config = make_llm_bot_config()
@@ -696,7 +726,8 @@ def configure_backend(username: str = None,
                             "server": "neon-rabbitmq",
                             "port": 5672}},
                   **keys_config,
-                  **llm_config}
+                  **llm_config,
+                  **hana_config}
         click.echo(f"Writing configuration to {diana_config}")
         with open(diana_config, 'w+') as f:
             yaml.dump(config, f)
@@ -936,7 +967,7 @@ def configure_klat_chat(external_url: str = None,
     confirmed = False
     while not confirmed:
         libretranslate_url = click.prompt("Libretranslate API URL", type=str,
-                               default=libretranslate_url)
+                                          default=libretranslate_url)
         confirmed = click.confirm(f"Is '{libretranslate_url}' correct?")
 
     # Validate https URL
