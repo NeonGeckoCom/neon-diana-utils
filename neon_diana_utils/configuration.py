@@ -1058,7 +1058,7 @@ def configure_klat_chat(external_url: str = None,
                               "COOKIES": {
                                   "LIFETIME": 3600,
                                   "REFRESH_RATE": 300,
-                                  "SECRET": "775115fdecb9b4971193b919d27d410a",
+                                  "SECRET": secrets.token_hex(16),
                                   "JWT_ALGO": "HS256"},
                               "LIBRE_TRANSLATE_URL": libretranslate_url,
                               "SFTP": sftp_config,
