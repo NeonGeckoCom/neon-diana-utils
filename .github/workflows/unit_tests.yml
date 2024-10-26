@@ -25,7 +25,7 @@ jobs:
         run: |
           pytest tests --doctest-modules --junitxml=tests/diana-test-results.xml
       - name: Upload test results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: utils-test-results
+          name: test-results-${{ matrix.python-version }}
           path: tests/diana-test-results.xml
