@@ -18,6 +18,9 @@ neon-script-parser:
 neon-llm-chatgpt:
   image:
     tag: *tag
+neon-llm-vllm:
+  image:
+    tag: *tag
 neon-llm-fastchat:
   image:
     tag: *tag

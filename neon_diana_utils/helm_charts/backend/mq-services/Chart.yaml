@@ -30,6 +30,10 @@ dependencies:
     alias: neon-llm-chatgpt
     version: 0.0.7
     repository: file://../../mq/neon-llm-chatgpt
+  - name: neon-llm-vllm
+    alias: neon-llm-vllm
+    version: 0.0.7
+    repository: file://../../mq/neon-llm-vllm
   - name: neon-llm-fastchat
     alias: neon-llm-fastchat
     version: 0.0.6

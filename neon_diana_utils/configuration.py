@@ -95,6 +95,8 @@ def make_llm_bot_config():
         configuration['llm_bots']['gemini'] = persona_config['gemini']
     if click.confirm("Configure Claude Personas?"):
         configuration['llm_bots']['claude'] = persona_config['claude']
+    if click.confirm("Configure VLLM Personas?"):
+        configuration['llm_bots']['vllm'] = persona_config['vllm']
     return configuration
 
 
@@ -192,6 +194,40 @@ def make_keys_config(write_config: bool,
                 "num_parallel_processes": 1
             }
             click.echo(pformat(chatgpt_config))
+            config_confirmed = \
+                click.confirm("Is this configuration correct?")
+
+    vllm_config = dict()
+    if click.confirm("Configure VLLM?"):
+        config_confirmed = False
+        while not config_confirmed:
+            vllm_api_url = click.prompt("VLLM API URL", type=str)
+            vllm_connection_key = click.prompt("VLLM Connection Key", type=str)
+            vllm_hf_token = click.prompt("Hugging Face Auth Token", type=str)
+            vllm_role = click.prompt("VLLM Role",
+                                     type=str,
+                                     default="You are NeonLLM."
+                                             "You are trying to give a short "
+                                             "answer in less than 40 words.")
+            vllm_context_depth = click.prompt("VLLM Context depth",
+                                              type=int,
+                                              default=4)
+            vllm_max_tokens = click.prompt("Maximum tokens in responses",
+                                      type=int,
+                                      default=100)
+            vllm_num_parallel_processes = click.prompt("Number of parallel processes",
+                                                       type=int,
+                                                       default=2)
+            vllm_config = {
+                "api_url": vllm_api_url,
+                "key": vllm_connection_key,
+                "hf_token": vllm_hf_token,
+                "role": vllm_role,
+                "context_depth": vllm_context_depth,
+                "max_tokens": vllm_max_tokens,
+                "num_parallel_processes": vllm_num_parallel_processes
+            }
+            click.echo(pformat(vllm_config))
             config_confirmed = \
                 click.confirm("Is this configuration correct?")
 
@@ -323,6 +359,7 @@ def make_keys_config(write_config: bool,
                  "emails": email_config,
                  "track_my_brands": brands_config},
         "LLM_CHAT_GPT": chatgpt_config,
+        "LLM_VLLM": vllm_config,
         "LLM_FASTCHAT": fastchat_config,
         "LLM_PALM2": palm2_config,
         "LLM_GEMINI": gemini_config,
@@ -572,6 +609,7 @@ def _get_unconfigured_mq_backend_services(config: dict) -> Set[str]:
                          'keys.emails': 'neon-email-proxy',
                          'keys.track_my_brands': 'neon-brands-service',
                          'LLM_CHAT_GPT': 'neon-llm-chatgpt',
+                         'LLM_VLLM': 'neon-llm-vllm',
                          'LLM_FASTCHAT': 'neon-llm-fastchat',
                          'LLM_CLAUDE': 'neon-llm-claude',
                          'LLM_GEMINI': 'neon-llm-gemini',
