@@ -132,6 +132,13 @@
       "read": "chat_gpt_input"
     },
     {
+      "user": "neon_llm_vllm",
+      "vhost": "/llm",
+      "configure": ".*",
+      "write": ".*",
+      "read": "vllm_input"
+    },
+    {
       "user": "neon_llm_fastchat",
       "vhost": "/llm",
       "configure": ".*",

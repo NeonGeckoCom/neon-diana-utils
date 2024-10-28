@@ -289,6 +289,7 @@ class TestConfiguration(unittest.TestCase):
         all_configured = {'keys': {'api_services': {'configured': True},
                                    'emails': {'configured': True},
                                    'track_my_brands': True},
+                          'LLM_VLLM': {'config': False},
                           'LLM_CHAT_GPT': {'config': False},
                           'LLM_CLAUDE': {'': ''},
                           'LLM_PALM2': 'enabled',
@@ -304,7 +305,8 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(disabled, {'neon-api-proxy', 'neon-brands-service',
                                     'neon-email-proxy', 'neon-llm-chatgpt',
                                     'neon-llm-fastchat', 'neon-llm-claude',
-                                    'neon-llm-palm', 'neon-llm-gemini'})
+                                    'neon-llm-palm', 'neon-llm-gemini',
+                                    'neon-llm-vllm'})
 
     def test_get_optional_http_backend(self):
         from neon_diana_utils.configuration import _get_optional_http_backend

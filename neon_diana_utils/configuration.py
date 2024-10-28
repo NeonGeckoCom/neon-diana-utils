@@ -206,15 +206,13 @@ def make_keys_config(write_config: bool,
             vllm_hf_token = click.prompt("Hugging Face Auth Token", type=str)
             vllm_role = click.prompt("VLLM Role",
                                      type=str,
-                                     default="You are NeonLLM."
-                                             "You are trying to give a short "
-                                             "answer in less than 40 words.")
+                                     default="You are NeonLLM.")
             vllm_context_depth = click.prompt("VLLM Context depth",
                                               type=int,
                                               default=4)
             vllm_max_tokens = click.prompt("Maximum tokens in responses",
-                                      type=int,
-                                      default=100)
+                                           type=int,
+                                           default=512)
             vllm_num_parallel_processes = click.prompt("Number of parallel processes",
                                                        type=int,
                                                        default=2)
