@@ -35,6 +35,8 @@ from pprint import pformat
 from typing import Optional, Set
 from os import makedirs, listdir
 from os.path import expanduser, join, abspath, isfile, isdir, dirname
+
+from click import Choice
 from ovos_utils.xdg_utils import xdg_config_home
 from ovos_utils.log import LOG
 
@@ -296,20 +298,46 @@ def make_keys_config(write_config: bool,
             config_confirmed = \
                 click.confirm("Is this configuration correct?")
 
-    config = {"keys": {"api_services": api_services,
-                       "emails": email_config,
-                       "track_my_brands": brands_config},
-              "LLM_CHAT_GPT": chatgpt_config,
-              "LLM_FASTCHAT": fastchat_config,
-              "LLM_PALM2": palm2_config,
-              "LLM_GEMINI": gemini_config,
-              "LLM_CLAUDE": claude_config,
-              "FastChat": fastchat_config,  # TODO: Backwards-compat. only
-              "hana": {
-                  "access_token_secret": secrets.token_hex(32),
-                  "refresh_token_secret": secrets.token_hex(32)
-              }
-              }
+    sentry_sdk_config = {
+        "enabled": False,
+    }
+    if click.confirm("Configure Sentry SDK?"):
+        config_confirmed = False
+        while not config_confirmed:
+            sentry_dsn = click.prompt("Sentry DSN", type=str)
+
+            should_enable_sentry = click.prompt("Enable Sentry by default?",
+                                                type=Choice(choices=["y", "n"],
+                                                            case_sensitive=False,),
+                                                default="y")
+            sentry_sdk_config = {
+                "enabled": should_enable_sentry,
+                "dsn": sentry_dsn,
+            }
+            click.echo(pformat(sentry_sdk_config))
+            config_confirmed = \
+                click.confirm("Is this configuration correct?")
+
+    config = {
+        "keys": {"api_services": api_services,
+                 "emails": email_config,
+                 "track_my_brands": brands_config},
+        "LLM_CHAT_GPT": chatgpt_config,
+        "LLM_FASTCHAT": fastchat_config,
+        "LLM_PALM2": palm2_config,
+        "LLM_GEMINI": gemini_config,
+        "LLM_CLAUDE": claude_config,
+        "FastChat": fastchat_config,  # TODO: Backwards-compat. only
+        "hana": {
+            "access_token_secret": secrets.token_hex(32),
+            "refresh_token_secret": secrets.token_hex(32)
+        },
+        "logs": {
+            "aggregators": {
+                "sentry": sentry_sdk_config,
+            }
+        }
+    }
     if write_config:
         click.echo(f"Writing configuration to {output_file}")
         with open(output_file, 'w+') as f:
