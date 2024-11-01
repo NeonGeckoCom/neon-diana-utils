@@ -64,6 +64,20 @@ services:
       - XDG_DATA_HOME=/xdg/data
       - XDG_CACHE_HOME=/xdg/cache
       - XDG_STATE_HOME=/xdg/state
+  neon-llm-vllm:
+    container_name: neon-llm-vllm
+    image: ghcr.io/neongeckocom/neon-llm-vllm:${MQ_IMAGE_TAG}
+    depends_on:
+      - neon-rabbitmq
+    networks:
+      - diana-backend
+    volumes:
+      - xdg:/xdg:rw
+    environment:
+      - XDG_CONFIG_HOME=/xdg/config
+      - XDG_DATA_HOME=/xdg/data
+      - XDG_CACHE_HOME=/xdg/cache
+      - XDG_STATE_HOME=/xdg/state
   neon-llm-fastchat:
     container_name: neon-llm-fastchat
     image: ghcr.io/neongeckocom/neon-llm-fastchat:${MQ_IMAGE_TAG}

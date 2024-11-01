@@ -1,0 +1,11 @@
+serviceName: backend-llm-vllm
+replicaCount: 1
+configSecret: diana-config
+image:
+  repository: ghcr.io/neongeckocom/neon-llm-vllm
+  pullPolicy: Always
+  tag: dev
+resources:
+  requests:
+    memory: "1Gi"
+    cpu: "1.0"

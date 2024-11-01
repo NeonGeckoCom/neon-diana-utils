@@ -39,6 +39,12 @@ users:
     tags:
       - backend
       - llm
+  - name: "neon_llm_vllm"
+    password:
+    tags:
+      - backend
+      - llm
+      - vllm
   - name: "neon_llm_fastchat"
     password:
     tags:
@@ -109,6 +115,11 @@ permissions:
     configure: "chat_gpt_.*"
     write: "chat_gpt_.*|amq\\.default"
     read: "chat_gpt_.*"
+  - user: "neon_llm_vllm"
+    vhost: "/llm"
+    configure: "vllm_.*"
+    write: "vllm_.*|amq\\.default"
+    read: "vllm_.*"
   - user: "neon_llm_fastchat"
     vhost: "/llm"
     configure: "fastchat_.*"
