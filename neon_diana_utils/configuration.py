@@ -129,7 +129,8 @@ def make_keys_config(write_config: bool,
             api_services = {
                 "wolfram_alpha": {"api_key": wolfram_key},
                 "alpha_vantage": {"api_key": alphavantage_key},
-                "open_weather_map": {"api_key": owm_key},
+                "open_weather_map": {"api_key": owm_key,
+                                     "cache_seconds": 1800},
                 "map_maker": {"api_key": maps_key}
             }
             click.echo(pformat(api_services))
@@ -202,6 +203,8 @@ def make_keys_config(write_config: bool,
         config_confirmed = False
         while not config_confirmed:
             vllm_api_url = click.prompt("VLLM API URL", type=str)
+            if not vllm_api_url.startswith("http"):
+                vllm_api_url = f"https://{vllm_api_url}"
             vllm_connection_key = click.prompt("VLLM Connection Key", type=str)
             vllm_hf_token = click.prompt("Hugging Face Auth Token", type=str)
             vllm_role = click.prompt("VLLM Role",
@@ -340,10 +343,8 @@ def make_keys_config(write_config: bool,
         while not config_confirmed:
             sentry_dsn = click.prompt("Sentry DSN", type=str)
 
-            should_enable_sentry = click.prompt("Enable Sentry by default?",
-                                                type=Choice(choices=["y", "n"],
-                                                            case_sensitive=False,),
-                                                default="y")
+            should_enable_sentry = click.confirm("Enable Sentry by default?",
+                                                 default=True)
             sentry_sdk_config = {
                 "enabled": should_enable_sentry,
                 "dsn": sentry_dsn,
@@ -353,8 +354,8 @@ def make_keys_config(write_config: bool,
                 click.confirm("Is this configuration correct?")
 
     config = {
-        "keys": {"api_services": api_services,
-                 "emails": email_config,
+        "api_services": api_services,
+        "keys": {"emails": email_config,
                  "track_my_brands": brands_config},
         "LLM_CHAT_GPT": chatgpt_config,
         "LLM_VLLM": vllm_config,
@@ -479,9 +480,9 @@ def generate_hana_config() -> dict:
     if click.confirm("Enable node websocket connections?"):
         node_user = click.prompt("Node username", type=str, default="neon")
         node_pass = click.prompt("Node password", type=str, default="neon")
-    rpm = click.prompt("Client maximum requests per limit", type=int,
+    rpm = click.prompt("Client maximum requests per minute", type=int,
                        default=60)
-    auth_rpm = click.prompt("Client maximum auth requests per limit",
+    auth_rpm = click.prompt("Client maximum auth requests per minute",
                             type=int, default=6)
 
     hana_config = {"enable_email": email,
@@ -843,6 +844,17 @@ def configure_chatbots(rmq_path: str = None,
             update_rmq_config(rmq_config)
             click.echo(f"Updated RabbitMQ config file: {rmq_config}")
         chatbots_config = _get_chatbots_mq_config(rmq_config)
+
+        default_prompts_file = join(dirname(__file__), "templates",
+                                    "automator_prompts.txt")
+        with open(default_prompts_file, "r") as f:
+            default_prompts = f.read().split('\n')
+
+        chatbots_config["chatbots"] = {
+            "proctor": {"next_wait": 60},
+            "automator": {"shouts_emit_interval": 180},
+            "prompts": default_prompts
+        }
         with open(join(output_path, "chatbots", "chatbots.yaml"), 'w+') as f:
             yaml.safe_dump(chatbots_config, f)
         click.echo(f"Outputs generated in {output_path}")
@@ -960,7 +972,10 @@ def configure_neon_core(mq_user: str = None,
                 "skill-homescreen-lite.openvoiceos"]},
             "MQ": mq_config,
             "iris": {"languages": ["en-us", "uk-ua"]},
-            "log_level": "DEBUG"
+            "log_level": "DEBUG",
+            "extra_dependencies": {
+                "voice": ["neon-stt-plugin-nemo-remote"]
+            }
         }
         click.echo(f"Writing configuration to {neon_config_file}")
         with open(neon_config_file, 'w+') as f:
@@ -1028,7 +1043,7 @@ def configure_klat_chat(external_url: str = None,
         forward_www = click.confirm(f"Route www.{domain} traffic to Klat?")
 
     # Get Libretranslate HTTP API URL
-    libretranslate_url = "https://libretranslate.2022.us"
+    libretranslate_url = "https://libretranslate.2022.us"  # TODO: New Default
     confirmed = False
     while not confirmed:
         libretranslate_url = click.prompt("Libretranslate API URL", type=str,
@@ -1082,12 +1097,20 @@ def configure_klat_chat(external_url: str = None,
         click.echo(pformat(sftp_config))
         confirmed = click.confirm("Is this configuration correct?")
 
+    k8s_namespace = "alpha" if "alpha" in domain \
+        else "beta" if "beta" in domain \
+        else "prod" if "chatbotsforum" in domain else "default"
+    k8s_config_path = "kube_config"
+    confirmed = False
+    while not confirmed:
+        k8s_namespace = click.prompt("Kubernetes namespace", type=str,
+                                     default=k8s_namespace)
+        k8s_config_path = click.prompt("Kubernetes config path", type=str,
+                                       default=k8s_config_path)
+        confirmed = click.confirm("Is this configuration correct?")
+
     # Define klat.yaml config
-    config = {"SIO_URL": api_url,
-              "MQ": {"users": {"chat_observer": user_config},
-                     "server": "neon-rabbitmq",
-                     "port": 5672},
-              "CHAT_CLIENT": {"SERVER_URL": api_url,
+    config = {"CHAT_CLIENT": {"SERVER_URL": api_url,
                               "FORCE_HTTPS": https,
                               "RUNTIME_CONFIG": {
                                   "CHAT_SERVER_URL_BASE": api_url}},
@@ -1100,10 +1123,22 @@ def configure_klat_chat(external_url: str = None,
                                   "SECRET": "775115fdecb9b4971193b919d27d410a",
                                   "JWT_ALGO": "HS256"},
                               "LIBRE_TRANSLATE_URL": libretranslate_url,
-                              "SFTP": sftp_config
+                              "SFTP": sftp_config,
+                              "DATABASE_CONFIG": {"mongo": mongo_config,
+                                                  "__default_alias": "mongo"},
+                              "K8S_CONFIG": {
+                                  "K8S_DEFAULT_NAMESPACE": k8s_namespace,
+                                  "K8S_CONFIG_PATH": k8s_config_path}
                               },
-              "DATABASE_CONFIG": mongo_config}
-
+              "CHAT_OBSERVER": {"SIO_URL": api_url,
+                                "SCAN_NEON_SERVICE": False,
+                                "MQ": {"users": {"chat_observer": user_config},
+                                       "server": "neon-rabbitmq",
+                                       "port": 5672},
+                                "KLAT_AUTH_CREDENTIALS": {
+                                    "username": "admin",
+                                    "password": "Neon2024!"
+                                }}}
     if orchestrator == Orchestrator.KUBERNETES:
         shutil.copytree(join(dirname(__file__), "templates", "klat"),
                         join(output_path, "klat-chat"))
