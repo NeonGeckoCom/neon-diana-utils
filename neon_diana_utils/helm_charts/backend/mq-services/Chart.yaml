@@ -3,7 +3,7 @@ name: diana-mq
 description: Deploy DIANA MQ Services
 
 type: application
-version: 0.0.17
+version: 0.0.18
 appVersion: "1.0.1a26"
 dependencies:
   - name: neon-api-proxy
@@ -32,7 +32,7 @@ dependencies:
     repository: file://../../mq/neon-llm-chatgpt
   - name: neon-llm-vllm
     alias: neon-llm-vllm
-    version: 0.0.7
+    version: 0.0.1
     repository: file://../../mq/neon-llm-vllm
   - name: neon-llm-fastchat
     alias: neon-llm-fastchat
