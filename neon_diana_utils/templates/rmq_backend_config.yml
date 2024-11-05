@@ -237,3 +237,8 @@ permissions:
     configure: ".*"
     write: ".*"
     read: ".*"
+  - user: "chat_observer"
+    vhost: "/llm"
+    configure: ".*"
+    write: ".*"
+    read: ".*"
