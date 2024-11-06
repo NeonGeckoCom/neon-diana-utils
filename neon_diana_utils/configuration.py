@@ -32,7 +32,7 @@ import shutil
 
 from enum import Enum
 from pprint import pformat
-from typing import Optional, Set
+from typing import Optional, Set, Literal
 from os import makedirs, listdir
 from os.path import expanduser, join, abspath, isfile, isdir, dirname
 
@@ -469,31 +469,72 @@ def generate_mq_auth_config(rmq_config: dict) -> dict:
     return mq_config
 
 
+def generate_users_service_config() -> dict:
+    """
+    Generate users service configuration.
+    """
+    confirmed = False
+    module = "mongodb"
+    mongo_config = {}
+    sqlite_config = {}
+    click.echo("Configuring Users Service")
+    while not confirmed:
+        module = click.prompt("Use `mongodb` or `sqlite`?",
+                              type=Literal["mongodb", "sqlite"], default=module)
+        if module == "mongodb":
+            db_host = click.prompt("MongoDB Host", type=str)
+            db_port = click.prompt("MongoDB Port", type=int, default=27017)
+            db_user = click.prompt("MongoDB Username", type=str)
+            db_pass = click.prompt("MongoDB Password", type=str)
+            db_name = click.prompt("MongoDB Database Name", type=str,
+                                   default="neon-users")
+            collection_name = click.prompt("MongoDB Collection Name", type=str,
+                                           default="users")
+            mongo_config = {"db_host": db_host, "db_port": db_port,
+                            "db_user": db_user, "db_pass": db_pass,
+                            "db_name": db_name, "collection_name": collection_name}
+            click.echo(mongo_config)
+        elif module == "sqlite":
+            db_path = click.prompt("Path to sqlite database file", type=str,
+                                   default="~/.local/share/neon/user-db.sqlite")
+            sqlite_config = {"db_path": db_path}
+            click.echo(sqlite_config)
+
+        confirmed = click.confirm("Is this configuration correct?")
+    return {"neon_users_service": {"module": module,
+                                   "mongodb": mongo_config,
+                                   "sqlite": sqlite_config}}
+
+
 def generate_hana_config() -> dict:
     """
     Generate HANA config based on user inputs.
     :returns: Configuration for HANA frontend
     """
+    confirmed = False
     click.echo("Configuring HANA (HTTP API for Neon AI)")
-    email = click.confirm("Enable endpoint to send email?")
-    node_user, node_pass = None, None
-    if click.confirm("Enable node websocket connections?"):
-        node_user = click.prompt("Node username", type=str, default="neon")
-        node_pass = click.prompt("Node password", type=str, default="neon")
-    rpm = click.prompt("Client maximum requests per minute", type=int,
-                       default=60)
-    auth_rpm = click.prompt("Client maximum auth requests per minute",
-                            type=int, default=6)
 
-    hana_config = {"enable_email": email,
-                   "node_username": node_user,
-                   "node_password": node_pass,
-                   "access_token_secret": secrets.token_hex(32),
-                   "refresh_token_secret": secrets.token_hex(32),
-                   "requests_per_minute": rpm,
-                   "auth_requests_per_minute": auth_rpm
-                   }
-    LOG.debug(pformat(hana_config))
+    while not confirmed:
+        email = click.confirm("Enable endpoint to send email?")
+        # node_user, node_pass = None, None
+        # if click.confirm("Enable node websocket connections?"):
+        #     node_user = click.prompt("Node username", type=str, default="neon")
+        #     node_pass = click.prompt("Node password", type=str, default="neon")
+        rpm = click.prompt("Client maximum requests per minute", type=int,
+                           default=60)
+        auth_rpm = click.prompt("Client maximum auth requests per minute",
+                                type=int, default=6)
+
+        hana_config = {"enable_email": email,
+                       # "node_username": node_user,
+                       # "node_password": node_pass,
+                       "access_token_secret": secrets.token_hex(32),
+                       "refresh_token_secret": secrets.token_hex(32),
+                       "requests_per_minute": rpm,
+                       "auth_requests_per_minute": auth_rpm
+                       }
+        click.echo(pformat(hana_config))
+        confirmed = click.confirm("Is this configuration correct?")
     return {"hana": hana_config}
 
 
@@ -680,6 +721,13 @@ def configure_backend(username: str = None,
     disabled_mq_services = list(
         _get_unconfigured_mq_backend_services(keys_config))
 
+    # Generate Users service config
+    if click.confirm(f"Configure Users Service?"):
+        users_config = generate_users_service_config()
+    else:
+        users_config = {}
+        disabled_mq_services.append("neon-users-service")
+
     if orchestrator == Orchestrator.KUBERNETES:
         shutil.copytree(join(dirname(__file__), "templates", "backend"),
                         join(output_path, "diana-backend"))
@@ -770,6 +818,9 @@ def configure_backend(username: str = None,
 
         # Generate HANA frontend config
         hana_config = generate_hana_config()
+        if not users_config:
+            click.echo("Disabling HANA auth as no users service is configured.")
+            hana_config["hana"]["disable_auth"] = True
 
         # Generate `diana.yaml` output
         if keys_config.get("LLM_CHAT_GPT"):
@@ -793,7 +844,8 @@ def configure_backend(username: str = None,
                             "port": 5672}},
                   **keys_config,
                   **llm_config,
-                  **hana_config}
+                  **hana_config,
+                  **users_config}
         click.echo(f"Writing configuration to {diana_config}")
         with open(diana_config, 'w+') as f:
             yaml.dump(config, f)

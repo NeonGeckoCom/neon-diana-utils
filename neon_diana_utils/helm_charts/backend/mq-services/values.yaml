@@ -15,6 +15,9 @@ neon-metrics-service:
 neon-script-parser:
   image:
     tag: *tag
+neon-users-service:
+  image:
+    tag: *tag
 neon-llm-chatgpt:
   image:
     tag: *tag
