@@ -212,7 +212,7 @@ class TestConfiguration(unittest.TestCase):
         self.assertEqual(hana_config['auth_requests_per_minute'], 6)
 
         # Test none confirmed
-        confirm.return_value = False
+        confirm.side_effect = [False, True]
         prompt.side_effect = [30, 3]
         hana_config = generate_hana_config()
         self.assertIsInstance(hana_config['hana'], dict)
