@@ -472,6 +472,7 @@ def generate_mq_auth_config(rmq_config: dict) -> dict:
 def generate_users_service_config() -> dict:
     """
     Generate users service configuration.
+    :returns: Configuration for users-service
     """
     confirmed = False
     module = "mongodb"
