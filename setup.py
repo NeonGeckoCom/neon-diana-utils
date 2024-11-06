@@ -90,6 +90,7 @@ setup(
     package_data={'neon_diana_utils': find_resource_files()},
     include_package_data=True,
     install_requires=get_requirements("requirements.txt"),
+    extras_require={"test": get_requirements("test_requirements.txt")},
     zip_safe=True,
     classifiers=[
         'Intended Audience :: Developers',
