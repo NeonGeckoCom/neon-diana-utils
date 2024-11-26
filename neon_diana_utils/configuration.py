@@ -32,11 +32,10 @@ import shutil
 
 from enum import Enum
 from pprint import pformat
-from typing import Optional, Set, Literal
+from typing import Optional, Set
 from os import makedirs, listdir
 from os.path import expanduser, join, abspath, isfile, isdir, dirname
 
-from click import Choice
 from ovos_utils.xdg_utils import xdg_config_home
 from ovos_utils.log import LOG
 
@@ -480,8 +479,9 @@ def generate_users_service_config() -> dict:
     sqlite_config = {}
     click.echo("Configuring Users Service")
     while not confirmed:
-        module = click.prompt("Use `mongodb` or `sqlite`?",
-                              type=Literal["mongodb", "sqlite"], default=module)
+
+        module = click.prompt("Use `mongodb` or `sqlite`?", default=module,
+                              type=click.Choice(["mongodb", "sqlite"]))
         if module == "mongodb":
             db_host = click.prompt("MongoDB Host", type=str)
             db_port = click.prompt("MongoDB Port", type=int, default=27017)
@@ -646,7 +646,7 @@ def _get_unconfigured_mq_backend_services(config: dict) -> Set[str]:
     Get a list of MQ Backend services that are not configured to run
     @param config: dict Configuration (diana.yaml)
     """
-    config_to_service = {'keys.api_services': 'neon-api-proxy',
+    config_to_service = {'api_services': 'neon-api-proxy',
                          'keys.emails': 'neon-email-proxy',
                          'keys.track_my_brands': 'neon-brands-service',
                          'LLM_CHAT_GPT': 'neon-llm-chatgpt',

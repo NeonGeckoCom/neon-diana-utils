@@ -23,5 +23,7 @@ backend:
       image: {}
     neon-script-parser:
       image: {}
+    neon-users-service:
+      image: {}
   letsencrypt:
     server: https://acme-v02.api.letsencrypt.org/directory
