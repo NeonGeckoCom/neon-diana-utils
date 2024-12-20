@@ -292,9 +292,9 @@ class TestConfiguration(unittest.TestCase):
 
     def test_get_unconfigured_backend_services(self):
         from neon_diana_utils.configuration import _get_unconfigured_mq_backend_services
-        all_configured = {'keys': {'api_services': {'configured': True},
-                                   'emails': {'configured': True},
+        all_configured = {'keys': {'emails': {'configured': True},
                                    'track_my_brands': True},
+                          'api_services': {'configured': True},
                           'LLM_VLLM': {'config': False},
                           'LLM_CHAT_GPT': {'config': False},
                           'LLM_CLAUDE': {'': ''},
@@ -304,8 +304,8 @@ class TestConfiguration(unittest.TestCase):
         disabled = _get_unconfigured_mq_backend_services(all_configured)
         self.assertEqual(disabled, set())
 
-        none_configured = {'keys': {'api_services': {},
-                                    'emails': None},
+        none_configured = {'keys': {'emails': None},
+                           'api_services': {},
                            'LLM_CHAT_GPT': {}}
         disabled = _get_unconfigured_mq_backend_services(none_configured)
         self.assertEqual(disabled, {'neon-api-proxy', 'neon-brands-service',
