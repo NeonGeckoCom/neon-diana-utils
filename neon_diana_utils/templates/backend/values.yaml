@@ -25,5 +25,7 @@ backend:
       image: {}
     neon-users-service:
       image: {}
+    brainforge-llm-service:
+      image: {}
   letsencrypt:
     server: https://acme-v02.api.letsencrypt.org/directory

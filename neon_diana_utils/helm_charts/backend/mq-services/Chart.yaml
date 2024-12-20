@@ -30,6 +30,10 @@ dependencies:
     alias: neon-users-service
     version: 0.0.2
     repository: file://../../mq/neon-users-service
+  - name: brainforge-llm-service
+    alias: brainforge-llm-service
+    version: 0.0.1
+    repository: file://../../mq/brainforge-llm-service
   - name: neon-llm-chatgpt
     alias: neon-llm-chatgpt
     version: 0.0.8
