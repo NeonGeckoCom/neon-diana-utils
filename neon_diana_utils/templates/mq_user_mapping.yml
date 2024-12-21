@@ -9,6 +9,8 @@ neon_metrics:
   - neon_metrics_connector
 neon_script_parser:
   - neon_script_parser_service
+neon_users_service:
+  - neon_users_service
 neon_libretranslate:
   - mq-libre-translate
 neon_llm_chatgpt:

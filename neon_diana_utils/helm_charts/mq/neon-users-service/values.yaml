@@ -1,0 +1,11 @@
+serviceName: backend-mq-users
+replicaCount: 1
+configSecret: diana-config
+image:
+  repository: ghcr.io/neongeckocom/neon-users-service
+  pullPolicy: Always
+  tag: dev
+resources:
+  requests:
+    memory: "50Mi"
+    cpu: "0.01"

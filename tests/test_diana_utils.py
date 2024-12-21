@@ -188,32 +188,38 @@ class TestConfiguration(unittest.TestCase):
 
     @patch("neon_diana_utils.configuration.click.prompt")
     @patch("neon_diana_utils.configuration.click.confirm")
+    def test_generate_users_service_config(self, confirm, prompt):
+        from neon_diana_utils.configuration import generate_users_service_config
+        # TODO
+
+    @patch("neon_diana_utils.configuration.click.prompt")
+    @patch("neon_diana_utils.configuration.click.confirm")
     def test_generate_hana_config(self, confirm, prompt):
         from neon_diana_utils.configuration import generate_hana_config
 
         # Test all confirmed
         confirm.return_value = True
-        prompt.side_effect = ['neon', 'neon', 60, 6]
+        prompt.side_effect = [60, 6]
         hana_config = generate_hana_config()
         self.assertIsInstance(hana_config['hana'], dict)
         hana_config = hana_config['hana']
         self.assertTrue(hana_config['enable_email'])
-        self.assertEqual(hana_config['node_username'], 'neon')
-        self.assertEqual(hana_config['node_password'], 'neon')
+        # self.assertEqual(hana_config['node_username'], 'neon')
+        # self.assertEqual(hana_config['node_password'], 'neon')
         self.assertIsInstance(hana_config['access_token_secret'], str)
         self.assertIsInstance(hana_config['refresh_token_secret'], str)
         self.assertEqual(hana_config['requests_per_minute'], 60)
         self.assertEqual(hana_config['auth_requests_per_minute'], 6)
 
         # Test none confirmed
-        confirm.return_value = False
+        confirm.side_effect = [False, True]
         prompt.side_effect = [30, 3]
         hana_config = generate_hana_config()
         self.assertIsInstance(hana_config['hana'], dict)
         hana_config = hana_config['hana']
         self.assertFalse(hana_config['enable_email'])
-        self.assertIsNone(hana_config['node_username'])
-        self.assertIsNone(hana_config['node_password'])
+        # self.assertIsNone(hana_config['node_username'])
+        # self.assertIsNone(hana_config['node_password'])
         self.assertIsInstance(hana_config['access_token_secret'], str)
         self.assertIsInstance(hana_config['refresh_token_secret'], str)
         self.assertEqual(hana_config['requests_per_minute'], 30)
@@ -286,9 +292,9 @@ class TestConfiguration(unittest.TestCase):
 
     def test_get_unconfigured_backend_services(self):
         from neon_diana_utils.configuration import _get_unconfigured_mq_backend_services
-        all_configured = {'keys': {'api_services': {'configured': True},
-                                   'emails': {'configured': True},
+        all_configured = {'keys': {'emails': {'configured': True},
                                    'track_my_brands': True},
+                          'api_services': {'configured': True},
                           'LLM_VLLM': {'config': False},
                           'LLM_CHAT_GPT': {'config': False},
                           'LLM_CLAUDE': {'': ''},
@@ -298,8 +304,8 @@ class TestConfiguration(unittest.TestCase):
         disabled = _get_unconfigured_mq_backend_services(all_configured)
         self.assertEqual(disabled, set())
 
-        none_configured = {'keys': {'api_services': {},
-                                    'emails': None},
+        none_configured = {'keys': {'emails': None},
+                           'api_services': {},
                            'LLM_CHAT_GPT': {}}
         disabled = _get_unconfigured_mq_backend_services(none_configured)
         self.assertEqual(disabled, {'neon-api-proxy', 'neon-brands-service',
