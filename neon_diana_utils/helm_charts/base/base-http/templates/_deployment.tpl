@@ -36,6 +36,10 @@ spec:
           resources:
           {{- toYaml $.Values.resources | nindent 12 -}}
           {{ end }}
+          {{- if .Values.env }}
+          env:
+          {{- toYaml $.Values.env | nindent 12 -}}
+          {{ end }}
       volumes:
         - name: config
           projected:

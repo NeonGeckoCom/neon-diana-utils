@@ -38,3 +38,7 @@ ingress:
             service:
   tls:
     secretName: tls-letsencrypt-prod
+
+env:
+  - name: ARGOS_PACKAGE_INDEX
+    value: https://raw.githubusercontent.com/argosopentech/argospm-index/802ad83594e3244e3f908ab0fefc56eef146a5da
