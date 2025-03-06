@@ -16,14 +16,14 @@ images:
     image: ghcr.io/neongeckocom/chat_server
     name: klat-chat-server
   observer:
-    image: ghcr.io/neongeckocom/klatchat_observer
+    image: ghcr.io/neongeckocom/klatchat-observer
     name: klat-chat-observer
   admin:
     image: ghcr.io/neongeckocom/pyklatchat_admin
     name: klat-chat-admin
 resources:
   requests:
-    memory: "1500Mi"
+    memory: "500Mi"
     cpu: "0.01"
 
 ingress:
@@ -31,6 +31,7 @@ ingress:
   ingressClassName: nginx
   tlsSecretName: tls-letsencrypt-klat
   certIssuer: letsencrypt-private-key
+  redirectRoot: False
   rules:
     - host: klat
       serviceName: klat-chat-client

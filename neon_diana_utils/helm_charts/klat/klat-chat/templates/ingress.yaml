@@ -14,6 +14,7 @@ metadata:
     kubernetes.io/ingress.class: {{ .Values.ingress.ingressClassName }}
     cert-manager.io/issuer: {{ .Values.ingress.certIssuer }}
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   tls:
     - secretName: {{ .Values.ingress.tlsSecretName }}
@@ -26,6 +27,9 @@ spec:
         {{- else }}
         - {{ printf "%s.%s " .host $.Values.domain }}
         {{- end }}
+        {{- end }}
+        {{- if .Values.redirectRoot}}
+        - {{ $.Values.domain }}
         {{- end }}
 
   rules:

@@ -7,5 +7,5 @@ image:
   tag: dev
 resources:
   requests:
-    memory: "800Mi"
+    memory: "850Mi"
     cpu: "0.1"
