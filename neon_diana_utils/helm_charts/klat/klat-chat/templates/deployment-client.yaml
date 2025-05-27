@@ -28,7 +28,7 @@ spec:
               - configMap:
                   name: {{ .Values.configMap }}
       containers:
-        - image: {{ .Values.images.client.image }}:{{ .Values.images.tag }}
+        - image: {{ .Values.images.client.image }}:{{ .Values.images.client.tag }}
           imagePullPolicy: {{ $.Values.images.pullPolicy }}
           name: {{ .Values.images.client.name }}
           env:
