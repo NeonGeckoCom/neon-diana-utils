@@ -7,20 +7,24 @@ clientSubdomain: klat
 serverSubdomain: klatapi
 adminSubdomain: klatadmin
 images:
-  tag: dev
+  tag: &image_tag dev
   pullPolicy: Always
   client:
-    image: ghcr.io/neongeckocom/chat_client
+    image: ghcr.io/neongeckocom/pyklatchat-client
     name: klat-chat-client
+    tag: *image_tag
   server:
-    image: ghcr.io/neongeckocom/chat_server
+    image: ghcr.io/neongeckocom/pyklatchat-server
     name: klat-chat-server
+    tag: *image_tag
   observer:
-    image: ghcr.io/neongeckocom/klatchat-observer
+    image: ghcr.io/neongeckocom/pyklatchat-observer
     name: klat-chat-observer
+    tag: *image_tag
   admin:
     image: ghcr.io/neongeckocom/pyklatchat_admin
     name: klat-chat-admin
+    tag: *image_tag
 resources:
   requests:
     memory: "500Mi"
