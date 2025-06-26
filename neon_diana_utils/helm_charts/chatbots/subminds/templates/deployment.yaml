@@ -24,12 +24,20 @@ spec:
       containers:
         {{- range .Values.images.containers }}
         {{- if .enabled }}
-        - image: {{ .image }}:{{ $.Values.images.tag }}
+        - image: "{{ .image }}:{{ $.Values.images.tag }}"
           imagePullPolicy: {{ $.Values.images.pullPolicy }}
           name: {{ .name }}
+          {{- if .livenessProbe }}
+          livenessProbe:
+          {{- toYaml .livenessProbe | nindent 12 -}}
+          {{ end }}
           env:
             - name: OVOS_CONFIG_FILENAME
               value: {{ $.Values.configFilename }}
+            {{- if .livenessProbe }}
+            - name: HEALTHCHECK_PORT
+              value: {{ .livenessProbe.httpGet.port | quote }}
+            {{ end }}
           volumeMounts:
             - name: config
               mountPath: /config/neon/{{ $.Values.configFilename }}
