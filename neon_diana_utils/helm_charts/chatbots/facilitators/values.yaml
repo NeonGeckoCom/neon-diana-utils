@@ -9,18 +9,45 @@ images:
     - image: "ghcr.io/neongeckocom/mq-chatbots-observer"
       name: "chatbots-observer"
       enabled: True
+      livenessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /status
+          port: 8000
+          scheme: HTTP
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 1
     - image: "ghcr.io/neongeckocom/chat-facilitator-automator"
       name: "automator"
       enabled: True
+      livenessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /status
+          port: 8001
+          scheme: HTTP
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 1
     - image: "ghcr.io/neongeckocom/chat-facilitator-context_keeper"
       name: "context-keeper"
       enabled: False
     - image: "ghcr.io/neongeckocom/chat-facilitator-proctor"
       name: "proctor"
       enabled: True
+      livenessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /status
+          port: 8002
+          scheme: HTTP
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 1
     - image: "ghcr.io/neongeckocom/chat-facilitator-scorekeeper"
       name: "scorekeeper"
-      enabled: True
+      enabled: False
     - image: "ghcr.io/neongeckocom/chat-facilitator-stenographer"
       name: "stenographer"
       enabled: False
