@@ -24,3 +24,12 @@ ingress:
     - host: iris
       serviceName: neon-core-iris
       servicePort: 7860
+livenessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /status
+    port: 7860
+    scheme: HTTP
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 1

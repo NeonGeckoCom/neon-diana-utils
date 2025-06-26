@@ -22,9 +22,13 @@ spec:
     spec:
       restartPolicy: Always
       containers:
-        - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ default .Chart.Name .Values.serviceName }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 12 -}}
+          {{ end }}
           volumeMounts:
             - name: config
               mountPath: /config/neon/neon.yaml
