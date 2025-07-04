@@ -3,10 +3,10 @@ name: hana
 description: Deploy the HANA application
 
 type: application
-version: 0.0.1
+version: 0.0.2
 appVersion: "1.0.1a35"
 
 dependencies:
   - name: base-http
-    version: 0.0.5
+    version: 0.0.7
     repository: file://../../base/base-http

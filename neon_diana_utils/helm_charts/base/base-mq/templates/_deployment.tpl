@@ -23,8 +23,12 @@ spec:
     spec:
       restartPolicy: Always
       containers:
-        - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .livenessProbe }}
+          livenessProbe:
+          {{- toYaml .livenessProbe | nindent 12 -}}
+          {{ end }}
           name: {{ $fullName }}
           volumeMounts:
             - mountPath: /config/neon
@@ -36,6 +40,11 @@ spec:
           {{- if .Values.resources }}
           resources:
           {{- toYaml $.Values.resources | nindent 12 -}}
+          {{ end }}
+          {{- if .livenessProbe }}
+          env:
+            - name: HEALTHCHECK_PORT
+              value: {{ .livenessProbe.httpGet.port | quote }}
           {{ end }}
       volumes:
         - name: config

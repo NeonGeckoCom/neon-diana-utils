@@ -37,3 +37,13 @@ ingress:
             service:
   tls:
     secretName: tls-letsencrypt-prod
+livenessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /status
+    port: 8080
+    scheme: HTTP
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 1
+

@@ -3,7 +3,7 @@ name: diana-http
 description: Deploy DIANA HTTP Services
 
 type: application
-version: 0.0.15
+version: 0.0.16
 appVersion: "1.0.1a35"
 dependencies:
   - name: libretranslate
@@ -12,7 +12,7 @@ dependencies:
     repository: file://../../http/libretranslate
   - name: tts-coqui
     alias: tts-coqui
-    version: 0.0.5
+    version: 0.0.6
     repository: file://../../http/tts-coqui
   - name: tts-glados
     alias: tts-glados
@@ -40,9 +40,9 @@ dependencies:
     repository: file://../../http/ww-snowboy
   - name: stt-nemo
     alias: stt-nemo
-    version: 0.0.2
+    version: 0.0.3
     repository: file://../../http/stt-nemo
   - name: hana
     alias: endpoint-hana
-    version: 0.0.1
+    version: 0.0.2
     repository: file://../../http/hana

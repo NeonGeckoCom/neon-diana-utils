@@ -3,12 +3,12 @@ name: diana-mq
 description: Deploy DIANA MQ Services
 
 type: application
-version: 0.0.19
+version: 0.0.21
 appVersion: "1.0.1a35"
 dependencies:
   - name: neon-api-proxy
     alias: neon-api-proxy
-    version: 0.0.6
+    version: 0.0.7
     repository: file://../../mq/neon-api-proxy
   - name: neon-brands-service
     alias: neon-brands-service
@@ -16,11 +16,11 @@ dependencies:
     repository: file://../../mq/neon-brands-service
   - name: neon-email-proxy
     alias: neon-email-proxy
-    version: 0.0.6
+    version: 0.0.7
     repository: file://../../mq/neon-email-proxy
   - name: neon-metrics-service
     alias: neon-metrics-service
-    version: 0.0.7
+    version: 0.0.8
     repository: file://../../mq/neon-metrics-service
   - name: neon-script-parser
     alias: neon-script-parser
@@ -28,15 +28,15 @@ dependencies:
     repository: file://../../mq/neon-script-parser
   - name: neon-users-service
     alias: neon-users-service
-    version: 0.0.1
+    version: 0.0.2
     repository: file://../../mq/neon-users-service
   - name: neon-llm-chatgpt
     alias: neon-llm-chatgpt
-    version: 0.0.7
+    version: 0.0.8
     repository: file://../../mq/neon-llm-chatgpt
   - name: neon-llm-vllm
     alias: neon-llm-vllm
-    version: 0.0.1
+    version: 0.0.2
     repository: file://../../mq/neon-llm-vllm
   - name: neon-llm-fastchat
     alias: neon-llm-fastchat
@@ -48,9 +48,5 @@ dependencies:
     repository: file://../../mq/neon-llm-claude
   - name: neon-llm-gemini
     alias: neon-llm-gemini
-    version: 0.0.2
+    version: 0.0.3
     repository: file://../../mq/neon-llm-gemini
-  - name: neon-llm-palm
-    alias: neon-llm-palm
-    version: 0.0.6
-    repository: file://../../mq/neon-llm-palm
