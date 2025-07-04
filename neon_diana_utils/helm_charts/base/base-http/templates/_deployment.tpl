@@ -21,9 +21,13 @@ spec:
         neon.service.class: http-backend
     spec:
       containers:
-        - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ $fullName }}
+          {{- if .livenessProbe }}
+          livenessProbe:
+          {{- toYaml .livenessProbe | nindent 12 -}}
+          {{ end }}
           ports:
             - name: {{ $fullName }}
               containerPort: {{ .Values.servicePort }}
