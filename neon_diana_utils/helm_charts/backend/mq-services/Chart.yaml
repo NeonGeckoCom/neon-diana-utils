@@ -3,7 +3,7 @@ name: diana-mq
 description: Deploy DIANA MQ Services
 
 type: application
-version: 0.0.22
+version: 0.0.24
 appVersion: "1.0.1a36"
 dependencies:
   - name: neon-api-proxy
@@ -32,7 +32,7 @@ dependencies:
     repository: file://../../mq/neon-users-service
   - name: brainforge-llm-service
     alias: brainforge-llm-service
-    version: 0.0.1
+    version: 0.0.3
     repository: file://../../mq/brainforge-llm-service
   - name: neon-llm-chatgpt
     alias: neon-llm-chatgpt
