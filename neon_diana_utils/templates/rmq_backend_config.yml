@@ -93,6 +93,11 @@ users:
     password:
     tags:
       - chatbots
+  - name: "brainforge_llm_service"
+    password:
+    tags:
+      - backend
+      - llm
 vhosts:
   - name: "/neon_emails"
   - name: "/neon_api"
@@ -105,6 +110,7 @@ vhosts:
   - name: "/neon_chat_api"
   - name: "/chatbots"
   - name: "/neon_users"
+  - name: "/brainforge"
 permissions:
   - user: "neon_core"
     vhost: "/neon_chat_api"
@@ -258,3 +264,13 @@ permissions:
     configure: ".*"
     write: ".*"
     read: ".*"
+  - user: "neon_api_utils"
+    vhost: "/brainforge"
+    configure: "./*"
+    write: "./*"
+    read: "./*"
+  - user: "brainforge_llm_service"
+    vhost: "/brainforge"
+    configure: "./*"
+    write: "./*"
+    read: "./*"

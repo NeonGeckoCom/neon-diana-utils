@@ -295,6 +295,7 @@ class TestConfiguration(unittest.TestCase):
         all_configured = {'keys': {'emails': {'configured': True},
                                    'track_my_brands': True},
                           'api_services': {'configured': True},
+                          'brainforge_llm_service': {'configured': True},
                           'LLM_VLLM': {'config': False},
                           'LLM_CHAT_GPT': {'config': False},
                           'LLM_CLAUDE': {'': ''},
@@ -312,7 +313,7 @@ class TestConfiguration(unittest.TestCase):
                                     'neon-email-proxy', 'neon-llm-chatgpt',
                                     'neon-llm-fastchat', 'neon-llm-claude',
                                     'neon-llm-palm', 'neon-llm-gemini',
-                                    'neon-llm-vllm'})
+                                    'neon-llm-vllm', 'brainforge-llm-service'})
 
     def test_get_optional_http_backend(self):
         from neon_diana_utils.configuration import _get_optional_http_backend

@@ -1,0 +1,22 @@
+serviceName: backend-mq-brainforge-llm
+replicaCount: 1
+configSecret: diana-config
+image:
+  pullSecret: github-auth
+  repository: ghcr.io/neongeckocom/brainforge-llm-service
+  pullPolicy: Always
+  tag: dev
+resources:
+  requests:
+    memory: "500Mi"
+    cpu: "1.0"
+livenessProbe:
+  failureThreshold: 3
+  httpGet:
+    path: /status
+    port: 8000
+    scheme: HTTP
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 1
+

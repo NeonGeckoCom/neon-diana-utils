@@ -18,6 +18,9 @@ neon-script-parser:
 neon-users-service:
   image:
     tag: *tag
+brainforge-llm-service:
+  image:
+    tag: *tag
 neon-llm-chatgpt:
   image:
     tag: *tag

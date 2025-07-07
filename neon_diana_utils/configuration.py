@@ -171,6 +171,27 @@ def make_keys_config(write_config: bool,
             config_confirmed = \
                 click.confirm("Is this configuration correct?")
 
+    brainforge_config = {"clients": {}}
+    if click.confirm("Configure BrainForge LLMs?"):
+        hosts_complete = False
+        while not hosts_complete:
+            name = click.prompt("vLLM Endpoint Name", type=str)
+            url = click.prompt("vLLM URL", type=str)
+            key = click.prompt("vLLM API key", type=str)
+            client_config = {name: {"api_url": url, "api_key": key}}
+            click.echo(pformat(client_config))
+            if click.confirm("Is this configuration correct?"):
+                brainforge_config["clients"][name] = client_config[name]
+            if not click.confirm("Add another client?"):
+                hosts_complete = True
+        confirmed = False
+        while not confirmed:
+            hf_token = click.prompt("HuggingFace Token", type=str)
+            brainforge_config['hf_token'] = hf_token
+            click.echo(brainforge_config)
+            if click.confirm("Is this configuration correct?"):
+                confirmed = True
+
     chatgpt_config = dict()
     if click.confirm("Configure ChatGPT LLM?"):
         config_confirmed = False
@@ -371,7 +392,8 @@ def make_keys_config(write_config: bool,
             "aggregators": {
                 "sentry": sentry_sdk_config,
             }
-        }
+        },
+        "brainforge_llm_service": brainforge_config
     }
     if write_config:
         click.echo(f"Writing configuration to {output_file}")
@@ -649,6 +671,7 @@ def _get_unconfigured_mq_backend_services(config: dict) -> Set[str]:
     config_to_service = {'api_services': 'neon-api-proxy',
                          'keys.emails': 'neon-email-proxy',
                          'keys.track_my_brands': 'neon-brands-service',
+                         'brainforge_llm_service': 'brainforge-llm-service',
                          'LLM_CHAT_GPT': 'neon-llm-chatgpt',
                          'LLM_VLLM': 'neon-llm-vllm',
                          'LLM_FASTCHAT': 'neon-llm-fastchat',
@@ -747,7 +770,8 @@ def configure_backend(username: str = None,
         else:
             # Define a default value so secret can be generated
             encoded_token = get_github_encoded_auth("", "")
-            to_disable = ['neon-brands-service', 'neon-script-parser']
+            to_disable = ['neon-brands-service', 'neon-script-parser',
+                          'brainforge-llm-service']
             disabled_mq_services += to_disable
         confirmed = False
         email = ''
@@ -805,6 +829,8 @@ def configure_backend(username: str = None,
         diana_config = join(output_path, "xdg", "config", "neon", "diana.yaml")
     else:
         raise RuntimeError(f"{orchestrator} is not yet supported")
+
+    # Generate configuration for required core services
     try:
         # Generate RabbitMQ config
         username = username or click.prompt("RabbitMQ Admin Username", type=str)

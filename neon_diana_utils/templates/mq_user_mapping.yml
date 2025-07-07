@@ -29,6 +29,8 @@ neon_core:
   - chat_api_proxy
 chat_observer:
   - chat_observer
+brainforge_llm_service:
+  - brainforge_llm_service
 neon_llm_submind:
   - neon_llm_submind
 neon_bot_submind:
