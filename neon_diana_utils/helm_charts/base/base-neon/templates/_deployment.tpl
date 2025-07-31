@@ -25,6 +25,10 @@ spec:
         - image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ default .Chart.Name .Values.serviceName }}
+          {{- if .Values.startupProbe }}
+          startupProbe:
+          {{- toYaml .Values.startupProbe | nindent 12 -}}
+          {{- end }}
           {{- if .Values.livenessProbe }}
           livenessProbe:
           {{- toYaml .Values.livenessProbe | nindent 12 -}}

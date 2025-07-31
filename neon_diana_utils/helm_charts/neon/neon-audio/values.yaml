@@ -18,4 +18,13 @@ livenessProbe:
   periodSeconds: 10
   successThreshold: 1
   timeoutSeconds: 1
+startupProbe:
+  failureThreshold: 30
+  httpGet:
+    path: /status
+    port: 8000
+    scheme: HTTP
+  periodSeconds: 15
+  successThreshold: 1
+  timeoutSeconds: 1
 
