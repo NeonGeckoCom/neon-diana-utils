@@ -4,7 +4,7 @@ description: Deploy a Brainforge LLM Backend Service
 
 type: application
 version: 0.0.3
-appVersion: "1.0.1a37"
+appVersion: "1.0.1a38"
 
 dependencies:
   - name: base-mq
