@@ -37,7 +37,7 @@ startupProbe:
   failureThreshold: 30
   httpGet:
     path: /status
-    port: 8000
+    port: 7860
     scheme: HTTP
   periodSeconds: 15
   successThreshold: 1
