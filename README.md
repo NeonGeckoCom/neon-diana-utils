@@ -31,7 +31,7 @@ We recommend you use a [Python virtual environment](https://docs.python.org/3/li
 
 Install the python3.10 venv package
 ```
-sudo apt install python3.10 -m venv
+sudo apt install python3.10-venv
 ```
 
 Create the virtual environment
